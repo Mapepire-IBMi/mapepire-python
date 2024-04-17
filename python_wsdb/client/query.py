@@ -5,8 +5,8 @@ from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
 from dataclasses_json import dataclass_json
 
-from python_sc.client.sql_job import SQLJob
-from python_sc.types import QueryOptions
+from python_wsdb.client.sql_job import SQLJob
+from python_wsdb.types import QueryOptions
 
 T = TypeVar("T")
 

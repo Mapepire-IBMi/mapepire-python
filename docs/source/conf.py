@@ -18,7 +18,7 @@ from datetime import datetime
 
 sys.path.insert(0, os.path.abspath("../../"))
 
-from python_sc import VERSION, VERSION_SHORT  # noqa: E402
+from python_wsdb import VERSION, VERSION_SHORT  # noqa: E402
 
 # -- Project information -----------------------------------------------------
 

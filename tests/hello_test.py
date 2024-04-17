@@ -1,7 +1,7 @@
 import asyncio
-from python_sc.client.sql_job import SQLJob
-from python_sc.tls import get_certificate
-from python_sc.types import DaemonServer
+from python_wsdb.client.sql_job import SQLJob
+from python_wsdb.tls import get_certificate
+from python_wsdb.types import DaemonServer
 
 creds = DaemonServer(
     host="localhost",

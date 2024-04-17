@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from python_sc.version import VERSION
+from python_wsdb.version import VERSION
 
 
 def main():
