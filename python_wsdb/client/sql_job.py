@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 import websocket
 from websocket import WebSocket, create_connection
 
-from python_sc.types import (
+from python_wsdb.types import (
     ConnectionResult,
     DaemonServer,
     JDBCOptions,
@@ -114,7 +114,7 @@ class SQLJob:
         sql: str,
         opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
     ):
-        from python_sc.client.query import Query
+        from python_wsdb.client.query import Query
 
         if isinstance(opts, dict):
             opts = QueryOptions(**opts)

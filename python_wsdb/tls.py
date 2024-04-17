@@ -4,7 +4,7 @@ import ssl
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from python_sc.types import DaemonServer
+from python_wsdb.types import DaemonServer
 
 
 async def get_certificate(server: DaemonServer):
