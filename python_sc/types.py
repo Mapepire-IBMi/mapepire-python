@@ -1,6 +1,7 @@
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Optional, List, Dict, Any, Union
+from dataclasses_json import dataclass_json
 
 class JobStatus(Enum):
     NotStarted = "notStarted"
@@ -36,6 +37,7 @@ class DaemonServer:
     ignoreUnauthorized: Optional[bool] = None
     ca: Optional[Union[str, bytes]] = None
 
+@dataclass_json
 @dataclass
 class ServerResponse:
     id: str
@@ -44,6 +46,7 @@ class ServerResponse:
     sql_state: str
     error: Optional[str] = None
 
+@dataclass_json
 @dataclass
 class ConnectionResult(ServerResponse):
     job: str
@@ -52,7 +55,8 @@ class ConnectionResult(ServerResponse):
     sql_rc: int = field(init=False)
     sql_state: str = field(init=False)
     error: Optional[str] = field(default=None, init=False)
-
+    
+@dataclass_json
 @dataclass
 class VersionCheckResult(ServerResponse):
     build_date: str
@@ -89,6 +93,7 @@ class ExplainResults(QueryResult):
     vemetadata: QueryMetaData
     vedata: Any
 
+@dataclass_json
 @dataclass
 class GetTraceDataResult(ServerResponse):
     tracedata: str
@@ -109,6 +114,7 @@ class JobLogEntry:
     MESSAGE_TEXT: str
     MESSAGE_SECOND_LEVEL_TEXT: str
 
+@dataclass_json
 @dataclass
 class CLCommandResult(ServerResponse):
     joblog: List[JobLogEntry]
@@ -124,7 +130,8 @@ class QueryOptions:
     isClCommand: Optional[bool] = None
     parameters: Optional[List[Any]] = None
     autoClose: Optional[bool] = None
-
+    
+@dataclass_json
 @dataclass
 class SetConfigResult(ServerResponse):
     tracedest: ServerTraceDest
