@@ -99,7 +99,7 @@ class SQLJob:
         return result
 
     def query(
-        self, sql: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
+        self, sql: str, opts: Optional[Dict[str, Any]] = None,
     ):
         from python_wsdb.client.query import Query
 
@@ -109,7 +109,7 @@ class SQLJob:
         return Query(job=self, query=sql)
 
     def query_and_run(
-        self, sql: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs
+        self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
     ):
         query = self.query(sql, opts)
         return query.run(**kwargs)
