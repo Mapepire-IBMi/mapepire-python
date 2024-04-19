@@ -65,10 +65,10 @@ exclude = [
 include-package-data = true
 
 [tool.setuptools.package-data]
-python_sc = ["py.typed"]
+python_wsdb = ["py.typed"]
 
 [tool.setuptools.dynamic]
-version = {attr = "python_sc.version.VERSION"}
+version = {attr = "python_wsdb.version.VERSION"}
 
 [tool.black]
 line-length = 100

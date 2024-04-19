@@ -2,7 +2,7 @@
 
 set -e
 
-TAG=$(python -c 'from python_sc.version import VERSION; print("v" + VERSION)')
+TAG=$(python -c 'from python_wsdb.version import VERSION; print("v" + VERSION)')
 
 read -p "Creating new release for $TAG. Do you want to continue? [Y/n] " prompt
 
