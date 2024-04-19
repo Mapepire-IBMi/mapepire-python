@@ -1,20 +1,17 @@
-import asyncio
 import base64
 import json
 import ssl
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, Optional, Union
 
-import websocket
 from websocket import WebSocket, create_connection
 
-from python_wsdb.types import (
+from python_wsdb import (
     ConnectionResult,
     DaemonServer,
     JDBCOptions,
     JobStatus,
     QueryOptions,
 )
-
 
 class SQLJob:
     def __init__(self, options: JDBCOptions | Dict = {}) -> None:
@@ -41,20 +38,19 @@ class SQLJob:
         }
 
         # Prepare SSL context if necessary
+        ssl_opts = {}
+
+        if db2_server.ignoreUnauthorized:
+            ssl_opts["cert_reqs"] = ssl.CERT_NONE
         if db2_server.ca:
-            ssl_opts = (
-                {"cert_reqs": ssl.CERT_NONE}
-                if not db2_server.ignoreUnauthorized
-                else {"ca_certs": db2_server.ca}
-            )
-        else:
-            ssl_opts = (
-                {"cert_reqs": ssl.CERT_NONE} if db2_server.ignoreUnauthorized is False else {}
-            )
+            ssl_context = ssl.create_default_context(cafile='server_cert.pem')
+            ssl_context.check_hostname = False
+            ssl_opts["ssl_context"] = ssl_context
+            ssl_opts['cert_reqs'] = ssl.CERT_NONE # ignore certs for now
+
 
         # Create WebSocket connection
         socket = create_connection(uri, header=headers, sslopt=ssl_opts)
-        # socket = websocket.WebSocketApp(uri, header=headers, sslopt=ssl_opts)
 
         # Register message handler
         def on_message(ws, message):
@@ -124,3 +120,6 @@ class SQLJob:
     def query_and_run(self, sql: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs):
         query = self.query(sql, opts)
         return query.run(**kwargs)
+    
+    def close(self):
+        self._socket.close()

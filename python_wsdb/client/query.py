@@ -6,7 +6,7 @@ from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 from dataclasses_json import dataclass_json
 
 from python_wsdb.client.sql_job import SQLJob
-from python_wsdb.types import QueryOptions
+from python_wsdb import QueryOptions
 
 T = TypeVar("T")
 
@@ -42,7 +42,7 @@ class Query(Generic[T]):
 
         Query.global_query_list.append(self)
 
-    def run(self, rows_to_fetch: int = None):
+    def run(self, rows_to_fetch: int = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:
@@ -84,12 +84,52 @@ class Query(Generic[T]):
         if not query_result.get("success", False) and not self.is_cl_command:
             self._state = QueryState.ERROR
             error_keys = ["error", "sql_state", "sql_rc"]
-            error_list = [query_result[key] for key in error_keys if key in query_result.keys()]
+            error_list = {key:query_result[key] for key in error_keys if key in query_result.keys()}
             if len(error_list) == 0:
-                error_list.append("failed to run query for unknown reason")
+                error_list['error'] = "failed to run query for unknown reason"
 
-            raise Exception(error_list.join(", "))
+            raise Exception(error_list)
 
         self._correlation_id = query_result["id"]
+
+        return query_result
+
+    def fetch_more(self, rows_to_fetch: int = None) -> Dict[str, Any]:
+        if rows_to_fetch is None:
+            rows_to_fetch = self._rows_to_fetch
+        else:
+            self._rows_to_fetch = rows_to_fetch
+
+        match self._state:
+            case QueryState.NOT_YET_RUN:
+                raise Exception("Statement has not been run")
+            case QueryState.RUN_DONE:
+                raise Exception("Statement has already been fully run")
+            
+        query_object = {
+            'id': self.job._get_unique_id('fetchMore'),
+            'cont_id': self._correlation_id,
+            'type': 'sqlmore',
+            'sql': self.sql,
+            'rows': rows_to_fetch
+        }
+        
+        self._rows_to_fetch = rows_to_fetch
+        result = self.job.send(json.dumps(query_object))
+        query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
+        
+        self._state = (
+            QueryState.RUN_DONE
+            if query_result.get("is_done", False)
+            else QueryState.RUN_MORE_DATA_AVAIL
+        )
+        
+        if not query_result['success']:
+            self._state = QueryState.ERROR
+            raise Exception(query_result['error'] or "Failed to run Query (unknown error)")
         
         return query_result
+        
+        
+        
+        
