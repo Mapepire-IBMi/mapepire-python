@@ -36,7 +36,7 @@ class ServerTraceDest(Enum):
 
 @dataclass
 class DaemonServer:
-    host: str | None
+    host: str
     user: str
     password: str
     port: int
@@ -145,7 +145,7 @@ class CLCommandResult(ServerResponse):
 class QueryOptions:
     isTerseResults: Optional[bool] = None
     isClCommand: Optional[bool] = None
-    parameters: Optional[str] = None
+    parameters: Optional[List[str]] = None
     autoClose: Optional[bool] = None
 
 

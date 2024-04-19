@@ -23,12 +23,12 @@ class Query(Generic[T]):
         job: SQLJob,
         query: str,
         opts: QueryOptions = QueryOptions(
-            isClCommand=False, parameters="", autoClose=False
+            isClCommand=False, parameters=None, autoClose=False
         ),
     ) -> None:
         self.job = job
         self.is_prepared: bool = True if opts.parameters is not None else False
-        self.parameters: Optional[str] = opts.parameters
+        self.parameters: Optional[List[str]] = opts.parameters
         self.sql: str = query
         self.is_cl_command: bool | None = opts.isClCommand
         self.should_auto_close: bool | None = opts.autoClose
@@ -81,6 +81,7 @@ class Query(Generic[T]):
         )
 
         if not query_result.get("success", False) and not self.is_cl_command:
+            print(query_result)
             self.state = QueryState.ERROR
             error_keys = ["error", "sql_state", "sql_rc"]
             error_list = {key:query_result[key] for key in error_keys if key in query_result.keys()}
