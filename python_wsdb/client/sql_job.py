@@ -1,7 +1,7 @@
 import base64
 import json
 import ssl
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional
 
 from websocket import WebSocket, create_connection
 
