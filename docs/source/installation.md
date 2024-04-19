@@ -1,23 +1,23 @@
 Installation
 ============
 
-**python-sc** supports Python >= 3.8.
+**python-wsdb** supports Python >= 3.8.
 
 ## Installing with `pip`
 
-**python-sc** is available [on PyPI](https://pypi.org/project/python-sc/). Just run
+**python-wsdb** is available [on PyPI](https://pypi.org/project/python-wsdb/). Just run
 
 ```bash
-pip install python-sc
+pip install python-wsdb
 ```
 
 ## Installing from source
 
-To install **python-sc** from source, first clone [the repository](https://github.com/ajshedivy/python-sc):
+To install **python-wsdb** from source, first clone [the repository](https://github.com/ajshedivy/python-wsdb):
 
 ```bash
-git clone https://github.com/ajshedivy/python-sc.git
-cd python-sc
+git clone https://github.com/ajshedivy/python-wsdb.git
+cd python-wsdb
 ```
 
 Then run

@@ -1,4 +1,4 @@
-# **python-sc**
+# **python-wsdb**
 
 ```{toctree}
 :maxdepth: 2
@@ -15,8 +15,8 @@ overview
 
 CHANGELOG
 CONTRIBUTING
-License <https://raw.githubusercontent.com/allenai/python-sc/main/LICENSE>
-GitHub Repository <https://github.com/ajshedivy/python-sc>
+License <https://raw.githubusercontent.com/allenai/python-wsdb/main/LICENSE>
+GitHub Repository <https://github.com/ajshedivy/python-wsdb>
 ```
 
 ## Indices and tables
