@@ -96,7 +96,7 @@ jobs:
         if: always()
         run: |
           . .venv/bin/activate
-          pip uninstall -y python-sc
+          pip uninstall -y python-wsdb
 
   release:
     name: Release

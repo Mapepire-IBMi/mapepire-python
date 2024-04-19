@@ -1,1 +1,1 @@
-# python-sc
+# python-wsdb
