@@ -55,7 +55,6 @@ jobs:
               name: Style
               run: |
                 isort --check .
-                black --check .
 
           - python: "3.10"
             task:

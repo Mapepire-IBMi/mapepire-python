@@ -1,12 +1,9 @@
 import json
-from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
-
-from dataclasses_json import dataclass_json
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from python_wsdb.client.sql_job import SQLJob
-from python_wsdb import QueryOptions
+from python_wsdb.types import QueryOptions
 
 T = TypeVar("T")
 
@@ -25,36 +22,38 @@ class Query(Generic[T]):
         self,
         job: SQLJob,
         query: str,
-        opts: Optional[Union[Dict[str, Any], QueryOptions]] = QueryOptions(
+        opts: QueryOptions = QueryOptions(
             isClCommand=False, parameters="", autoClose=False
         ),
     ) -> None:
         self.job = job
-        self.is_prepared: bool = None is opts.parameters
-        self.parameters: Optional[List] = opts.parameters
+        self.is_prepared: bool = True if opts.parameters is not None else False
+        self.parameters: Optional[str] = opts.parameters
         self.sql: str = query
-        self.is_cl_command: bool = opts.isClCommand
-        self.should_auto_close: bool = opts.autoClose
-        self.is_terse_results: bool = opts.isTerseResults
+        self.is_cl_command: bool | None = opts.isClCommand
+        self.should_auto_close: bool | None = opts.autoClose
+        self.is_terse_results: bool | None = opts.isTerseResults
 
         self._rows_to_fetch: int = 100
-        self._state: QueryState = QueryState.NOT_YET_RUN
+        self.state: QueryState = QueryState.NOT_YET_RUN
 
         Query.global_query_list.append(self)
 
-    def run(self, rows_to_fetch: int = None) -> Dict[str, Any]:
+    def run(self, rows_to_fetch: int | Any = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:
             self._rows_to_fetch = rows_to_fetch
-
-        match self._state:
+            
+        # fmt: off
+        match self.state:
             case QueryState.RUN_MORE_DATA_AVAIL:
                 raise Exception("Statement has already been run")
             case QueryState.RUN_DONE:
                 raise Exception("Statement has already been fully run")
+        # fmt: on
 
-        query_object = {}
+        query_object: Dict[str, Any] = {}
         if self.is_cl_command:
             query_object = {
                 "id": self.job._get_unique_id("clcommand"),
@@ -72,17 +71,17 @@ class Query(Generic[T]):
                 "parameters": self.parameters,
             }
 
-        result = self.job.send(json.dumps(query_object))
+        self.job.send(json.dumps(query_object))
         query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
 
-        self._state = (
+        self.state = (
             QueryState.RUN_DONE
             if query_result.get("is_done", False)
             else QueryState.RUN_MORE_DATA_AVAIL
         )
 
         if not query_result.get("success", False) and not self.is_cl_command:
-            self._state = QueryState.ERROR
+            self.state = QueryState.ERROR
             error_keys = ["error", "sql_state", "sql_rc"]
             error_list = {key:query_result[key] for key in error_keys if key in query_result.keys()}
             if len(error_list) == 0:
@@ -94,13 +93,13 @@ class Query(Generic[T]):
 
         return query_result
 
-    def fetch_more(self, rows_to_fetch: int = None) -> Dict[str, Any]:
+    def fetch_more(self, rows_to_fetch: int | Any = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:
             self._rows_to_fetch = rows_to_fetch
 
-        match self._state:
+        match self.state:
             case QueryState.NOT_YET_RUN:
                 raise Exception("Statement has not been run")
             case QueryState.RUN_DONE:
@@ -115,17 +114,17 @@ class Query(Generic[T]):
         }
         
         self._rows_to_fetch = rows_to_fetch
-        result = self.job.send(json.dumps(query_object))
+        self.job.send(json.dumps(query_object))
         query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
         
-        self._state = (
+        self.state = (
             QueryState.RUN_DONE
             if query_result.get("is_done", False)
             else QueryState.RUN_MORE_DATA_AVAIL
         )
         
         if not query_result['success']:
-            self._state = QueryState.ERROR
+            self.state = QueryState.ERROR
             raise Exception(query_result['error'] or "Failed to run Query (unknown error)")
         
         return query_result

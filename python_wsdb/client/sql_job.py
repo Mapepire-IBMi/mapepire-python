@@ -5,19 +5,13 @@ from typing import Any, Dict, Optional, Union
 
 from websocket import WebSocket, create_connection
 
-from python_wsdb import (
-    ConnectionResult,
-    DaemonServer,
-    JDBCOptions,
-    JobStatus,
-    QueryOptions,
-)
+from python_wsdb.types import DaemonServer, JobStatus, QueryOptions
+
 
 class SQLJob:
-    def __init__(self, options: JDBCOptions | Dict = {}) -> None:
+    def __init__(self, options: Dict[Any, Any] = {}) -> None:
         self.options = options
         self._unique_id_counter: int = 0
-        self._socket: Any = None
         self._reponse_emitter = None
         self._status: JobStatus = JobStatus.NotStarted
         self._trace_file = None
@@ -38,16 +32,15 @@ class SQLJob:
         }
 
         # Prepare SSL context if necessary
-        ssl_opts = {}
+        ssl_opts: Dict[str, Any] = {}
 
         if db2_server.ignoreUnauthorized:
             ssl_opts["cert_reqs"] = ssl.CERT_NONE
         if db2_server.ca:
-            ssl_context = ssl.create_default_context(cafile='server_cert.pem')
+            ssl_context = ssl.create_default_context(cadata=db2_server.ca)
             ssl_context.check_hostname = False
             ssl_opts["ssl_context"] = ssl_context
-            ssl_opts['cert_reqs'] = ssl.CERT_NONE # ignore certs for now
-
+            ssl_opts["cert_reqs"] = ssl.CERT_NONE  # ignore certs for now
 
         # Create WebSocket connection
         socket = create_connection(uri, header=headers, sslopt=ssl_opts)
@@ -69,7 +62,7 @@ class SQLJob:
     def send(self, content):
         self._socket.send(content)
 
-    def connect(self, db2_server: DaemonServer) -> ConnectionResult:
+    def connect(self, db2_server: DaemonServer) -> Dict[Any, Any]:
         self._socket: WebSocket = self._get_channel(db2_server)
 
         props = ";".join(
@@ -88,7 +81,7 @@ class SQLJob:
         }
 
         self.send(json.dumps(connection_props))
-        result: Dict[str, Any] | ConnectionResult = {}
+        result: Dict[str, Any] = {}
         try:
             result = json.loads(self._socket.recv())
         except Exception as e:
@@ -106,9 +99,7 @@ class SQLJob:
         return result
 
     def query(
-        self,
-        sql: str,
-        opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
+        self, sql: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
     ):
         from python_wsdb.client.query import Query
 
@@ -117,9 +108,11 @@ class SQLJob:
             return Query(job=self, query=sql, opts=opts)
         return Query(job=self, query=sql)
 
-    def query_and_run(self, sql: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs):
+    def query_and_run(
+        self, sql: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs
+    ):
         query = self.query(sql, opts)
         return query.run(**kwargs)
-    
+
     def close(self):
         self._socket.close()
