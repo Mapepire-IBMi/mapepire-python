@@ -1,5 +1,9 @@
 from datetime import datetime
 from pathlib import Path
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from python_wsdb.version import VERSION
 
