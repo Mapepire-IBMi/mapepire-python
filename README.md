@@ -1,7 +1,16 @@
 # python-wsdb
-
-![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/ajshedivy/python-wsdb/main.yml)![PyPI - Version](https://img.shields.io/pypi/v/python-wsdb)
-
+<div align="center">
+<a href="https://github.com/ajshedivy/python-wsdb/actions">
+    <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/ajshedivy/python-wsdb/main.yml">
+</a>
+<a href="https://pypi.org/project/python-wsdb/">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/python-wsdb">
+</a>
+<a href="https://github.com/ajshedivy/python-wsdb/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/allenai/tango.svg?color=blue&cachedrop">
+</a>
+<br/>
+</div>
 
 
 #### ⚠️ (WIP!) This Project is for demo purposes only
