@@ -1,7 +1,7 @@
 import base64
 import json
 import ssl
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from websocket import WebSocket, create_connection
 
@@ -43,18 +43,6 @@ class SQLJob:
 
         # Create WebSocket connection
         socket = create_connection(uri, header=headers, sslopt=ssl_opts)
-
-        # Register message handler
-        def on_message(ws, message):
-            if self._is_tracing_channeldata:
-                print(message)
-            try:
-                response = json.loads(message)
-                print(f"Received message with ID: {response['id']}")
-            except Exception as e:
-                print(f"Error parsing message: {e}")
-
-        socket.on_message = on_message
 
         return socket
 
@@ -98,14 +86,39 @@ class SQLJob:
         return result
 
     def query(
-        self, sql: str, opts: Optional[Dict[str, Any]] = None,
+        self,
+        sql: str,
+        opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
     ):
+        """
+        Create a Query object using provided SQL and options. If opts is None,
+        the default options defined in Query constructor are used. opts can be a
+        dictionary to be converted to QueryOptions, or a QueryOptions object directly.
+
+        Args:
+        sql (str): The SQL query string.
+        opts (Optional[Union[Dict[str, Any], QueryOptions]]): Additional options
+                for the query which can be a dictionary or a QueryOptions object.
+
+        Returns:
+        Query: A configured Query object.
+        """
         from python_wsdb.client.query import Query
 
-        if isinstance(opts, dict):
-            opts = QueryOptions(**opts)
-            return Query(job=self, query=sql, opts=opts)
-        return Query(job=self, query=sql)
+        if opts is not None and not isinstance(opts, (dict, QueryOptions)):
+            raise ValueError("opts must be a dictionary, a QueryOptions object, or None")
+
+        query_options = (
+            opts
+            if isinstance(opts, QueryOptions)
+            else (
+                QueryOptions(**opts)
+                if opts
+                else QueryOptions(isClCommand=False, parameters=None, autoClose=False)
+            )
+        )
+
+        return Query(job=self, query=sql, opts=query_options)
 
     def query_and_run(
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs

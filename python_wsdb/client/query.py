@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
 from python_wsdb.client.sql_job import SQLJob
 from python_wsdb.types import QueryOptions
@@ -15,17 +15,19 @@ class QueryState(Enum):
     ERROR = 4
 
 
+def get_query_options(opts: Optional[Union[Dict[str, Any], QueryOptions]] = None) -> QueryOptions:
+    if isinstance(opts, QueryOptions):
+        return opts
+    elif opts:
+        return QueryOptions(**opts)
+    else:
+        return QueryOptions(isClCommand=False, parameters=None, autoClose=False)
+
+
 class Query(Generic[T]):
     global_query_list: List["Query[Any]"] = []
 
-    def __init__(
-        self,
-        job: SQLJob,
-        query: str,
-        opts: QueryOptions = QueryOptions(
-            isClCommand=False, parameters=None, autoClose=False
-        ),
-    ) -> None:
+    def __init__(self, job: SQLJob, query: str, opts: QueryOptions) -> None:
         self.job = job
         self.is_prepared: bool = True if opts.parameters is not None else False
         self.parameters: Optional[List[str]] = opts.parameters
@@ -44,14 +46,12 @@ class Query(Generic[T]):
             rows_to_fetch = self._rows_to_fetch
         else:
             self._rows_to_fetch = rows_to_fetch
-            
-        # fmt: off
-        match self.state:
-            case QueryState.RUN_MORE_DATA_AVAIL:
-                raise Exception("Statement has already been run")
-            case QueryState.RUN_DONE:
-                raise Exception("Statement has already been fully run")
-        # fmt: on
+
+        # check Query state first
+        if self.state == QueryState.RUN_MORE_DATA_AVAIL:
+            raise Exception("Statement has already been run")
+        elif self.state == QueryState.RUN_DONE:
+            raise Exception("Statement has already been fully run")
 
         query_object: Dict[str, Any] = {}
         if self.is_cl_command:
@@ -84,9 +84,11 @@ class Query(Generic[T]):
             print(query_result)
             self.state = QueryState.ERROR
             error_keys = ["error", "sql_state", "sql_rc"]
-            error_list = {key:query_result[key] for key in error_keys if key in query_result.keys()}
+            error_list = {
+                key: query_result[key] for key in error_keys if key in query_result.keys()
+            }
             if len(error_list) == 0:
-                error_list['error'] = "failed to run query for unknown reason"
+                error_list["error"] = "failed to run query for unknown reason"
 
             raise Exception(error_list)
 
@@ -100,36 +102,31 @@ class Query(Generic[T]):
         else:
             self._rows_to_fetch = rows_to_fetch
 
-        match self.state:
-            case QueryState.NOT_YET_RUN:
-                raise Exception("Statement has not been run")
-            case QueryState.RUN_DONE:
-                raise Exception("Statement has already been fully run")
-            
+        if self.state == QueryState.NOT_YET_RUN:
+            raise Exception("Statement has not been run")
+        elif self.state == QueryState.RUN_DONE:
+            raise Exception("Statement has already been fully run")
+
         query_object = {
-            'id': self.job._get_unique_id('fetchMore'),
-            'cont_id': self._correlation_id,
-            'type': 'sqlmore',
-            'sql': self.sql,
-            'rows': rows_to_fetch
+            "id": self.job._get_unique_id("fetchMore"),
+            "cont_id": self._correlation_id,
+            "type": "sqlmore",
+            "sql": self.sql,
+            "rows": rows_to_fetch,
         }
-        
+
         self._rows_to_fetch = rows_to_fetch
         self.job.send(json.dumps(query_object))
         query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
-        
+
         self.state = (
             QueryState.RUN_DONE
             if query_result.get("is_done", False)
             else QueryState.RUN_MORE_DATA_AVAIL
         )
-        
-        if not query_result['success']:
+
+        if not query_result["success"]:
             self.state = QueryState.ERROR
-            raise Exception(query_result['error'] or "Failed to run Query (unknown error)")
-        
+            raise Exception(query_result["error"] or "Failed to run Query (unknown error)")
+
         return query_result
-        
-        
-        
-        
