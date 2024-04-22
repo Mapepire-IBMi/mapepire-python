@@ -30,16 +30,16 @@ class Query(Generic[T]):
         self.is_prepared: bool = True if opts.parameters is not None else False
         self.parameters: Optional[List[str]] = opts.parameters
         self.sql: str = query
-        self.is_cl_command: bool | None = opts.isClCommand
-        self.should_auto_close: bool | None = opts.autoClose
-        self.is_terse_results: bool | None = opts.isTerseResults
+        self.is_cl_command: Optional[bool] = opts.isClCommand
+        self.should_auto_close: Optional[bool] = opts.autoClose
+        self.is_terse_results: Optional[bool] = opts.isTerseResults
 
         self._rows_to_fetch: int = 100
         self.state: QueryState = QueryState.NOT_YET_RUN
 
         Query.global_query_list.append(self)
 
-    def run(self, rows_to_fetch: int | Any = None) -> Dict[str, Any]:
+    def run(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:
@@ -94,7 +94,7 @@ class Query(Generic[T]):
 
         return query_result
 
-    def fetch_more(self, rows_to_fetch: int | Any = None) -> Dict[str, Any]:
+    def fetch_more(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:

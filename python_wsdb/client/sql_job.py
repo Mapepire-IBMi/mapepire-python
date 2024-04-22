@@ -33,7 +33,6 @@ class SQLJob:
 
         # Prepare SSL context if necessary
         ssl_opts: Dict[str, Any] = {}
-
         if db2_server.ignoreUnauthorized:
             ssl_opts["cert_reqs"] = ssl.CERT_NONE
         if db2_server.ca:
@@ -110,7 +109,7 @@ class SQLJob:
 
     def query_and_run(
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
-    ):
+    ) -> Dict[str, Any]:
         query = self.query(sql, opts)
         return query.run(**kwargs)
 
