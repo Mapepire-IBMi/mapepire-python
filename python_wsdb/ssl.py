@@ -1,10 +1,11 @@
 import socket
 import ssl
+from typing import Optional
 
 from python_wsdb.types import DaemonServer
 
 
-def get_certificate(creds: DaemonServer) -> (bytes | None):
+def get_certificate(creds: DaemonServer) -> Optional[bytes]:
     context = ssl.create_default_context()
     context.check_hostname = False
     context.verify_mode = ssl.CERT_NONE

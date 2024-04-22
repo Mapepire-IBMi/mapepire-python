@@ -4,6 +4,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
 on:
   pull_request:
     branches:
@@ -139,6 +144,8 @@ jobs:
 
       - name: Publish GitHub release
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN}}
         with:
           body_path: ${{ github.workspace }}-RELEASE_NOTES.md
           prerelease: ${{ contains(env.TAG, 'rc') }}
