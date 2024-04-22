@@ -6,8 +6,6 @@ repos:
     rev: v0.4.1
     hooks:
       - id: ruff
-        args: [ --fix ]
-      - id: ruff-format
         types: [python]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
@@ -22,6 +20,7 @@ repos:
     rev: 24.4.0
     hooks:
       - id: black
+        args: [--check]
         types: [python]
 
   - repo: local
