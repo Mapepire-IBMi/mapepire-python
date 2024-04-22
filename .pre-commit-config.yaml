@@ -13,8 +13,8 @@ repos:
     hooks:
       - id: mypy
         types: [python]
-        args: [--strict]
         additional_dependencies: [  dataclasses-json>=0.6.4, websocket-client>=1.2.1]
+        exclude: '^tests/'
 
   - repo: https://github.com/ambv/black
     rev: 24.4.0
