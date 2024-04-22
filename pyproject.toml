@@ -49,7 +49,8 @@ dev = [
     "sphinx-copybutton==0.5.2",
     "sphinx-autobuild==2021.3.14",
     "sphinx-autodoc-typehints==1.23.3",
-    "packaging"
+    "packaging",
+    "pre-commit"
 ]
 
 [tool.setuptools.packages.find]
@@ -106,6 +107,7 @@ target-version = "py39"
 ignore_missing_imports = true
 no_site_packages = true
 check_untyped_defs = true
+exclude="(tests/)"
 
 [[tool.mypy.overrides]]
 module = "tests.*"

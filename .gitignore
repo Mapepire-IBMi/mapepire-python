@@ -32,6 +32,7 @@ doc/_build/
 .DS_Store
 *.pem
 local_test/
+local_test.py
 
 # python
 

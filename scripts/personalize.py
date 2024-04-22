@@ -72,7 +72,10 @@ BASE_URL_TO_REPLACE = "https://github.com/allenai/python-package-template"
     default=False,
 )
 @click.option(
-    "--dry-run", is_flag=True, hidden=True, default=False,
+    "--dry-run",
+    is_flag=True,
+    hidden=True,
+    default=False,
 )
 def main(
     github_org: str, github_repo: str, package_name: str, yes: bool = False, dry_run: bool = False
