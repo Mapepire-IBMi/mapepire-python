@@ -33,6 +33,7 @@ doc/_build/
 *.pem
 local_test/
 local_test.py
+_*
 
 # python
 
