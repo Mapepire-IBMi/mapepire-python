@@ -12,6 +12,13 @@
 <br/>
 </div>
 
+- [Overview](#overview)
+- [Setup](#setup)
+  - [Install with `pip`](#install-with-pip)
+  - [Server Component Setup (Forthcoming)](#server-component-setup-forthcoming)
+- [Example usage](#example-usage)
+
+
 
 #### ⚠️ (WIP!) This Project is for demo purposes only
 
@@ -179,6 +186,186 @@ Here is the output from the script above:
 }
 
 ```
+
+# Development Setup
+
+This guide provides instructions for setting up a Python virtual environment using either `venv` or `conda`.
+
+## Setup python virtual environment with pip and venv
+
+- Create and activate virtual environment
+- Prepare pip
+- Install packages from `requirements-dev.txt`
+
+### Create a new virtual environment
+
+**Note**: This applies to supported versions of Python 3.8 and higher
+
+navigate to the project's directory and run the following command. This will create a new virtual environment in a local folder named `.venv`
+
+```bash
+cd mapepire-python/
+```
+
+#### Unix/macOS
+
+```bash
+python3 -m venv .venv
+```
+
+#### Windows
+
+```bash
+py -m venv .venv
+```
+
+The second argument is the location of the virtual environment, which will create a the virtual environment in the mapepire-python project root directory: `mapepire-python/.venv`
+
+### Activate the virtual environment:
+
+before installing the project dependencies, `activate` the virtual environment to put the environment-specific `python` and `pip` executables into your shell's `PATH`
+
+#### Unix.macOS
+
+```bash
+source .venv/bin/activate
+```
+
+#### Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+Confirm the virtual environment is activated, check the location of the Python interpreter:
+
+#### Unix/macOS
+
+```bash 
+which python
+```
+
+#### Windows
+
+```bash 
+where python
+```
+Expected output should be:
+
+```bash
+.venv/bin/python     # Unix/macOS
+.venv\Scripts\python # Windows
+```
+
+To deactivate the virtual environment, run:
+
+```bash
+deactivate
+```
+
+from the `mapepire-python` project directory
+
+### Prepare pip
+
+Make sure pip is up to date:
+
+#### Unix/macOS
+
+```bash
+python3 -m pip install --upgrade pip
+python3 -m pip --version
+```
+
+#### Windows
+
+```bash
+py -m pip install --upgrade pip
+py -m pip --version
+```
+
+### Install Dependencies using `requirements-dev.txt`
+
+Run the following to install the project dependencies:
+
+#### Unix/macOS
+
+```bash
+python3 -m pip install -r requirements-dev.txt
+```
+
+#### Windows
+
+```bash
+py -m pip install -r requirements-dev.txt
+```
+
+
+## Setup Python virtual environment with Conda
+
+First, install Conda if you haven't already by following the instructions in this [guide](https://conda.io/projects/conda/en/latest/user-guide/install/index.html). There are installers for macOS/Windows and Linux. I recommend the following installers for this project:
+
+- [Miniconda](https://docs.anaconda.com/miniconda/)
+  - Miniconda is a minimal installer provided by Anaconda.
+- [Anaconda](https://www.anaconda.com/download)
+  - Anaconda Distribution is a full featured installer that comes with a suite of packages for data science, as well as Anaconda Navigator, a GUI application for working with conda environments.
+  
+### Create an environment from an environment-dev.yml file
+
+In a terminal, navigate to the `mapepire-python` project directory and run the following command:
+
+```bash 
+cd mapepire-python/
+
+conda env create -f environment-dev.yml
+```
+The `conda env create` command will create a python environment called `mapepire-dev`.
+
+#### 1. Activate the new environment: 
+```bash
+conda activate mapepire-dev
+```
+
+#### 2. Verify the new environment was installed:
+
+```bash
+conda env list
+```
+You can also use conda info --envs.
+
+To deactivate, call:
+
+```bash
+conda deactivate
+```
+## Run local test suite
+
+First, create a `pytest.ini` file in the `tests` directory. 
+
+`tests/pytest.ini`
+
+```ini
+[pytest]
+env =
+    VITE_SERVER=p114ibmi01.pbm.ihost.com
+    VITE_DB_USER=user
+    VITE_DB_PASS=user1
+```
+
+Run the test suite from the `mapepire-python` directory:
+
+```bash
+# activate python development environment first
+
+pytest tests/
+```
+
+
+
+
+
+
+
+
 
 
 

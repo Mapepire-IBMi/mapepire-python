@@ -1,0 +1,5 @@
+[pytest]
+env =
+    VITE_SERVER=X
+    VITE_DB_USER=X
+    VITE_DB_PASS=X
