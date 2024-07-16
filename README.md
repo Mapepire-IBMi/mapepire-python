@@ -17,6 +17,20 @@
   - [Install with `pip`](#install-with-pip)
   - [Server Component Setup (Forthcoming)](#server-component-setup-forthcoming)
 - [Example usage](#example-usage)
+- [Development Setup](#development-setup)
+  - [Setup python virtual environment with pip and venv](#setup-python-virtual-environment-with-pip-and-venv)
+    - [Create a new virtual environment](#create-a-new-virtual-environment)
+      - [Unix/macOS](#unixmacos)
+      - [Windows](#windows)
+    - [Activate the virtual environment:](#activate-the-virtual-environment)
+    - [Prepare pip](#prepare-pip)
+    - [Install Dependencies using `requirements-dev.txt`](#install-dependencies-using-requirements-devtxt)
+  - [Setup Python virtual environment with Conda](#setup-python-virtual-environment-with-conda)
+    - [Create an environment from an environment-dev.yml file](#create-an-environment-from-an-environment-devyml-file)
+      - [1. Activate the new environment:](#1-activate-the-new-environment)
+      - [2. Verify the new environment was installed:](#2-verify-the-new-environment-was-installed)
+- [Run local test suite](#run-local-test-suite)
+
 
 
 
