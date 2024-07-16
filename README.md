@@ -360,9 +360,9 @@ First, create a `pytest.ini` file in the `tests` directory.
 ```ini
 [pytest]
 env =
-    VITE_SERVER=p114ibmi01.pbm.ihost.com
-    VITE_DB_USER=user
-    VITE_DB_PASS=user1
+    VITE_SERVER=IBMI_SERVER
+    VITE_DB_USER=USER
+    VITE_DB_PASS=PASS
 ```
 
 Run the test suite from the `mapepire-python` directory:
