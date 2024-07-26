@@ -38,6 +38,7 @@ jobs:
          echo "VITE_DB_USER=${{vars.VITE_DB_USER}}" >> pytest.ini
          cat pytest.ini
          echo "VITE_DB_PASS=${{secrets.VITE_DB_PASS}}" >> pytest.ini
+         cp pytest.ini ../.env
       - name: Run tests
         run: |
           pytest tests/
