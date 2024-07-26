@@ -18,6 +18,10 @@ jobs:
       - name: Checkout this repository
         uses: actions/checkout@v3
 
+      - name: Debugging
+        run: 
+          ls ./
+
       - name: Set up Python and virtual environment
         uses: ./.github/actions/setup-venv/action.yml
         with:
