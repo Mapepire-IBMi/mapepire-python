@@ -1,0 +1,32 @@
+name: PR Pytest Tests
+
+on:
+  push:
+    branches:
+      - setup-env
+  pull_request:
+    branches:
+      - setup-env
+    types: opened
+
+jobs:
+  test:
+    name: Run Pytest
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v2
+
+      - name: Set up Python and virtual environment
+        uses: ./.github/actions/setup-venv/action.yml
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+      - name: Run tests
+        run: |
+          pytest tests/
