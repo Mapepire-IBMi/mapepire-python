@@ -34,3 +34,7 @@ jobs:
       - name: Run tests
         run: |
           pytest tests/
+        env:
+          VITE_SERVER: ${{ secrets.VITE_SERVER }}
+          VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
+          VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
