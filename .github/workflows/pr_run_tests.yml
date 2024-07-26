@@ -14,6 +14,8 @@ jobs:
     name: Run Pytest
     runs-on: ubuntu-latest
 
+    environment: OSSBUILD
+
     steps:
       - name: Checkout this repository
         uses: actions/checkout@v3
@@ -29,14 +31,6 @@ jobs:
           python -m pip install --upgrade pip
           python3 -m pip install -r requirements-dev.txt
 
-      - name: Setup Test Files
-        run: |
-         cd tests/
-         echo "[pytest]" > pytest.ini
-         echo "env = " >> pytest.ini
-         echo "    VITE_SERVER=${{vars.VITE_SERVER}}" >> pytest.ini
-         echo "    VITE_DB_USER=${{vars.VITE_DB_USER}}" >> pytest.ini
-         echo "    VITE_DB_PASS=${{secrets.VITE_DB_PASS}}" >> pytest.ini
       - name: Run tests
         run: |
           pytest tests/
