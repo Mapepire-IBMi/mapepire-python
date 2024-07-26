@@ -1,13 +1,7 @@
 name: PR Pytest Tests
 
 on:
-  push:
-    branches:
-      - setup-env
-  pull_request:
-    branches:
-      - setup-env
-    types: opened
+  workflow_dispatch:
 
 jobs:
   test:
