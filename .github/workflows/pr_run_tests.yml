@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout codebase
-        uses: actions/checkout@v2
+      - name: Checkout this repository
+        uses: actions/checkout@v3
 
       - name: Set up Python and virtual environment
         uses: ./.github/actions/setup-venv/action.yml
