@@ -34,9 +34,9 @@ jobs:
          cd tests/
          echo "[pytest]" > pytest.ini
          echo "env = " >> pytest.ini
-         echo "VITE_SERVER=${{vars.VITE_SERVER}}" >> pytest.ini
-         echo "VITE_DB_USER=${{vars.VITE_DB_USER}}" >> pytest.ini
-         echo "VITE_DB_PASS=${{secrets.VITE_DB_PASS}}" >> pytest.ini
+         echo "    VITE_SERVER=${{vars.VITE_SERVER}}" >> pytest.ini
+         echo "    VITE_DB_USER=${{vars.VITE_DB_USER}}" >> pytest.ini
+         echo "    VITE_DB_PASS=${{secrets.VITE_DB_PASS}}" >> pytest.ini
       - name: Run tests
         run: |
           pytest tests/
