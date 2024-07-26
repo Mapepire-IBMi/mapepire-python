@@ -21,6 +21,7 @@ jobs:
       - name: Debugging
         run: 
           ls ./
+          ls ./.github/actions/setup-venv/
 
       - name: Set up Python and virtual environment
         uses: ./.github/actions/setup-venv/action.yml
