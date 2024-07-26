@@ -18,15 +18,11 @@ jobs:
       - name: Checkout this repository
         uses: actions/checkout@v3
 
-      - name: Debugging
-        run: 
-          ls ./
-          ls ./.github/actions/setup-venv/
-
       - name: Set up Python and virtual environment
         uses: ./.github/actions/setup-venv/action.yml
         with:
           python-version: "3.11"
+        
 
       - name: Install dependencies
         run: |
