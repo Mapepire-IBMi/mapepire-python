@@ -12,6 +12,7 @@ creds = DaemonServer(
 
 def test_simple():
     job = SQLJob()
+    print(creds)
     _ = job.connect(creds)
     query = job.query("select * from sample.employee")
     result = query.run(rows_to_fetch=5)
