@@ -3,3 +3,7 @@ websocket-client>=1.2.1
 pytest
 python-dotenv
 pytest-env
+isort
+black
+ruff
+mypy
