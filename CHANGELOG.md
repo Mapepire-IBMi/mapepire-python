@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v0.1.3] - 2025-08-02
+Add workflow to run test suite on PR's
+Update requirements-dev.txt to include isort, black, ruff, mypy
+
 ## [v0.1.2](https://github.com/ajshedivy/python-wsdb/releases/tag/v0.1.2) - 2024-04-22
 
 ## [v0.1.1](https://github.com/ajshedivy/python-wsdb/releases/tag/v0.1.1) - 2024-04-19
