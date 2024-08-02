@@ -1,14 +1,16 @@
-from python_wsdb.client.sql_job import SQLJob
-from python_wsdb.types import DaemonServer
 import os
 
+from python_wsdb.client.sql_job import SQLJob
+from python_wsdb.types import DaemonServer
+
 creds = DaemonServer(
-    host=os.getenv('VITE_SERVER'),
+    host=os.getenv("VITE_SERVER"),
     port=8085,
-    user=os.getenv('VITE_DB_USER'),
-    password=os.getenv('VITE_DB_PASS'),
+    user=os.getenv("VITE_DB_USER"),
+    password=os.getenv("VITE_DB_PASS"),
     ignoreUnauthorized=True,
 )
+
 
 def test_simple():
     job = SQLJob()
