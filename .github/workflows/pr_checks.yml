@@ -5,6 +5,11 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'python_wsdb/**'
   pull_request:
     branches:
       - main
@@ -32,7 +37,7 @@ jobs:
     name: Run Pytest
     runs-on: ubuntu-latest
     environment: OSSBUILD
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
 
     steps:
       - name: Checkout this repository
