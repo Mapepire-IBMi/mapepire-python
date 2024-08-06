@@ -5,16 +5,14 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'python_wsdb/**'
   pull_request:
     branches:
       - main
-    paths:
-      - 'python_wsdb/**'
+  push:
+    branches:
+      - main
+    tags:
+      - "v*.*.*"
 
 jobs:
   changelog:
