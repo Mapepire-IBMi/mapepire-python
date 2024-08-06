@@ -23,6 +23,9 @@ env:
   # Change this to invalidate existing cache.
   CACHE_PREFIX: v0
   PYTHONPATH: ./
+  VITE_SERVER: ${{ secrets.VITE_SERVER }}
+  VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
+  VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
 
 jobs:
   checks:
@@ -89,10 +92,6 @@ jobs:
         run: |
           . .venv/bin/activate
           ${{ matrix.task.run }}
-        env:
-          VITE_SERVER: ${{ secrets.VITE_SERVER }}
-          VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
-          VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
 
       - name: Upload package distribution files
         if: matrix.task.name == 'Build'
