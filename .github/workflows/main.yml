@@ -96,11 +96,15 @@ jobs:
           VITE_SERVER: ${{ secrets.VITE_SERVER }}
           VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
           VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
-          
+
       - name: ${{ matrix.task.name }}
         run: |
           . .venv/bin/activate
           ${{ matrix.task.run }}
+        env:
+          VITE_SERVER: ${{ secrets.VITE_SERVER }}
+          VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
+          VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
 
       - name: Upload package distribution files
         if: matrix.task.name == 'Build'
