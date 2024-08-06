@@ -27,7 +27,8 @@ env:
 jobs:
   checks:
     name: Python ${{ matrix.python }} - ${{ matrix.task.name }}
-    runs-on: [ubuntu-latest]
+    runs-on: [ubuntu-latest],
+    environment: OSSBUILD,
     timeout-minutes: 15
     strategy:
       fail-fast: false
