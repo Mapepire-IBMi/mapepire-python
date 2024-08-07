@@ -8,6 +8,10 @@ dependencies:
   - pip
   - python-dotenv
   - pytest-env
+  - isort
+  - black
+  - ruff
+  - mypy
   - pip:
     - dataclasses-json>=0.6.4
     - websocket-client>=1.2.1
