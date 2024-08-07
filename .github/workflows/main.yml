@@ -13,19 +13,11 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
-    tags:
-      - "v*.*.*"
 
 env:
   # Change this to invalidate existing cache.
   CACHE_PREFIX: v0
   PYTHONPATH: ./
-  VITE_SERVER: ${{ secrets.VITE_SERVER }}
-  VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
-  VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
 
 jobs:
   checks:
@@ -87,15 +79,6 @@ jobs:
           restore-keys: |
             mypy-${{ env.CACHE_PREFIX }}-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('*requirements.txt') }}-${{ github.ref }}
             mypy-${{ env.CACHE_PREFIX }}-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('*requirements.txt') }}
-      - name: Debug secrets
-        run: |
-          echo "VITE_SERVER=${{ secrets.VITE_SERVER }}"
-          echo "VITE_DB_USER=${{ secrets.VITE_DB_USER }}"
-          echo "VITE_DB_PASS=${{ secrets.VITE_DB_PASS }}"
-        env:
-          VITE_SERVER: ${{ secrets.VITE_SERVER }}
-          VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
-          VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
 
       - name: ${{ matrix.task.name }}
         run: |
