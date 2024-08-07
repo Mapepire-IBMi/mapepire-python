@@ -1,5 +1,6 @@
 import os
 import re
+
 from python_wsdb.client.sql_job import SQLJob
 from python_wsdb.types import DaemonServer
 
@@ -20,12 +21,14 @@ creds = DaemonServer(
     ignoreUnauthorized=True,
 )
 
+
 def parse_sql_rc(message):
     match = re.search(r"'sql_rc': (-?\d+)", message)
     if match:
         return int(match.group(1))
     else:
         return None
+
 
 def test_simple():
     job = SQLJob()
@@ -34,6 +37,7 @@ def test_simple():
     result = query.run(rows_to_fetch=5)
     assert result["success"]
     job.close()
+
 
 def test_query_and_run():
     job = SQLJob()
