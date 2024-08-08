@@ -2,8 +2,8 @@ import json
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
 
-from python_wsdb.client.sql_job import SQLJob
-from python_wsdb.types import QueryOptions
+from mapepire_python.client.sql_job import SQLJob
+from mapepire_python.types import QueryOptions
 
 T = TypeVar("T")
 

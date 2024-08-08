@@ -1,8 +1,8 @@
 import os
 import re
 
-from python_wsdb.client.sql_job import SQLJob
-from python_wsdb.types import DaemonServer
+from mapepire_python.client.sql_job import SQLJob
+from mapepire_python.types import DaemonServer
 
 # Fetch environment variables
 server = os.getenv("VITE_SERVER")
