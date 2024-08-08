@@ -10,6 +10,7 @@ Changes proposed in this pull request:
 ## Before submitting
 
 <!-- Please complete this checklist BEFORE submitting your PR to speed along the review process. -->
+- [ ] Change the base branch to `dev` if it is not already.
 - [ ] I've read and followed all steps in the [Making a pull request](https://github.com/ajshedivy/python-wsdb/blob/main/.github/CONTRIBUTING.md#making-a-pull-request)
     section of the `CONTRIBUTING` docs.
 - [ ] I've updated or added any relevant docstrings following the syntax described in the
