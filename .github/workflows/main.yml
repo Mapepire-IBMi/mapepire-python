@@ -12,7 +12,13 @@ permissions:
 on:
   pull_request:
     branches:
+      - "*"
+  push:
+    branches:
       - main
+      - dev
+    tags:
+      - "v*.*.*"
 
 env:
   # Change this to invalidate existing cache.
@@ -70,6 +76,19 @@ jobs:
           python-version: ${{ matrix.python }}
           cache-prefix: ${{ env.CACHE_PREFIX }}
 
+      - name: Check if PR is from a fork
+        id: check_fork
+        run: |
+          echo "is_fork=${{ github.event.pull_request.head.repo.fork }}" >> $GITHUB_ENV
+
+      - name: check if PR is from a fork
+        if: env.is_fork == 'true'
+        run: echo "This PR is from a fork. skipping pyest."
+
+      - name: Skip if not from fork
+        if: env.is_fork != 'true'
+        run: echo "This PR is not from a fork. Running pytest."
+
       - name: Restore mypy cache
         if: matrix.task.name == 'Type check'
         uses: actions/cache@v3
@@ -80,7 +99,8 @@ jobs:
             mypy-${{ env.CACHE_PREFIX }}-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('*requirements.txt') }}-${{ github.ref }}
             mypy-${{ env.CACHE_PREFIX }}-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('*requirements.txt') }}
 
-      - name: ${{ matrix.task.name }}
+      - name: Run Python tests
+        if: env.is_fork != 'true' && matrix.task.name == 'Test'
         run: |
           . .venv/bin/activate
           ${{ matrix.task.run }}
@@ -88,6 +108,12 @@ jobs:
           VITE_SERVER: ${{ secrets.VITE_SERVER }}
           VITE_DB_USER: ${{ secrets.VITE_DB_USER }}
           VITE_DB_PASS: ${{ secrets.VITE_DB_PASS }}
+
+      - name: ${{ matrix.task.name }}
+        if: matrix.task.name != 'Test'
+        run: |
+          . .venv/bin/activate
+          ${{ matrix.task.run }}
 
       - name: Upload package distribution files
         if: matrix.task.name == 'Build'
