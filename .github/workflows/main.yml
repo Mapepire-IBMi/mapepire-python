@@ -76,6 +76,19 @@ jobs:
           python-version: ${{ matrix.python }}
           cache-prefix: ${{ env.CACHE_PREFIX }}
 
+      - name: Check if PR is from a fork
+        id: check_fork
+        run: |
+          echo "is_fork=${{ github.event.pull_request.head.repo.fork }}" >> $GITHUB_ENV
+
+      - name: Run only if from fork
+        if: env.is_fork == 'true'
+        run: echo "This PR is from a fork. Running specific actions."
+
+      - name: Skip if not from fork
+        if: env.is_fork != 'true'
+        run: echo "This PR is not from a fork. Skipping specific actions."
+
       - name: Restore mypy cache
         if: matrix.task.name == 'Type check'
         uses: actions/cache@v3
