@@ -12,7 +12,13 @@ permissions:
 on:
   pull_request:
     branches:
+      - "*"
+  push:
+    branches:
       - main
+      - dev
+    tags:
+      - "v*.*.*"
 
 env:
   # Change this to invalidate existing cache.
