@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 # See https://setuptools.pypa.io/en/latest/userguide/quickstart.html for more project configuration options.
-name = "python-wsdb"
+name = "mapepire-python"
 dynamic = ["version"]
 readme = "README.md"
 classifiers = [
@@ -25,9 +25,9 @@ dependencies = [
 license = {file = "LICENSE"}
 
 [project.urls]
-Homepage = "https://github.com/ajshedivy/python-wsdb"
-Repository = "https://github.com/ajshedivy/python-wsdb"
-Changelog = "https://github.com/ajshedivy/python-wsdb/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/Mapepire-IBMi/mapepire-python"
+Repository = "https://github.com/Mapepire-IBMi/mapepire-python  "
+Changelog = "https://github.com/Mapepire-IBMi/mapepire-python/blob/main/CHANGELOG.md"
 # Documentation = "https://python-wsdb.readthedocs.io/"
 
 [project.optional-dependencies]

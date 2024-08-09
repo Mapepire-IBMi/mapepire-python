@@ -1,4 +1,4 @@
-# **python-wsdb**
+# **mapepire-python**
 
 ```{toctree}
 :maxdepth: 2
@@ -15,8 +15,8 @@ overview
 
 CHANGELOG
 CONTRIBUTING
-License <https://raw.githubusercontent.com/allenai/python-wsdb/main/LICENSE>
-GitHub Repository <https://github.com/ajshedivy/python-wsdb>
+License <https://raw.githubusercontent.com/Mapepire-IBMi/mapepire-python/main/LICENSE>
+GitHub Repository <https://github.com/Mapepire-IBMi/mapepire-python>
 ```
 
 ## Indices and tables

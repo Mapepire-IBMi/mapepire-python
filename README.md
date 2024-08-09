@@ -1,12 +1,12 @@
-# python-wsdb
+# mapepire-python
 <div align="center">
-<a href="https://github.com/ajshedivy/python-wsdb/actions">
-    <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/ajshedivy/python-wsdb/main.yml">
+<a href="https://github.com/Mapepire-IBMi/mapepire-python/actions">
+    <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Mapepire-IBMi/mapepire-python/main.yml">
 </a>
 <a href="https://pypi.org/project/python-wsdb/">
     <img alt="PyPI" src="https://img.shields.io/pypi/v/python-wsdb">
 </a>
-<a href="https://github.com/ajshedivy/python-wsdb/blob/main/LICENSE">
+<a href="https://github.com/Mapepire-IBMi/mapepire-python/blob/main/LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/allenai/tango.svg?color=blue&cachedrop">
 </a>
 <br/>
@@ -40,15 +40,15 @@
 
 ![alt text](images/image-1.png)
 
-`python-wsdb` is a Python client implementation that leverages the [CodeFori Server Component](https://github.com/ThePrez/CodeForIBMiServer). 
+`mapepire-python` is a Python client implementation that leverages the [CodeFori Server Component](https://github.com/ThePrez/CodeForIBMiServer). 
 
 ## Setup
 
-`python-wsdb` requires Python 3.9 or later.
+`mapepire-python` requires Python 3.9 or later.
 
 ### Install with `pip`
 
-`python-wsdb` is available on [PyPi](https://pypi.org/project/python-wsdb/). Just Run
+`mapepire-python` is available on [PyPi](https://pypi.org/project/python-wsdb/). Just Run
 
 ```bash
 pip install python-wsdb
