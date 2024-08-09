@@ -17,7 +17,7 @@ body:
 
       ```python
       # All necessary imports at the beginning
-      import python_wsdb
+      import mapepire_python
 
       # A succinct reproducing example trimmed down to the essential parts:
       assert False is True, "Oh no!"

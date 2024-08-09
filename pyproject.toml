@@ -67,10 +67,10 @@ exclude = [
 include-package-data = true
 
 [tool.setuptools.package-data]
-python_wsdb = ["py.typed"]
+mapepire_python = ["py.typed"]
 
 [tool.setuptools.dynamic]
-version = {attr = "python_wsdb.version.VERSION"}
+version = {attr = "mapepire_python.version.VERSION"}
 
 [tool.black]
 line-length = 100

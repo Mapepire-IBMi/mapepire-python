@@ -61,8 +61,8 @@ pip install python-wsdb
 The following script sets up a `DaemonServer` object that will be used to connect with the Server Component. Then a single `SQLJob` is created to facilitate the connection from the client side. 
 
 ```python
-from python_wsdb.client.sql_job import SQLJob
-from python_wsdb.types import DaemonServer
+from mapepire_python.client.sql_job import SQLJob
+from mapepire_python.types import DaemonServer
 
 creds = DaemonServer(
     host="localhost",
