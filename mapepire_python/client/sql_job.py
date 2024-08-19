@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 
 from websocket import WebSocket, create_connection
 
-from python_wsdb.types import DaemonServer, JobStatus, QueryOptions
+from ..types import DaemonServer, JobStatus, QueryOptions
 
 
 class SQLJob:
@@ -103,7 +103,7 @@ class SQLJob:
         Returns:
         Query: A configured Query object.
         """
-        from python_wsdb.client.query import Query
+        from .query import Query
 
         if opts is not None and not isinstance(opts, (dict, QueryOptions)):
             raise ValueError("opts must be a dictionary, a QueryOptions object, or None")

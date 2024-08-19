@@ -1,7 +1,7 @@
 .PHONY : docs
 docs :
 	rm -rf docs/build/
-	sphinx-autobuild -b html --watch python_wsdb/ docs/source/ docs/build/
+	sphinx-autobuild -b html --watch mapepire_python/ docs/source/ docs/build/
 
 .PHONY : run-checks
 run-checks :
@@ -9,7 +9,7 @@ run-checks :
 	black --check .
 	ruff check .
 	mypy .
-	CUDA_VISIBLE_DEVICES='' pytest -v --color=yes --doctest-modules tests/ python_wsdb/
+	CUDA_VISIBLE_DEVICES='' pytest -v --color=yes --doctest-modules tests/ mapepire_python/
 
 .PHONY : build
 build :

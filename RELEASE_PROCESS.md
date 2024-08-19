@@ -2,7 +2,7 @@
 
 ## Steps
 
-1. Update the version in `python_wsdb/version.py`.
+1. Update the version in `mapepire_python/version.py`.
 
 3. Run the release script:
 
