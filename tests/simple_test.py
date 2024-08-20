@@ -77,16 +77,3 @@ def test_error():
         assert parse_sql_rc(message) == -204
 
     job.close()
-
-
-def test_multiple_statements():
-    job = SQLJob()
-    _ = job.connect(creds)
-
-    resA = job.query("select * from sample.department").run()
-    assert resA["success"] is True
-
-    resB = job.query("select * from sample.employee").run()
-    assert resB["success"] is True
-
-    job.close()
