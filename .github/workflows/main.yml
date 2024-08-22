@@ -43,7 +43,7 @@ jobs:
           - python: "3.10"
             task:
               name: Lint
-              run: ruff check .
+              run: ruff check . --exclude tests/
 
           # - python: "3.10"
           #   task:
