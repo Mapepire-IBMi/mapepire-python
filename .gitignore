@@ -47,8 +47,11 @@ __pycache__
 .coverage
 .pytest_cache/
 .benchmarks
+*.env
+*.ini
 
 # documentation build artifacts
 
 docs/build
 site/
+

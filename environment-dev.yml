@@ -1,0 +1,17 @@
+name: mapepire-dev
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python>=3.8
+  - pytest
+  - pip
+  - python-dotenv
+  - pytest-env
+  - isort
+  - black
+  - ruff
+  - mypy
+  - pip:
+    - dataclasses-json>=0.6.4
+    - websocket-client>=1.2.1

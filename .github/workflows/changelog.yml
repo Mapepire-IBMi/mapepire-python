@@ -1,4 +1,4 @@
-name: PR Checks
+name: ChangeLog
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -8,8 +8,7 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'python_wsdb/**'
+      - dev
 
 jobs:
   changelog:
@@ -27,3 +26,4 @@ jobs:
         # If this step fails, this means you haven't updated the CHANGELOG.md
         # file with notes on your contribution.
         git diff --name-only $(git merge-base origin/main HEAD) | grep '^CHANGELOG.md$' && echo "Thanks for helping keep our CHANGELOG up-to-date!"
+  

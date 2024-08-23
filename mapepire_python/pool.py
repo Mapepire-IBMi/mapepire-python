@@ -2,8 +2,8 @@
 # from typing import List, Optional
 
 
-# from python_wsdb.client.sql_job import SQLJob
-# from python_wsdb.types import *
+# from mapepire_python.client.sql_job import SQLJob
+# from mapepire_python.types import *
 
 
 # @dataclass
