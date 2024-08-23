@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from python_wsdb.version import VERSION
+from mapepire_python.version import VERSION
 
 
 def main():
@@ -31,7 +31,7 @@ def main():
     lines.insert(insert_index, "\n")
     lines.insert(
         insert_index + 1,
-        f"## [v{VERSION}](https://github.com/ajshedivy/python-wsdb/releases/tag/v{VERSION}) - "
+        f"## [v{VERSION}](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v{VERSION}) - "
         f"{datetime.now().strftime('%Y-%m-%d')}\n",
     )
 
