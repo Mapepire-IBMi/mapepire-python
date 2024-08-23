@@ -3,8 +3,8 @@
 <a href="https://github.com/Mapepire-IBMi/mapepire-python/actions">
     <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Mapepire-IBMi/mapepire-python/main.yml">
 </a>
-<a href="https://pypi.org/project/python-wsdb/">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/python-wsdb">
+<a href="https://pypi.org/project/mapepire-python/">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/mapepire-python">
 </a>
 <a href="https://github.com/Mapepire-IBMi/mapepire-python/blob/main/LICENSE">
     <img alt="License" src="https://img.shields.io/github/license/allenai/tango.svg?color=blue&cachedrop">
@@ -33,14 +33,14 @@
 
 
 
-
-#### ⚠️ (WIP!) This Project is for demo purposes only
-
 ## Overview
 
-![alt text](images/image-1.png)
+<img src="images/mapepire-logo.png" alt="logo" width="200"/>
 
-`mapepire-python` is a Python client implementation that leverages the [CodeFori Server Component](https://github.com/ThePrez/CodeForIBMiServer). 
+---
+
+
+`mapepire-python` is a Python client implementation for [Mapepire](https://github.com/Mapepire-IBMi) that provides a simple interface for connecting to an IBM i server and running SQL queries. The client is designed to work with the [Mapepire Server Component](https://github.com/Mapepire-IBMi/mapepire-server)
 
 ## Setup
 
@@ -48,13 +48,14 @@
 
 ### Install with `pip`
 
-`mapepire-python` is available on [PyPi](https://pypi.org/project/python-wsdb/). Just Run
+`mapepire-python` is available on [PyPi](https://pypi.org/project/mapepire-python/). Just Run
 
 ```bash
-pip install python-wsdb
+pip install mapepire-python
 ```
 
-### Server Component Setup (Forthcoming)
+### Server Component Setup
+To use mapire-python, you will need to have the Mapepire Server Component running on your IBM i server. Follow these instructions to set up the server component: [Mapepire Server Installation](https://mapepire-ibmi.github.io/guides/sysadmin/)
 
 ## Example usage
 
