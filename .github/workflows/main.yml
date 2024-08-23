@@ -126,7 +126,7 @@ jobs:
         if: always()
         run: |
           . .venv/bin/activate
-          pip uninstall -y python-wsdb
+          pip uninstall -y mapepire-python
 
   release:
     name: Release
