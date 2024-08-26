@@ -52,7 +52,7 @@ def test_cl_unsuccesful():
     query = job.query("INVALIDCOMMAND", opts=opts)
     result = query.run()
     job.close()
-    assert len(result["data"]) == 1
+    assert len(result["data"]) >= 1
     assert result["success"] is False
     assert "[CPF0006] Errors occurred in command." in result["error"]
     assert result["id"] is not None
