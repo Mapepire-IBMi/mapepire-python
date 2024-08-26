@@ -23,7 +23,6 @@ class SQLJob:
     def __enter__(self):
         if self.creds:
             self.connect(self.creds)
-            return self
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
