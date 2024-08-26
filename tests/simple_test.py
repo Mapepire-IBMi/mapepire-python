@@ -8,6 +8,7 @@ from mapepire_python.types import DaemonServer
 server = os.getenv("VITE_SERVER")
 user = os.getenv("VITE_DB_USER")
 password = os.getenv("VITE_DB_PASS")
+port = os.getenv("VITE_DB_PORT")
 
 # Check if environment variables are set
 if not server or not user or not password:
@@ -15,7 +16,7 @@ if not server or not user or not password:
 
 creds = DaemonServer(
     host=server,
-    port=8085,
+    port=port,
     user=user,
     password=password,
     ignoreUnauthorized=True,
