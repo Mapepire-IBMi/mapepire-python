@@ -70,7 +70,7 @@ def test_invalid_query():
     _ = job.connect(creds)
     query = job.query("select * from sample.notreal")
     try:
-        result = query.run(rows_to_fetch=5)
+        query.run(rows_to_fetch=5)
         raise Exception("error not raised")
     except Exception as e:
         assert e.args[0]
@@ -200,7 +200,7 @@ def test_prepare_statement_invalid_params():
     opts = QueryOptions(parameters=["jjfkdsajf"])
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     with pytest.raises(Exception) as execinfo:
-        res = query.run()
+        query.run()
     assert "Data type mismatch. (Infinite or NaN)" in str(execinfo.value)
 
 
@@ -212,7 +212,7 @@ def test_prepare_statement_no_param():
     )
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     with pytest.raises(Exception) as execinfo:
-        res = query.run()
+        query.run()
     assert (
         "The number of parameter values set or registered does not match the number of parameters."
         in str(execinfo.value)
@@ -226,7 +226,7 @@ def test_prepare_statement_too_many():
     opts = QueryOptions(parameters=[500, "hello"])
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     with pytest.raises(Exception) as execinfo:
-        res = query.run()
+        query.run()
     assert "Descriptor index not valid. (2>1)" in str(execinfo.value)
 
 
@@ -236,7 +236,7 @@ def test_prepare_statement_invalid_data():
     opts = QueryOptions(parameters=[{"bonus": 500}])
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     with pytest.raises(Exception) as execinfo:
-        res = query.run()
+        query.run()
     assert "JsonObject" in str(execinfo.value)
 
 
