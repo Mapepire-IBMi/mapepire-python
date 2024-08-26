@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from ..types import QueryOptions
 from .sql_job import SQLJob
@@ -13,25 +13,15 @@ class QueryState(Enum):
     RUN_MORE_DATA_AVAIL = (2,)
     RUN_DONE = (3,)
     ERROR = 4
-
-
-def get_query_options(opts: Optional[Union[Dict[str, Any], QueryOptions]] = None) -> QueryOptions:
-    if isinstance(opts, QueryOptions):
-        return opts
-    elif opts:
-        return QueryOptions(**opts)
-    else:
-        return QueryOptions(isClCommand=False, parameters=None, autoClose=False)
-
-
+    
 class Query(Generic[T]):
     global_query_list: List["Query[Any]"] = []
 
     def __init__(self, job: SQLJob, query: str, opts: QueryOptions) -> None:
         self.job = job
+        self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
         self.parameters: Optional[List[str]] = opts.parameters
-        self.sql: str = query
         self.is_cl_command: Optional[bool] = opts.isClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
         self.is_terse_results: Optional[bool] = opts.isTerseResults
@@ -40,6 +30,17 @@ class Query(Generic[T]):
         self.state: QueryState = QueryState.NOT_YET_RUN
 
         Query.global_query_list.append(self)
+    
+    def __enter__(self):
+        return self
+        
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+        
+    def _execute_query(self, qeury_object: Dict[str, Any]) -> Dict[str, Any]:
+        self.job.send(json.dumps(qeury_object))
+        query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
+        return query_result
 
     def run(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
@@ -71,8 +72,7 @@ class Query(Generic[T]):
                 "parameters": self.parameters,
             }
 
-        self.job.send(json.dumps(query_object))
-        query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
+        query_result: Dict[str, Any] = self._execute_query(query_object)
 
         self.state = (
             QueryState.RUN_DONE
@@ -81,7 +81,6 @@ class Query(Generic[T]):
         )
 
         if not query_result.get("success", False) and not self.is_cl_command:
-            print(query_result)
             self.state = QueryState.ERROR
             error_keys = ["error", "sql_state", "sql_rc"]
             error_list = {
@@ -116,8 +115,7 @@ class Query(Generic[T]):
         }
 
         self._rows_to_fetch = rows_to_fetch
-        self.job.send(json.dumps(query_object))
-        query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
+        query_result: Dict[str, Any] = self._execute_query(query_object)
 
         self.state = (
             QueryState.RUN_DONE
@@ -130,3 +128,18 @@ class Query(Generic[T]):
             raise Exception(query_result["error"] or "Failed to run Query (unknown error)")
 
         return query_result
+    
+    def close(self):
+        if not self.job._socket.connected:
+            raise Exception('SQL Job not connected')
+        if self._correlation_id and self.state is not QueryState.RUN_DONE:
+            self.state = QueryState.RUN_DONE
+            query_object = {
+                'id': self.job._get_unique_id('sqlclose'),
+                'cont_id': self._correlation_id,
+                'type': 'sqlclose'
+            }
+            
+            return self._execute_query(query_object)
+        elif not self._correlation_id:
+            self.state = QueryState.RUN_DONE

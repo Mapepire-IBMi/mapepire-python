@@ -1,15 +1,14 @@
-import base64
 import json
-import ssl
 from typing import Any, Dict, Optional, Union
 
-from websocket import WebSocket, create_connection
+from websocket import WebSocket
 
 from ..types import DaemonServer, JobStatus, QueryOptions
+from .websocket import WebsocketConnection
 
 
 class SQLJob:
-    def __init__(self, options: Dict[Any, Any] = {}) -> None:
+    def __init__(self, creds: DaemonServer = None, options: Dict[Any, Any] = {}) -> None:
         self.options = options
         self._unique_id_counter: int = 0
         self._reponse_emitter = None
@@ -19,32 +18,24 @@ class SQLJob:
 
         self.__unique_id = self._get_unique_id("sqljob")
         self.id: Optional[str] = None
+        self.creds = creds
+
+    def __enter__(self):
+        if self.creds:
+            self.connect(self.creds)
+            return self
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
 
     def _get_unique_id(self, prefix: str = "id") -> str:
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
 
     def _get_channel(self, db2_server: DaemonServer) -> WebSocket:
-        uri = f"wss://{db2_server.host}:{db2_server.port}/db/"
-        headers = {
-            "Authorization": "Basic "
-            + base64.b64encode(f"{db2_server.user}:{db2_server.password}".encode()).decode("ascii")
-        }
-
-        # Prepare SSL context if necessary
-        ssl_opts: Dict[str, Any] = {}
-        if db2_server.ignoreUnauthorized:
-            ssl_opts["cert_reqs"] = ssl.CERT_NONE
-        if db2_server.ca:
-            ssl_context = ssl.create_default_context(cadata=db2_server.ca)
-            ssl_context.check_hostname = False
-            ssl_opts["ssl_context"] = ssl_context
-            ssl_opts["cert_reqs"] = ssl.CERT_NONE  # ignore certs for now
-
-        # Create WebSocket connection
-        socket = create_connection(uri, header=headers, sslopt=ssl_opts)
-
-        return socket
+        socket = WebsocketConnection(db2_server)
+        return socket.connect()
 
     def send(self, content):
         self._socket.send(content)
@@ -127,4 +118,5 @@ class SQLJob:
         return query.run(**kwargs)
 
     def close(self):
+        self._status = JobStatus.Ended
         self._socket.close()
