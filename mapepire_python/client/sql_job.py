@@ -11,7 +11,7 @@ class SQLJob:
     def __init__(self, creds: DaemonServer = None, options: Dict[Any, Any] = {}) -> None:
         self.options = options
         self._unique_id_counter: int = 0
-        self._reponse_emitter = None
+        self._reponse_emitter = {}
         self._status: JobStatus = JobStatus.NotStarted
         self._trace_file = None
         self._is_tracing_channeldata: bool = True
@@ -35,6 +35,9 @@ class SQLJob:
     def _get_channel(self, db2_server: DaemonServer) -> WebSocket:
         socket = WebsocketConnection(db2_server)
         return socket.connect()
+    
+    def get_status(self) -> JobStatus:
+        return self._status
 
     def send(self, content):
         self._socket.send(content)
