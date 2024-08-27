@@ -31,6 +31,10 @@ class PoolJob:
     # def get_new_unique_id(prefix: str = "id") -> str:
     #     PoolJob.unique_id_counter += 1
     #     return f"{prefix}{PoolJob.unique_id_counter}"
+    
+    def _get_unique_id(self, prefix: str = "id") -> str:
+        self._unique_id_counter += 1
+        return f"{prefix}{self._unique_id_counter}"
 
     def enable_local_trace(self):
         pass
@@ -53,7 +57,7 @@ class PoolJob:
         return socket
 
     
-    async def send(self, content: str, db2_server: DaemonServer) -> str:
+    async def send(self, content: str) -> str:
         # sock = self.get_channel(db2_server)
         await self.socket.send(content)
         response = await self.socket.recv()
@@ -75,14 +79,14 @@ class PoolJob:
         )
 
         connection_props = {
-            "id": self.get_unique_id(),
+            "id": self._get_unique_id(),
             "type": "connect",
             "technique": "tcp",
             "application": "Python Client",
             "props": props if len(props) > 0 else "",
         }
         
-        res = await self.send(json.dumps(connection_props), db2_server)
+        res = await self.send(json.dumps(connection_props))
         try:
             result = json.loads(res)
         except Exception as e:
@@ -101,49 +105,48 @@ class PoolJob:
         return result
         
 
-    def query(self, sql: str, opts: Optional[Dict[str, Any]] = None):
-        pass
+    def query(
+            self,
+            sql: str,
+            opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
+        ):
+            """
+            Create a Query object using provided SQL and options. If opts is None,
+            the default options defined in Query constructor are used. opts can be a
+            dictionary to be converted to QueryOptions, or a QueryOptions object directly.
 
-    async def execute(self, sql: str, opts: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        pass
+            Args:
+            sql (str): The SQL query string.
+            opts (Optional[Union[Dict[str, Any], QueryOptions]]): Additional options
+                    for the query which can be a dictionary or a QueryOptions object.
 
-    async def get_version(self) -> Dict[str, Any]:
-        pass
+            Returns:
+            Query: A configured Query object.
+            """
+            from .pool_query import PoolQuery
 
-    async def explain(self, statement: str, type: Optional[str] = "Run") -> Dict[str, Any]:
-        pass
+            if opts is not None and not isinstance(opts, (dict, QueryOptions)):
+                raise ValueError("opts must be a dictionary, a QueryOptions object, or None")
 
-    def get_trace_file_path(self) -> Optional[str]:
-        pass
+            query_options = (
+                opts
+                if isinstance(opts, QueryOptions)
+                else (
+                    QueryOptions(**opts)
+                    if opts
+                    else QueryOptions(isClCommand=False, parameters=None, autoClose=False)
+                )
+            )
 
-    async def get_trace_data(self) -> Dict[str, Any]:
-        pass
+            return PoolQuery(job=self, query=sql, opts=query_options)
 
-    async def set_trace_config(self, dest: str, level: str) -> Dict[str, Any]:
-        pass
-
-    def clcommand(self, cmd: str):
-        pass
-
-    def under_commit_control(self) -> bool:
-        pass
-
-    async def get_pending_transactions(self) -> int:
-        pass
-
-    async def end_transaction(self, type: str) -> Dict[str, Any]:
-        pass
-
-    def get_unique_id(self, prefix: str = "id") -> str:
-        self._unique_id_counter += 1
-        return f"{prefix}{self._unique_id_counter}"
+    async def query_and_run(
+        self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
+    ) -> Dict[str, Any]:
+        query = self.query(sql, opts)
+        return await query.run(**kwargs)
 
     async def close(self):
-        pass
-
-    def dispose(self):
-        pass
-
-def url_to_daemon(uri: str) -> Dict[str, Any]:
-    pass
-        
+        self._status = JobStatus.Ended
+        await self.socket.close()
+            

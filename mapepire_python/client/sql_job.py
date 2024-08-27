@@ -27,7 +27,7 @@ class SQLJob:
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
-
+    
     def _get_unique_id(self, prefix: str = "id") -> str:
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
