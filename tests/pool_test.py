@@ -45,7 +45,7 @@ async def test_simple():
     _ = await job.connect(creds)
     query = job.query('select * from sample.employee')
     result = await query.run(rows_to_fetch=5)
-    job.close()
+    await job.close()
     assert result['success'] == True
     assert result['is_done'] == False
     assert result['has_results'] == True
@@ -56,7 +56,7 @@ async def test_query_large_dataset():
     _ = await job.connect(creds)
     query = job.query('select * from sample.employee')
     result = await query.run(rows_to_fetch=30)
-    job.close()
+    await job.close()
     
     assert result['success'] == True
     assert result['is_done'] == False
@@ -72,7 +72,7 @@ async def test_run_query_terse_format():
     )
     query = job.query('select * from sample.employee', opts=opts)
     result = await query.run(rows_to_fetch=5)
-    job.close()
+    await job.close()
     
     assert result['success'] == True
     assert result['is_done'] == False
@@ -91,7 +91,7 @@ async def test_invalid_query():
         assert e.args[0]
         assert 'error' in e.args[0]
         assert '*FILE not found.'  in e.args[0]['error']
-    job.close()
+    await job.close()
     
 @pytest.mark.asyncio
 async def test_query_edge_cases():
@@ -153,7 +153,7 @@ async def test_run_sql_query_with_edge_case_inputs():
     assert res['data'] == [], "Expected empty result set when rows_to_fetch < 0"
     
     # query.close()
-    job.close()
+    await job.close()
     
 @pytest.mark.asyncio
 async def test_drop_table():
@@ -162,7 +162,7 @@ async def test_drop_table():
     query = job.query('drop table sample.delete if exists')
     res = await query.run()
     assert res['has_results'] == False
-    job.close()
+    await job.close()
     
 @pytest.mark.asyncio
 async def test_fetch_more():
@@ -174,7 +174,7 @@ async def test_fetch_more():
         res = await query.fetch_more(10)
         assert len(res['data']) > 0
     
-    job.close()
+    await job.close()
     assert res['is_done']
     
 @pytest.mark.asyncio
@@ -213,7 +213,7 @@ async def test_prepare_statement_mult_params():
     query = job.query('select * from sample.employee where bonus > ? and job = ?', opts=opts)
     res = await query.run()
     assert res['success']
-    job.close()
+    await job.close()
     
 @pytest.mark.asyncio
 async def test_prepare_statement_invalid_params():
@@ -238,7 +238,7 @@ async def test_prepare_statement_no_param():
     with pytest.raises(Exception) as execinfo:
         res = await query.run()
     assert 'The number of parameter values set or registered does not match the number of parameters.' in str(execinfo.value)
-    job.close()
+    await job.close()
     
 @pytest.mark.asyncio
 async def test_prepare_statement_too_many():
@@ -282,7 +282,7 @@ async def test_multiple_statements():
     resB = await job.query("select * from sample.employee").run()
     assert resB["success"] is True
 
-    job.close()
+    await job.close()
     
     
     
