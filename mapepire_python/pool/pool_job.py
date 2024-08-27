@@ -27,10 +27,13 @@ class PoolJob:
         self._unique_id_counter: int = 0
         self.requests = 0
 
-    # @staticmethod
-    # def get_new_unique_id(prefix: str = "id") -> str:
-    #     PoolJob.unique_id_counter += 1
-    #     return f"{prefix}{PoolJob.unique_id_counter}"
+    async def __aenter__(self):
+        if self.creds:
+            await self.connect(self.creds)
+        return self
+    
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.close()
     
     def _get_unique_id(self, prefix: str = "id") -> str:
         self._unique_id_counter += 1
@@ -39,7 +42,7 @@ class PoolJob:
     def enable_local_trace(self):
         pass
 
-    async def get_channel(self, db2_server: Dict[str, Any] | DaemonServer) -> websockets.WebSocketClientProtocol:
+    async def get_channel(self, db2_server: DaemonServer) -> websockets.WebSocketClientProtocol:
         uri = f"wss://{db2_server.host}:{db2_server.port}/db/"
         headers = {
             "Authorization": "Basic "

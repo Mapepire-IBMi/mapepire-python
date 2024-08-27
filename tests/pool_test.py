@@ -28,16 +28,23 @@ creds = DaemonServer(
 
 @pytest.mark.asyncio
 async def test_pool():
-    pool_job = PoolJob()
-    
-    result = await pool_job.connect(creds)
-    print(result)
-    
-    query = pool_job.query('select * from sample.employee')
-    res = await query.run()
-    print(res)
-    
-    await pool_job.close()
+    async with PoolJob(creds=creds) as job:
+        query = job.query('select * from sample.employee')
+        query2 = job.query('select * from sample.department')
+        res = await query.run()
+        res2 = await query2.run()
+        assert res['success'] == True
+        assert res2['success'] == True
+        
+def test_pool2():
+    with SQLJob(creds=creds) as job:
+        query = job.query('select * from sample.employee')
+        query2 = job.query('select * from sample.department')
+        res = query.run()
+        res2 = query2.run()
+        assert res['success'] == True
+        assert res2['success'] == True
+        
     
 @pytest.mark.asyncio
 async def test_simple():
