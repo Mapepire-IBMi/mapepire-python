@@ -45,6 +45,18 @@ def test_pool2():
         assert res['success'] == True
         assert res2['success'] == True
         
+@pytest.mark.asyncio
+async def test_simple2():
+    job = PoolJob()
+    job.enable_local_trace_data()
+    _ = await job.connect(creds)
+    query = job.query('select * from sample.employee')
+    result = await query.run(rows_to_fetch=5)
+    await job.close()
+    assert result['success'] == True
+    assert result['is_done'] == False
+    assert result['has_results'] == True
+        
     
 @pytest.mark.asyncio
 async def test_simple():

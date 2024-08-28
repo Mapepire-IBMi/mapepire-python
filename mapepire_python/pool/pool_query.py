@@ -63,7 +63,7 @@ class PoolQuery:
                 "parameters": self.parameters,
             }
 
-        query_result: Dict[str, Any] = json.loads(await self._execute_query(query_object))
+        query_result: Dict[str, Any] = await self._execute_query(query_object)
 
         self.state = (
             QueryState.RUN_DONE

@@ -41,7 +41,7 @@ class QueryManager:
         return query.run(rows_to_fetch=rows_to_fetch)
 
     def query_and_run(
-        self, query: str, opts: Optional[Dict[str, Any]] = None, **kwargs
+        self, query: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs
     ) -> Dict[str, Any]:
         with self.create_query(query, opts) as query:
             return query.run(**kwargs)
