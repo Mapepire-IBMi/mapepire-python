@@ -5,10 +5,10 @@ Installation
 
 ## Installing with `pip`
 
-**mapepire-python** is available [on PyPI](https://pypi.org/project/python-wsdb/). Just run
+**mapepire-python** is available [on PyPI](https://pypi.org/project/mapepire-python/). Just run
 
 ```bash
-pip install python-wsdb
+pip install mapepire-python
 ```
 
 ## Installing from source
