@@ -5,8 +5,6 @@ import ssl
 from typing import Any, Dict, Optional, Union
 
 import websockets
-import websockets.asyncio
-import websockets.asyncio.connection
 from pyee.asyncio import AsyncIOEventEmitter
 
 from ..types import DaemonServer, JobStatus, QueryOptions

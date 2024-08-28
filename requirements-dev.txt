@@ -7,3 +7,5 @@ isort
 black
 ruff
 mypy
+websockets
+pyee
