@@ -8,6 +8,7 @@ dependencies:
   - pip
   - python-dotenv
   - pytest-env
+  - pytest-asyncio
   - isort
   - black
   - ruff
