@@ -90,6 +90,8 @@ def test_query_edge_cases():
         assert e.args[0]
         assert "error" in e.args[0]
         assert "A string parameter value with zero length was detected." in e.args[0]["error"]
+    finally:
+        job.close()
 
 
 def test_run_sql_query_with_edge_case_inputs():
@@ -169,6 +171,7 @@ def test_prepare_statement():
     opts = QueryOptions(parameters=[500])
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     res = query.run()
+    job.close()
     assert res["success"]
     assert len(res["data"]) >= 17
 
@@ -179,6 +182,7 @@ def test_prepare_statement_terse():
     opts = QueryOptions(parameters=[500], isTerseResults=True)
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     res = query.run()
+    job.close()
     assert res["success"]
     assert len(res["data"]) >= 17
     assert "metadata" in res
@@ -202,6 +206,7 @@ def test_prepare_statement_invalid_params():
     with pytest.raises(Exception) as execinfo:
         query.run()
     assert "Data type mismatch. (Infinite or NaN)" in str(execinfo.value)
+    job.close()
 
 
 def test_prepare_statement_no_param():
@@ -228,6 +233,7 @@ def test_prepare_statement_too_many():
     with pytest.raises(Exception) as execinfo:
         query.run()
     assert "Descriptor index not valid. (2>1)" in str(execinfo.value)
+    job.close()
 
 
 def test_prepare_statement_invalid_data():
@@ -238,12 +244,14 @@ def test_prepare_statement_invalid_data():
     with pytest.raises(Exception) as execinfo:
         query.run()
     assert "JsonObject" in str(execinfo.value)
+    job.close()
 
 
 def test_run_from_job():
     job = SQLJob()
     _ = job.connect(creds)
     res = job.query_and_run("select * from sample.employee")
+    job.close()
     assert res["success"]
 
 
