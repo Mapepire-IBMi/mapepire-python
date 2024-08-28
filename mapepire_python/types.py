@@ -1,9 +1,14 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from dataclasses_json import dataclass_json
 
+
+def dict_to_dataclass(data: Dict[str, Any], dataclass_type: Any) -> Any:
+    field_names = {f.name for f in fields(dataclass_type)}
+    filtered_data = {k: v for k, v in data.items() if k in field_names}
+    return dataclass_type(**filtered_data)
 
 class JobStatus(Enum):
     NotStarted = "notStarted"
