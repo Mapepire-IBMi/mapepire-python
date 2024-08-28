@@ -1,12 +1,13 @@
 # Fetch environment variables
 import asyncio
+import os
 
 import pytest
+
 from mapepire_python.client.query_manager import QueryManager
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.types import DaemonServer, QueryOptions
-import os
 
 server = os.getenv('VITE_SERVER')
 user = os.getenv('VITE_DB_USER')
@@ -44,6 +45,25 @@ def test_pool2():
         res2 = query2.run()
         assert res['success'] == True
         assert res2['success'] == True
+
+@pytest.mark.asyncio
+async def test_simple_dict():
+    creds_dict = {
+        'host': server,
+        'user': user,
+        'port': port,
+        'password': password,
+        'port': port,
+        'ignoreUnauthorized': True
+    }
+    job = PoolJob()
+    await job.connect(creds_dict)
+    query = job.query("select * from sample.employee")
+    result = await query.run(rows_to_fetch=5)
+    await job.close()
+    assert result["success"] is True
+    assert result["is_done"] is False
+    assert result["has_results"] is True
         
 @pytest.mark.asyncio
 async def test_simple2():

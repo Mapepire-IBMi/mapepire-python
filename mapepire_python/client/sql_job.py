@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 
 from websocket import WebSocket
 
-from ..types import DaemonServer, JobStatus, QueryOptions
+from ..types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 from .websocket import WebsocketConnection
 
 
@@ -20,20 +20,13 @@ class SQLJob:
         self.id: Optional[str] = None
         self.creds = creds
 
-    def __enter__(self):
-        if self.creds:
-            self.connect(self.creds)
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
 
     def __enter__(self):
         if self.creds:
             self.connect(self.creds)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, *args, **kwargs):
         self.close()
     
     def _get_unique_id(self, prefix: str = "id") -> str:
@@ -50,7 +43,10 @@ class SQLJob:
     def send(self, content):
         self._socket.send(content)
 
-    def connect(self, db2_server: DaemonServer) -> Dict[Any, Any]:
+    def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[Any, Any]:
+        if isinstance(db2_server, dict):
+            db2_server = dict_to_dataclass(db2_server, DaemonServer)
+            
         self._socket: WebSocket = self._get_channel(db2_server)
 
         props = ";".join(
