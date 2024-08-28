@@ -66,7 +66,7 @@ class Pool:
 
         return new_sql_job
 
-    def _get_ready_job(self) -> PoolJob | None:
+    def _get_ready_job(self) -> PoolJob:
         return next((job for job in self.jobs if job.get_status() == JobStatus.Ready), None)
 
     def _get_ready_job_idx(self):
