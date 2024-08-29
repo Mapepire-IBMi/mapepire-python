@@ -31,19 +31,36 @@ class Pool:
         if self.options.max_size <= 0:
             raise ValueError("Max size must be greater than 0")
         elif self.options.starting_size <= 0:
-            raise ValueError('Starting size must be greater than 0')
+            raise ValueError("Starting size must be greater than 0")
         elif self.options.starting_size > self.options.max_size:
-            raise ValueError('Max size must be greater than or equal to starting size')
-        
+            raise ValueError("Max size must be greater than or equal to starting size")
+
         for _ in range(self.options.starting_size):
             await self._add_job()
+
+    def __str__(self):
+        job_details = []
+        active_jobs = 0
+
+        for job in self.jobs:
+            status = job.get_status()
+            running_count = job.get_running_count()
+            unique_id = job.get_unique_id()
+            job_details.append(
+                f"Job ID: {unique_id}, Status: {status}, Running Count: {running_count}"
+            )
+            if status not in INVALID_STATES:
+                active_jobs += 1
+
+        job_details_str = "\n".join(job_details)
+        return f"-------\nJobs:\n{job_details_str}\nActive Jobs: {active_jobs}\n-------"
 
     def has_space(self):
         return (
             len([j for j in self.jobs if j.get_status() not in INVALID_STATES])
             < self.options.max_size
         )
-        
+
     def get_active_job_count(self):
         return len([j for j in self.jobs if j.get_status() in {JobStatus.Busy, JobStatus.Ready}])
 
@@ -52,7 +69,9 @@ class Pool:
             if self.jobs[i].get_status() in INVALID_STATES:
                 self.jobs.pop(i)
 
-    async def _add_job(self, options: PoolAddOptions = PoolAddOptions(existing_job=None, pool_ignore=None)):
+    async def _add_job(
+        self, options: PoolAddOptions = PoolAddOptions(existing_job=None, pool_ignore=None)
+    ):
         if options.existing_job:
             self.cleanup()
 
@@ -74,18 +93,17 @@ class Pool:
             (index for index, job in enumerate(self.jobs) if job.get_status() == JobStatus.Ready),
             -1,
         )
-        
-        
+
     async def get_job(self):
         job = self._get_ready_job()
         if not job:
             busy_jobs: PoolJob = [j for j in self.jobs if j.get_status() == JobStatus.Busy]
-            freeist: PoolJob = sorted(busy_jobs, key=lambda job: job.get_running_count())[0]        
+            freeist: PoolJob = sorted(busy_jobs, key=lambda job: job.get_running_count())[0]
             if self.has_space() and freeist.get_running_count() > 2:
                 await self._add_job()
             return freeist
         return job
-    
+
     async def wait_for_job(self, use_new_job: bool = False):
         job = self._get_ready_job()
         if not job:
@@ -93,30 +111,24 @@ class Pool:
                 new_job = await self._add_job()
                 return new_job
             else:
-                return await self.get_job()     
+                return await self.get_job()
         return job
-    
+
     async def pop_job(self):
         index = self._get_ready_job_idx()
         if index > -1:
             return self.jobs.pop(index)
         new_job = await self._add_job(PoolAddOptions(pool_ignore=False))
         return new_job
-    
+
     async def query(self, sql: str, opts: Union[QueryOptions, Dict[str, Any]] = None):
         job = await self.get_job()
         return job.query(sql, opts)
-    
+
     async def execute(self, sql: str, opts: Union[QueryOptions, Dict[str, Any]] = None):
         job = await self.get_job()
         return await job.query_and_run(sql, opts=opts)
-    
+
     async def end(self):
         for j in self.jobs:
             await j.close()
-        
-            
-            
-            
-            
-            

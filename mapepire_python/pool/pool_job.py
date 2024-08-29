@@ -65,8 +65,10 @@ class PoolJob:
 
         try:
             socket = await websockets.connect(
-                uri=uri, extra_headers=headers, ssl=ssl_contest, ping_timeout=None
+                uri=uri, extra_headers=headers, ssl=ssl_contest, ping_timeout=None, open_timeout=30
             )
+        except TimeoutError as e:
+            raise TimeoutError("Failed to connect to server")
         except Exception as e:
             raise e
 
