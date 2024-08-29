@@ -8,6 +8,7 @@ dependencies:
   - pip
   - python-dotenv
   - pytest-env
+  - pytest-asyncio
   - isort
   - black
   - ruff
@@ -15,3 +16,5 @@ dependencies:
   - pip:
     - dataclasses-json>=0.6.4
     - websocket-client>=1.2.1
+    - pyee
+    - websockets

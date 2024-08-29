@@ -34,6 +34,24 @@ def test_simple():
     assert result["success"] is True
     assert result["is_done"] is False
     assert result["has_results"] is True
+    
+def test_simple_dict():
+    creds_dict = {
+        'host': server,
+        'user': user,
+        'port': port,
+        'password': password,
+        'port': port,
+        'ignoreUnauthorized': True
+    }
+    job = SQLJob()
+    _ = job.connect(creds_dict)
+    query = job.query("select * from sample.employee")
+    result = query.run(rows_to_fetch=5)
+    job.close()
+    assert result["success"] is True
+    assert result["is_done"] is False
+    assert result["has_results"] is True
 
 
 def test_query_large_dataset():

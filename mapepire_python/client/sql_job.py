@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, Union
 
 from websocket import WebSocket
 
-from ..types import DaemonServer, JobStatus, QueryOptions
+from ..types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 from .websocket import WebsocketConnection
 
 
@@ -11,7 +11,7 @@ class SQLJob:
     def __init__(self, creds: DaemonServer = None, options: Dict[Any, Any] = {}) -> None:
         self.options = options
         self._unique_id_counter: int = 0
-        self._reponse_emitter = None
+        self._reponse_emitter = {}
         self._status: JobStatus = JobStatus.NotStarted
         self._trace_file = None
         self._is_tracing_channeldata: bool = True
@@ -20,14 +20,15 @@ class SQLJob:
         self.id: Optional[str] = None
         self.creds = creds
 
+
     def __enter__(self):
         if self.creds:
             self.connect(self.creds)
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def __exit__(self, *args, **kwargs):
         self.close()
-
+    
     def _get_unique_id(self, prefix: str = "id") -> str:
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
@@ -35,11 +36,17 @@ class SQLJob:
     def _get_channel(self, db2_server: DaemonServer) -> WebSocket:
         socket = WebsocketConnection(db2_server)
         return socket.connect()
+    
+    def get_status(self) -> JobStatus:
+        return self._status
 
     def send(self, content):
         self._socket.send(content)
 
-    def connect(self, db2_server: DaemonServer) -> Dict[Any, Any]:
+    def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[Any, Any]:
+        if isinstance(db2_server, dict):
+            db2_server = dict_to_dataclass(db2_server, DaemonServer)
+            
         self._socket: WebSocket = self._get_channel(db2_server)
 
         props = ";".join(
