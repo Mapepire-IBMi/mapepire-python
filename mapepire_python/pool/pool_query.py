@@ -23,11 +23,11 @@ class PoolQuery:
 
         PoolQuery.global_query_list.append(self)
     
-    def __enter__(self):
+    async def __aenter__(self):
         return self
         
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.close()
+    async def __aexit__(self, exc_type, exc_value, traceback):
+        await self.close()
         
     async def _execute_query(self, qeury_object: Dict[str, Any]) -> Dict[str, Any]:
         query_result = await self.job.send(json.dumps(qeury_object))
@@ -120,8 +120,8 @@ class PoolQuery:
 
         return query_result
     
-    def close(self):
-        if not self.job._socket.connected:
+    async def close(self):
+        if not self.job.socket:
             raise Exception('SQL Job not connected')
         if self._correlation_id and self.state is not QueryState.RUN_DONE:
             self.state = QueryState.RUN_DONE
@@ -131,6 +131,6 @@ class PoolQuery:
                 'type': 'sqlclose'
             }
             
-            return self._execute_query(query_object)
+            return await self._execute_query(query_object)
         elif not self._correlation_id:
             self.state = QueryState.RUN_DONE

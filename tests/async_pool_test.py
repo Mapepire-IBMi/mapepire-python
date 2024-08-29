@@ -37,6 +37,10 @@ async def test_pool():
         assert res['success'] == True
         assert res2['success'] == True
         
+    async with PoolJob(creds=creds) as pool_job:
+        async with pool_job.query('select * from sample.employee') as query:
+          res = await query.run(rows_to_fetch=1)
+        
 def test_pool2():
     with SQLJob(creds=creds) as job:
         query = job.query('select * from sample.employee')

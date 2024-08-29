@@ -42,6 +42,11 @@ def test_query_manager():
     
     assert result['success']
     job.close()
+    with SQLJob(creds) as sql_job:
+        query_manager = QueryManager(sql_job)
+        with query_manager.create_query("select * from sample.employee") as query:
+            result = query_manager.run_query(query, rows_to_fetch=1)
+            print(result)
     
 
     

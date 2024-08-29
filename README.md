@@ -59,9 +59,10 @@ To use mapire-python, you will need to have the Mapepire Server Component runnin
 
 ## Example usage
 
-The following script sets up a `DaemonServer` object that will be used to connect with the Server Component. Then a single `SQLJob` is created to facilitate the connection from the client side. 
+The following script sets up a `DaemonServer` object that will be used to connect with the Server Component. Then a single `SQLJob` is created to facilitate the connection from the client side. The `QueryManager` object is used to create and run a query.
 
 ```python
+from mapepire_python.client.query_manager import QueryManager
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.types import DaemonServer
 
@@ -73,12 +74,11 @@ creds = DaemonServer(
     ignoreUnauthorized=True
 )
 
-
-job = SQLJob()
-res = job.connect(creds)
-query = job.query("select * from sample.employee")
-result = query.run(rows_to_fetch=3)
-print(result)
+with SQLJob(creds) as sql_job:
+    query_manager = QueryManager(sql_job)
+    with query_manager.create_query("select * from sample.employee") as query:
+        result = query_manager.run_query(query, rows_to_fetch=1)
+        print(result)
 ```
 
 Here is the output from the script above:
@@ -201,6 +201,104 @@ Here is the output from the script above:
 }
 
 ```
+
+### Query and run 
+
+The `QueryManager` object can be used to create and run queries with the ` query_and_run`: 
+
+```python
+from mapepire_python.client.query_manager import QueryManager
+from mapepire_python.client.sql_job import SQLJob
+from mapepire_python.types import DaemonServer
+
+creds = DaemonServer(
+    host="localhost",
+    port=8085,
+    user="USER",
+    password="PASSWORD",
+    ignoreUnauthorized=True
+)
+
+with SQLJob(creds) as sql_job:
+    query_manager = QueryManager(sql_job)
+
+    # query automatically closed after running
+    results = query_manager.query_and_run("select * from sample.employee", rows_to_fetch=1)
+    print(result)
+```
+
+### Asynchronous SQL Job and Query Execution
+
+The `PoolJob` object can be used to create and run queries asynchronously:
+
+```python
+import asyncio
+from mapepire_python.pool.pool_job import PoolJob
+from mapepire_python.types import DaemonServer
+
+creds = DaemonServer(
+    host="localhost",
+    port=8085,
+    user="USER",
+    password="PASSWORD",
+    ignoreUnauthorized=True
+)
+
+async def main():
+    async with PoolJob(creds=creds) as pool_job:
+        async with pool_job.query('select * from sample.employee') as query:
+          res = await query.run(rows_to_fetch=1)
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
+```
+
+## Pooling (beta)
+Pooling is a feature that allows for the reuse of SQL jobs across multiple queries
+
+```python
+import asyncio
+from mapepire_python.pool.pool_client import Pool, PoolOptions
+from mapepire_python.types import DaemonServer
+
+creds = DaemonServer(
+    host=server,
+    port=port,
+    user=user,
+    password=password,
+    ignoreUnauthorized=True,
+)
+
+
+async def main():
+    async with Pool(
+        options=PoolOptions(
+            creds=creds,
+            opts=None,
+            max_size=5,
+            starting_size=3
+        )
+    ) as pool:
+      job_names = []
+      resultsA = await asyncio.gather(
+          pool.execute('values (job_name)'),
+          pool.execute('values (job_name)'),
+          pool.execute('values (job_name)')
+      )
+      job_names = [res['data'][0]['00001'] for res in resultsA]
+
+      assert len(job_names) == 3
+      
+      assert pool.get_active_job_count() == 3
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
+
+```
+
+
 
 # Development Setup
 
