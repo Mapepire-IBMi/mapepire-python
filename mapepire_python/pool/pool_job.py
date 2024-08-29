@@ -7,15 +7,15 @@ from typing import Any, Dict, Optional, Union
 import websockets
 from pyee.asyncio import AsyncIOEventEmitter
 
+from ..base_job import BaseJob
 from ..types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 
 
-class PoolJob:
+class PoolJob(BaseJob):
     unique_id_counter = 0
 
     def __init__(self, creds: DaemonServer = None, options: Optional[Dict[Any, Any]] = {}):
-        self.creds = creds
-        self.options = options
+        super().__init__(creds, options)
         self.socket = None
         self.response_emitter = AsyncIOEventEmitter()
         self.status = JobStatus.NotStarted

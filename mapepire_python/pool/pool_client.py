@@ -37,11 +37,11 @@ class Pool:
 
         for _ in range(self.options.starting_size):
             await self._add_job()
-            
+
     async def __aenter__(self):
         await self.init()
         return self
-        
+
     async def __aexit__(self, *args, **kwargs):
         await self.end()
 

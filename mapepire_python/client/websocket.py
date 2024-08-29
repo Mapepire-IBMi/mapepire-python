@@ -29,7 +29,9 @@ class WebsocketConnection:
         return ssl_opts
 
     def connect(self) -> WebSocket:
-        try:  
-            return create_connection(self.uri, header=self.headers, sslopt=self.ssl_opts, timeout=10)
+        try:
+            return create_connection(
+                self.uri, header=self.headers, sslopt=self.ssl_opts, timeout=10
+            )
         except Exception as e:
-            raise Exception(f'An error occurred while connecting to the server: {e}')
+            raise Exception(f"An error occurred while connecting to the server: {e}")

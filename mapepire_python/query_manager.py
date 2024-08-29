@@ -1,12 +1,14 @@
 from typing import Any, Dict, Optional, Union
 
-from ..types import QueryOptions
-from .query import Query
-from .sql_job import SQLJob
+from .client.query import Query
+from .client.sql_job import SQLJob
+from .pool.pool_job import PoolJob
+from .pool.pool_query import PoolQuery
+from .types import QueryOptions
 
 
 class QueryManager:
-    def __init__(self, job: SQLJob) -> None:
+    def __init__(self, job: Union[SQLJob, PoolJob]) -> None:
         self.job = job
 
     def get_query_options(
@@ -28,14 +30,18 @@ class QueryManager:
         self,
         query: str,
         opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
-    ) -> Query:
+    ) -> Union[Query, PoolQuery]:
 
         if opts and not isinstance(opts, (dict, QueryOptions)):
             raise Exception("opts must be a dictionary, a QueryOptions object, or None")
 
         query_options = self.get_query_options(opts)
 
-        return Query(self.job, query, opts=query_options)
+        return (
+            Query(self.job, query, opts=query_options)
+            if isinstance(self.job, SQLJob)
+            else PoolQuery(self.job, query=query, opts=query_options)
+        )
 
     def run_query(self, query: Query, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
         return query.run(rows_to_fetch=rows_to_fetch)

@@ -3,10 +3,10 @@ import os
 
 import pytest
 
-from mapepire_python.client.query_manager import QueryManager
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.pool.pool_client import Pool, PoolOptions
 from mapepire_python.pool.pool_job import PoolJob
+from mapepire_python.query_manager import QueryManager
 from mapepire_python.types import DaemonServer, JobStatus, QueryOptions
 
 server = os.getenv('VITE_SERVER')

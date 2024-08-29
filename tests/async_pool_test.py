@@ -4,9 +4,9 @@ import os
 
 import pytest
 
-from mapepire_python.client.query_manager import QueryManager
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.pool.pool_job import PoolJob
+from mapepire_python.query_manager import QueryManager
 from mapepire_python.types import DaemonServer, QueryOptions
 
 server = os.getenv('VITE_SERVER')
@@ -38,7 +38,8 @@ async def test_pool():
         assert res2['success'] == True
         
     async with PoolJob(creds=creds) as pool_job:
-        async with pool_job.query('select * from sample.employee') as query:
+        query_manager = QueryManager(pool_job)
+        async with query_manager.create_query('select * from sample.employee') as query:
           res = await query.run(rows_to_fetch=1)
         
 def test_pool2():

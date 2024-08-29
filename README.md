@@ -233,6 +233,7 @@ The `PoolJob` object can be used to create and run queries asynchronously:
 
 ```python
 import asyncio
+from mapepire_python.client.query_manager import QueryManager
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.types import DaemonServer
 
@@ -246,7 +247,8 @@ creds = DaemonServer(
 
 async def main():
     async with PoolJob(creds=creds) as pool_job:
-        async with pool_job.query('select * from sample.employee') as query:
+        query_manager = QueryManager(pool_job)
+        async with query_manager.create_query('select * from sample.employee') as query:
           res = await query.run(rows_to_fetch=1)
 
 if __name__ == '__main__':

@@ -3,8 +3,8 @@ import re
 
 import pytest
 
-from mapepire_python.client.query_manager import QueryManager
 from mapepire_python.client.sql_job import SQLJob
+from mapepire_python.query_manager import QueryManager
 from mapepire_python.types import DaemonServer, QueryOptions
 
 # Fetch environment variables

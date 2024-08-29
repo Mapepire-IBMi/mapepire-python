@@ -3,13 +3,14 @@ from typing import Any, Dict, Optional, Union
 
 from websocket import WebSocket
 
+from ..base_job import BaseJob
 from ..types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 from .websocket import WebsocketConnection
 
 
-class SQLJob:
+class SQLJob(BaseJob):
     def __init__(self, creds: DaemonServer = None, options: Dict[Any, Any] = {}) -> None:
-        self.options = options
+        super().__init__(creds, options)
         self._unique_id_counter: int = 0
         self._reponse_emitter = {}
         self._status: JobStatus = JobStatus.NotStarted
@@ -18,8 +19,6 @@ class SQLJob:
 
         self.__unique_id = self._get_unique_id("sqljob")
         self.id: Optional[str] = None
-        self.creds = creds
-
 
     def __enter__(self):
         if self.creds:
@@ -28,7 +27,7 @@ class SQLJob:
 
     def __exit__(self, *args, **kwargs):
         self.close()
-    
+
     def _get_unique_id(self, prefix: str = "id") -> str:
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
@@ -36,7 +35,7 @@ class SQLJob:
     def _get_channel(self, db2_server: DaemonServer) -> WebSocket:
         socket = WebsocketConnection(db2_server)
         return socket.connect()
-    
+
     def get_status(self) -> JobStatus:
         return self._status
 
@@ -46,7 +45,7 @@ class SQLJob:
     def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[Any, Any]:
         if isinstance(db2_server, dict):
             db2_server = dict_to_dataclass(db2_server, DaemonServer)
-            
+
         self._socket: WebSocket = self._get_channel(db2_server)
 
         props = ";".join(
