@@ -68,7 +68,7 @@ class PoolJob:
                 uri=uri, extra_headers=headers, ssl=ssl_contest, ping_timeout=None, open_timeout=30
             )
         except TimeoutError as e:
-            raise TimeoutError("Failed to connect to server")
+            raise TimeoutError("Failed to connect to server") from e
         except Exception as e:
             raise e
 

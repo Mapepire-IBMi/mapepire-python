@@ -37,6 +37,13 @@ class Pool:
 
         for _ in range(self.options.starting_size):
             await self._add_job()
+            
+    async def __aenter__(self):
+        await self.init()
+        return self
+        
+    async def __aexit__(self, *args, **kwargs):
+        await self.end()
 
     def __str__(self):
         job_details = []
@@ -118,7 +125,7 @@ class Pool:
         index = self._get_ready_job_idx()
         if index > -1:
             return self.jobs.pop(index)
-        new_job = await self._add_job(PoolAddOptions(pool_ignore=False))
+        new_job = await self._add_job(PoolAddOptions(pool_ignore=True))
         return new_job
 
     async def query(self, sql: str, opts: Union[QueryOptions, Dict[str, Any]] = None):
