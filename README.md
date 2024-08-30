@@ -86,7 +86,7 @@ The following script sets up a `DaemonServer` object that will be used to connec
 ```python
 import configparser
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.types import DaemonServer
+from mapepire_python.data_types import DaemonServer
 
 config = configparser.ConfigParser()
 config.read('mapepire.ini')
@@ -243,7 +243,7 @@ To create and run a query in a single step, use the `query_and_run` method:
 ```python
 import configparser
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.types import DaemonServer
+from mapepire_python.data_types import DaemonServer
 
 config = configparser.ConfigParser()
 config.read('mapepire.ini')
@@ -270,7 +270,7 @@ The `PoolJob` object can be used to create and run queries asynchronously:
 import asyncio
 import configparser
 from mapepire_python.pool.pool_job import PoolJob
-from mapepire_python.types import DaemonServer
+from mapepire_python.data_types import DaemonServer
 
 config = configparser.ConfigParser()
 config.read('mapepire.ini')
@@ -299,7 +299,7 @@ To run a create and run a query asynchronously in a single step, use the `query_
 import asyncio
 import configparser
 from mapepire_python.pool.pool_job import PoolJob
-from mapepire_python.types import DaemonServer
+from mapepire_python.data_types import DaemonServer
 
 config = configparser.ConfigParser()
 config.read('mapepire.ini')
@@ -331,7 +331,7 @@ The `Pool` object can be used to create a pool of `PoolJob` objects to run queri
 import asyncio
 import configparser
 from mapepire_python.pool.pool_client import Pool, PoolOptions
-from mapepire_python.types import DaemonServer
+from mapepire_python.data_types import DaemonServer
 
 config = configparser.ConfigParser()
 config.read('mapepire.ini')
