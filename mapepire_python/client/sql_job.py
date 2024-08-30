@@ -111,6 +111,7 @@ class SQLJob(BaseJob):
             self._status = JobStatus.Ready
         else:
             self._status = JobStatus.NotStarted
+            self.close()
             raise Exception(result.get("error", "Failed to connect to server"))
 
         self.id = result["job"]
