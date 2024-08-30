@@ -71,17 +71,31 @@ To use mapire-python, you will need to have the Mapepire Server Component runnin
 
 ## Example usage
 
+Setup the server credentials used to connect to the server. One way to do this is to create a `mapepire.ini` file in the root of your project with the following content:
+
+```ini
+[mapepire]
+SERVER="SERVER"
+PORT="PORT"
+USER="USER"
+PASSWORD="PASSWORD"
+```
+
 The following script sets up a `DaemonServer` object that will be used to connect with the Server Component. Then a single `SQLJob` is created to facilitate the connection from the client side.
 
 ```python
+import configparser
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.types import DaemonServer
 
+config = configparser.ConfigParser()
+config.read('mapepire.ini')
+
 creds = DaemonServer(
-    host="localhost",
-    port=8085,
-    user="USER",
-    password="PASSWORD",
+    host=config['mapepire']['SERVER'],
+    port=config['mapepire']['PORT'],
+    user=config['mapepire']['USER'],
+    password=config['mapepire']['PASSWORD'],
     ignoreUnauthorized=True
 )
 
@@ -227,14 +241,18 @@ In the ouput above, the query was successful and returned one row of data.
 To create and run a query in a single step, use the `query_and_run` method: 
 
 ```python
+import configparser
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.types import DaemonServer
 
+config = configparser.ConfigParser()
+config.read('mapepire.ini')
+
 creds = DaemonServer(
-    host="localhost",
-    port=8085,
-    user="USER",
-    password="PASSWORD",
+    host=config['mapepire']['SERVER'],
+    port=config['mapepire']['PORT'],
+    user=config['mapepire']['USER'],
+    password=config['mapepire']['PASSWORD'],
     ignoreUnauthorized=True
 )
 
@@ -250,14 +268,18 @@ The `PoolJob` object can be used to create and run queries asynchronously:
 
 ```python
 import asyncio
+import configparser
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.types import DaemonServer
 
+config = configparser.ConfigParser()
+config.read('mapepire.ini')
+
 creds = DaemonServer(
-    host="localhost",
-    port=8085,
-    user="USER",
-    password="PASSWORD",
+    host=config['mapepire']['SERVER'],
+    port=config['mapepire']['PORT'],
+    user=config['mapepire']['USER'],
+    password=config['mapepire']['PASSWORD'],
     ignoreUnauthorized=True
 )
 
@@ -275,14 +297,18 @@ To run a create and run a query asynchronously in a single step, use the `query_
 
 ```python
 import asyncio
+import configparser
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.types import DaemonServer
 
+config = configparser.ConfigParser()
+config.read('mapepire.ini')
+
 creds = DaemonServer(
-    host="localhost",
-    port=8085,
-    user="USER",
-    password="PASSWORD",
+    host=config['mapepire']['SERVER'],
+    port=config['mapepire']['PORT'],
+    user=config['mapepire']['USER'],
+    password=config['mapepire']['PASSWORD'],
     ignoreUnauthorized=True
 )
 
@@ -303,14 +329,18 @@ The `Pool` object can be used to create a pool of `PoolJob` objects to run queri
 
 ```python
 import asyncio
+import configparser
 from mapepire_python.pool.pool_client import Pool, PoolOptions
 from mapepire_python.types import DaemonServer
 
+config = configparser.ConfigParser()
+config.read('mapepire.ini')
+
 creds = DaemonServer(
-    host="localhost",
-    port=8085,
-    user="USER",
-    password="PASSWORD",
+    host=config['mapepire']['SERVER'],
+    port=config['mapepire']['PORT'],
+    user=config['mapepire']['USER'],
+    password=config['mapepire']['PASSWORD'],
     ignoreUnauthorized=True
 )
 
