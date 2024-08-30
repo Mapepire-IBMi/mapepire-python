@@ -197,7 +197,7 @@ class PoolJob(BaseJob):
             self.status = JobStatus.Ready
         else:
             self.status = JobStatus.NotStarted
-            print(result)
+            await self.close()
             raise Exception(result.get("error", "Failed to connect to server"))
 
         self.id = result["job"]
