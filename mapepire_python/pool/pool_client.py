@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-from ..types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
+from ..data_types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
 from .pool_job import PoolJob
 
 
@@ -37,11 +37,11 @@ class Pool:
 
         for _ in range(self.options.starting_size):
             await self._add_job()
-            
+
     async def __aenter__(self):
         await self.init()
         return self
-        
+
     async def __aexit__(self, *args, **kwargs):
         await self.end()
 
