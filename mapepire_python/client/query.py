@@ -2,7 +2,7 @@ import json
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from ..types import QueryOptions
+from ..data_types import QueryOptions
 from .sql_job import SQLJob
 
 T = TypeVar("T")
@@ -13,7 +13,8 @@ class QueryState(Enum):
     RUN_MORE_DATA_AVAIL = (2,)
     RUN_DONE = (3,)
     ERROR = 4
-    
+
+
 class Query(Generic[T]):
     global_query_list: List["Query[Any]"] = []
 
@@ -30,13 +31,13 @@ class Query(Generic[T]):
         self.state: QueryState = QueryState.NOT_YET_RUN
 
         Query.global_query_list.append(self)
-    
+
     def __enter__(self):
         return self
-        
+
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()
-        
+
     def _execute_query(self, qeury_object: Dict[str, Any]) -> Dict[str, Any]:
         self.job.send(json.dumps(qeury_object))
         query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
@@ -128,18 +129,18 @@ class Query(Generic[T]):
             raise Exception(query_result["error"] or "Failed to run Query (unknown error)")
 
         return query_result
-    
+
     def close(self):
         if not self.job._socket.connected:
-            raise Exception('SQL Job not connected')
+            raise Exception("SQL Job not connected")
         if self._correlation_id and self.state is not QueryState.RUN_DONE:
             self.state = QueryState.RUN_DONE
             query_object = {
-                'id': self.job._get_unique_id('sqlclose'),
-                'cont_id': self._correlation_id,
-                'type': 'sqlclose'
+                "id": self.job._get_unique_id("sqlclose"),
+                "cont_id": self._correlation_id,
+                "type": "sqlclose",
             }
-            
+
             return self._execute_query(query_object)
         elif not self._correlation_id:
             self.state = QueryState.RUN_DONE

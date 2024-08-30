@@ -10,6 +10,7 @@ def dict_to_dataclass(data: Dict[str, Any], dataclass_type: Any) -> Any:
     filtered_data = {k: v for k, v in data.items() if k in field_names}
     return dataclass_type(**filtered_data)
 
+
 class JobStatus(Enum):
     NotStarted = "notStarted"
     Ready = "ready"

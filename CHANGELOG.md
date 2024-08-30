@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add query manager
 - Add async support for pooling
 - Add context managers for SQLJob and PoolJob
+- update docs and usage
 
 ## [v0.1.4](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.1.4) - 2024-08-23
 

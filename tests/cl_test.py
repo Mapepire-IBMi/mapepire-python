@@ -1,7 +1,7 @@
 import os
 
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.types import DaemonServer, QueryOptions
+from mapepire_python.data_types import DaemonServer, QueryOptions
 
 # Fetch environment variables
 server = os.getenv("VITE_SERVER")

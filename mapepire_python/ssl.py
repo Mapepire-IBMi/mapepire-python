@@ -2,7 +2,7 @@ import socket
 import ssl
 from typing import Optional
 
-from .types import DaemonServer
+from .data_types import DaemonServer
 
 
 def get_certificate(creds: DaemonServer) -> Optional[bytes]:
