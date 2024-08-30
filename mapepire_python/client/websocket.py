@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 from websocket import WebSocket, create_connection
 
-from ..types import DaemonServer
+from ..data_types import DaemonServer
 
 
 class WebsocketConnection:

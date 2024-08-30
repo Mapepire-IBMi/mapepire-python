@@ -3,7 +3,7 @@ import os
 import pytest
 
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.types import DaemonServer, QueryOptions
+from mapepire_python.data_types import DaemonServer, QueryOptions
 
 # Fetch environment variables
 server = os.getenv("VITE_SERVER")
@@ -52,7 +52,12 @@ def test_simple_dict():
     assert result["success"] is True
     assert result["is_done"] is False
     assert result["has_results"] is True
-
+    
+    
+def test_with_q_and_run_cm():
+    with SQLJob(creds=creds) as job:
+        res = job.query_and_run('select * from sample.employee')
+        assert res['success'] == True
 
 def test_query_large_dataset():
     job = SQLJob()

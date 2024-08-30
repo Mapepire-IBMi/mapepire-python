@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Union
 from websocket import WebSocket
 
 from ..base_job import BaseJob
-from ..types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
+from ..data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 from .websocket import WebsocketConnection
 
 
@@ -29,20 +29,57 @@ class SQLJob(BaseJob):
         self.close()
 
     def _get_unique_id(self, prefix: str = "id") -> str:
+        """returns a unique id for the job object with the given prefix
+
+        Args:
+            prefix (str, optional): _description_. Defaults to "id".
+
+        Returns:
+            str: unique id
+        """
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
 
     def _get_channel(self, db2_server: DaemonServer) -> WebSocket:
+        """returns a websocket connection to the mapepire server
+
+        Args:
+            db2_server (DaemonServer): _description_
+
+        Returns:
+            WebSocket: websocket connection
+        """
         socket = WebsocketConnection(db2_server)
         return socket.connect()
 
     def get_status(self) -> JobStatus:
+        """returns the current status of the job
+
+        Returns:
+            JobStatus: job status
+        """
         return self._status
 
-    def send(self, content):
+    def send(self, content: str) -> None:
+        """sends content to the mapepire server
+
+        Args:
+            content (str): JSON content to be sent
+        """
         self._socket.send(content)
 
     def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[Any, Any]:
+        """create connection to the mapepire server
+
+        Args:
+            db2_server (Union[DaemonServer, Dict[str, Any]]): server credentials
+
+        Raises:
+            Exception: Failed to connect to server
+
+        Returns:
+            Dict[Any, Any]: connection results from the server
+        """
         if isinstance(db2_server, dict):
             db2_server = dict_to_dataclass(db2_server, DaemonServer)
 
@@ -119,9 +156,24 @@ class SQLJob(BaseJob):
     def query_and_run(
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
     ) -> Dict[str, Any]:
-        query = self.query(sql, opts)
-        return query.run(**kwargs)
+        """Create a Query object using provided SQL and options, then run the query.
 
-    def close(self):
+        Args:
+            sql (str): query string
+            opts (Optional[Dict[str, Any]], optional): query options. Defaults to None.
+
+        Raises:
+            RuntimeError: Failed to run query
+
+        Returns:
+            Dict[str, Any]: query results
+        """
+        try:
+            with self.query(sql, opts) as query:
+                return query.run(**kwargs)
+        except Exception as e:
+            raise RuntimeError(f"Failed to run query: {e}")
+
+    def close(self) -> None:
         self._status = JobStatus.Ended
         self._socket.close()

@@ -8,13 +8,13 @@ import websockets
 from pyee.asyncio import AsyncIOEventEmitter
 
 from ..base_job import BaseJob
-from ..types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
+from ..data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 
 
 class PoolJob(BaseJob):
     unique_id_counter = 0
 
-    def __init__(self, creds: DaemonServer = None, options: Optional[Dict[Any, Any]] = {}):
+    def __init__(self, creds: DaemonServer = None, options: Optional[Dict[Any, Any]] = {}) -> None:
         super().__init__(creds, options)
         self.socket = None
         self.response_emitter = AsyncIOEventEmitter()
@@ -32,10 +32,18 @@ class PoolJob(BaseJob):
             await self.connect(self.creds)
         return self
 
-    async def __aexit__(self, exc_type, exc, tb):
+    async def __aexit__(self, *args, **kwargs):
         await self.close()
 
     def _get_unique_id(self, prefix: str = "id") -> str:
+        """returns a unique id for the job object with the given prefix
+
+        Args:
+            prefix (str, optional): _description_. Defaults to "id".
+
+        Returns:
+            str: unique id
+        """
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
 
@@ -53,6 +61,18 @@ class PoolJob(BaseJob):
             print(message, flush=True)
 
     async def get_channel(self, db2_server: DaemonServer) -> websockets.WebSocketClientProtocol:
+        """returns a websocket connection to the mapepire server
+
+        Args:
+            db2_server (DaemonServer): server credentials
+
+        Raises:
+            TimeoutError: Failed to connect to server
+            e: Exception
+
+        Returns:
+            websockets.WebSocketClientProtocol: websocket connection
+        """
         uri = f"wss://{db2_server.host}:{db2_server.port}/db/"
         headers = {
             "Authorization": "Basic "
@@ -75,6 +95,14 @@ class PoolJob(BaseJob):
         return socket
 
     async def send(self, content: str) -> str:
+        """sends content to the mapepire server
+
+        Args:
+            content (str): JSON content to be sent
+
+        Returns:
+            str: response from the server
+        """
         self._local_log(self.enable_local_trace, f"sending data: {content}")
 
         req = json.loads(content)
@@ -87,6 +115,17 @@ class PoolJob(BaseJob):
         return response
 
     async def wait_for_response(self, req_id: str) -> str:
+        """when a request is sent to the server, this method waits for the response
+
+        Args:
+            req_id (str): request id
+
+        Raises:
+            e: Exception
+
+        Returns:
+            str: response from the server
+        """
         future = asyncio.Future()
 
         def on_response(response):
@@ -116,6 +155,17 @@ class PoolJob(BaseJob):
         return len(self.response_emitter.event_names())
 
     async def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[str, Any]:
+        """create connection to the mapepire server
+
+        Args:
+            db2_server (Union[DaemonServer, Dict[str, Any]]): server credentials
+
+        Raises:
+            Exception: Failed to connect to server
+
+        Returns:
+            Dict[str, Any]: Connection results from the server
+        """
         if isinstance(db2_server, dict):
             db2_server = dict_to_dataclass(db2_server, DaemonServer)
 
@@ -163,6 +213,12 @@ class PoolJob(BaseJob):
         self.response_emitter.remove_all_listeners()
 
     async def message_handler(self):
+        """handle incoming messages from the server
+
+        Raises:
+            ValueError: Error decoding JSON
+            RuntimeError: Error occured while processing message
+        """
         try:
             async for message in self.socket:
                 self._local_log(self.enable_local_trace, f"Received raw message: {message}")
@@ -224,9 +280,24 @@ class PoolJob(BaseJob):
     async def query_and_run(
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
     ) -> Dict[str, Any]:
-        query = self.query(sql, opts)
-        return await query.run(**kwargs)
+        """Create a PoolQuery object using provided SQL and options, then run the query.
 
-    async def close(self):
+        Args:
+            sql (str): query string
+            opts (Optional[Dict[str, Any]], optional): Query Options, Defaults to None.
+
+        Raises:
+            RuntimeError: Failed to run query
+
+        Returns:
+            Dict[str, Any]: Results of the query
+        """
+        try:
+            async with self.query(sql, opts) as query:
+                return await query.run(**kwargs)
+        except Exception as e:
+            raise RuntimeError(f"Failed to run query: {e}")
+
+    async def close(self) -> None:
         self.status = JobStatus.Ended
         await self.socket.close()

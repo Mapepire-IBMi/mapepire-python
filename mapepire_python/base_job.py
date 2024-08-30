@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Union
 
-from mapepire_python.types import DaemonServer, JobStatus
+from .data_types import DaemonServer, JobStatus, QueryOptions
 
 
 class BaseJob:
@@ -14,13 +14,20 @@ class BaseJob:
     def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[str, Any]:
         raise NotImplementedError()
 
-    async def close(self):
+    async def close(self) -> None:
         raise NotImplementedError()
 
-    def close(self):
+    def close(self) -> None:
         raise NotImplementedError()
 
     def get_status(self) -> JobStatus:
+        raise NotImplementedError()
+
+    def query(
+        self,
+        sql: str,
+        opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
+    ):
         raise NotImplementedError()
 
     async def query_and_run(

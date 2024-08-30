@@ -5,7 +5,7 @@ import pytest
 
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.query_manager import QueryManager
-from mapepire_python.types import DaemonServer, QueryOptions
+from mapepire_python.data_types import DaemonServer, QueryOptions
 
 # Fetch environment variables
 server = os.getenv('VITE_SERVER')
@@ -47,6 +47,13 @@ def test_query_manager():
         with query_manager.create_query("select * from sample.employee") as query:
             result = query_manager.run_query(query, rows_to_fetch=1)
             print(result)
+            
+
+def test_query_manager_with_cm_q_and_run():
+    with SQLJob(creds=creds) as job:
+        query_manager = QueryManager(job)
+        res = query_manager.query_and_run('select * from sample.employee')
+        assert res['success'] == True
     
 
     

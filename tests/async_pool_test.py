@@ -7,7 +7,7 @@ import pytest
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.query_manager import QueryManager
-from mapepire_python.types import DaemonServer, QueryOptions
+from mapepire_python.data_types import DaemonServer, QueryOptions
 
 server = os.getenv('VITE_SERVER')
 user = os.getenv('VITE_DB_USER')
@@ -36,11 +36,40 @@ async def test_pool():
         res2 = await query2.run()
         assert res['success'] == True
         assert res2['success'] == True
-        
+    
     async with PoolJob(creds=creds) as pool_job:
         query_manager = QueryManager(pool_job)
         async with query_manager.create_query('select * from sample.employee') as query:
           res = await query.run(rows_to_fetch=1)
+          
+@pytest.mark.asyncio
+async def test_pool_with_cm():
+    async with PoolJob(creds=creds) as pool_job:
+        query_manager = QueryManager(pool_job)
+        async with query_manager.create_query('select * from sample.employee') as query:
+          res = await query.run(rows_to_fetch=1)
+          assert res['success'] == True
+          
+@pytest.mark.asyncio
+async def test_pool_with_q_and_run():
+    async with PoolJob(creds=creds) as pool_job:
+        res = await pool_job.query_and_run('select * from sample.employee')
+        assert res['success'] == True
+        
+@pytest.mark.asyncio
+async def test_pool_with_cm_q_and_run():
+    async with PoolJob(creds=creds) as pool_job:
+        query_manager = QueryManager(pool_job)
+        res = await query_manager.query_and_run_async('select * from sample.employee')
+        assert res['success'] == True
+          
+@pytest.mark.asyncio
+async def test_pool_raw():
+    async with PoolJob(creds=creds) as pool_job:
+        async with pool_job.query('select * from sample.employee') as query:
+          res = await query.run(rows_to_fetch=1)
+          assert res['success'] == True
+        
         
 def test_pool2():
     with SQLJob(creds=creds) as job:

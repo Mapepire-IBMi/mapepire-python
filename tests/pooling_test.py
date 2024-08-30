@@ -7,7 +7,7 @@ from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.pool.pool_client import Pool, PoolOptions
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.query_manager import QueryManager
-from mapepire_python.types import DaemonServer, JobStatus, QueryOptions
+from mapepire_python.data_types import DaemonServer, JobStatus, QueryOptions
 
 server = os.getenv('VITE_SERVER')
 user = os.getenv('VITE_DB_USER')
@@ -46,7 +46,7 @@ async def test_simple_pool_cm():
                 pool.execute('values (job_name)')
             )
             job_names = [res['data'][0]['00001'] for res in resultsA]
-            
+            print(job_names)
             assert len(job_names) == 3
             assert pool.get_active_job_count() == 3
         finally:

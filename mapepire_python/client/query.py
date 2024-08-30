@@ -2,7 +2,7 @@ import json
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
-from ..types import QueryOptions
+from ..data_types import QueryOptions
 from .sql_job import SQLJob
 
 T = TypeVar("T")

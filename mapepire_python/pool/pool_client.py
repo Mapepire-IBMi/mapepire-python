@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Union
 
-from ..types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
+from ..data_types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
 from .pool_job import PoolJob
 
 
