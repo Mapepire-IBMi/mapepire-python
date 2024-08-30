@@ -8,13 +8,7 @@ class BaseJob:
         self.creds = creds
         self.options = options
 
-    async def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[str, Any]:
-        raise NotImplementedError()
-
     def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[str, Any]:
-        raise NotImplementedError()
-
-    async def close(self) -> None:
         raise NotImplementedError()
 
     def close(self) -> None:
@@ -28,11 +22,6 @@ class BaseJob:
         sql: str,
         opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
     ):
-        raise NotImplementedError()
-
-    async def query_and_run(
-        self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
-    ) -> Dict[str, Any]:
         raise NotImplementedError()
 
     def query_and_run(

@@ -5,9 +5,9 @@ import os
 import pytest
 
 from mapepire_python.client.sql_job import SQLJob
+from mapepire_python.data_types import DaemonServer, QueryOptions
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.query_manager import QueryManager
-from mapepire_python.data_types import DaemonServer, QueryOptions
 
 server = os.getenv('VITE_SERVER')
 user = os.getenv('VITE_DB_USER')

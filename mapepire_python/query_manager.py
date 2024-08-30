@@ -2,9 +2,9 @@ from typing import Any, Dict, Optional, Union
 
 from .client.query import Query
 from .client.sql_job import SQLJob
+from .data_types import QueryOptions
 from .pool.pool_job import PoolJob
 from .pool.pool_query import PoolQuery
-from .data_types import QueryOptions
 
 
 class QueryManager:

@@ -4,8 +4,8 @@ import re
 import pytest
 
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.query_manager import QueryManager
 from mapepire_python.data_types import DaemonServer, QueryOptions
+from mapepire_python.query_manager import QueryManager
 
 # Fetch environment variables
 server = os.getenv('VITE_SERVER')

@@ -2,8 +2,8 @@ import json
 from typing import Any, Dict, List, Optional
 
 from mapepire_python.client.query import QueryState
-from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.data_types import QueryOptions
+from mapepire_python.pool.pool_job import PoolJob
 
 
 class PoolQuery:
