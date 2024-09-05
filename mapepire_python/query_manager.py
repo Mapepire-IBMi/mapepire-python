@@ -57,7 +57,7 @@ class QueryManager:
                 return query.run(**kwargs)
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}")
-        
+
     async def query_and_run_async(
         self, query: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs
     ) -> Dict[str, Any]:
