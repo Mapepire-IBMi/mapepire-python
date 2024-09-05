@@ -27,6 +27,8 @@ def test_pep249():
     cur = conn.execute("select * from sample.employee")
     assert cur.rowcount == -1
     res = cur.fetchmany(5)
+    cur.close()
+    conn.close()
     assert len(res["data"]) == 5
 
 

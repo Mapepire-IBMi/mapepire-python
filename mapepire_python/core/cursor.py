@@ -1,10 +1,15 @@
+import weakref
 from collections import deque
-from typing import Any, Dict, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple, Type
 
 import pep249
 from pep249.cursor import CursorType
 
 from mapepire_python.core.utils import raise_if_closed
+
+if TYPE_CHECKING:
+    # pylint: disable=cyclic-import
+    from ..core.connection import Connection
 
 from ..client.query import Query, QueryState
 from ..client.sql_job import SQLJob
@@ -19,7 +24,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     def __init__(self, connection: "Connection", job: SQLJob) -> None:
         super().__init__()
         self.job = job
-        self._connection = connection
+        self._connection = weakref.proxy(connection)
         self.query: Query = None
         self.query_q = deque(maxlen=20)
         self.__closed = False
@@ -164,7 +169,9 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         if self._closed:
             return
         if self.query and self.job._socket.connected:
-            self.query.close()
+            for q in self.query_q:
+                q.close()
+            self.query_q.clear()
             self._closed = True
 
     def commit(self) -> None:
