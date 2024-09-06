@@ -10,8 +10,6 @@ from .core import (
     NotSupportedError,
     OperationalError,
     ProgrammingError,
-    CONNECTION_CLOSED,
-    convert_runtime_errors,
     Connection,
     Cursor,
 )

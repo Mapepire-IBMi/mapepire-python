@@ -66,7 +66,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
 
     async def callproc(
         self, procname: ProcName, parameters: Optional[ProcArgs] = None
-    ) -> Sequence[Any] | None:
+    ) -> Optional[ProcArgs]:
         cursor = await self.cursor()
         return await cursor.callproc(procname, parameters)
 

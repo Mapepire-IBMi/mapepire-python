@@ -3,7 +3,15 @@ from collections import deque
 from typing import TYPE_CHECKING, Any, Optional, Sequence, Tuple, Type, Union
 
 import pep249
-from pep249 import ProcArgs, ProcName, QueryParameters, ResultRow, ResultSet, SQLQuery
+from pep249 import (
+    ColumnDescription,
+    ProcArgs,
+    ProcName,
+    QueryParameters,
+    ResultRow,
+    ResultSet,
+    SQLQuery,
+)
 from pep249.cursor import CursorType
 
 from mapepire_python.core.utils import raise_if_closed
@@ -116,10 +124,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     @property
     def description(
         self,
-    ) -> (
-        Sequence[Tuple[str, type, int | None, int | None, int | None, int | None, bool | None]]
-        | None
-    ):
+    ) -> Optional[Sequence[ColumnDescription]]:
         pass
 
     @raise_if_closed
