@@ -1,7 +1,5 @@
 from typing import Any, Dict, Union
 
-from pep249.type_constructors import *
-
 from ..asyncio.connection import AsyncConnection
 from ..core.exceptions import (
     DatabaseError,
@@ -15,7 +13,6 @@ from ..core.exceptions import (
     ProgrammingError,
 )
 from ..data_types import DaemonServer
-from .connection import AsyncConnection
 from .cursor import AsyncCursor
 
 __all__ = [

@@ -1,6 +1,6 @@
 import weakref
 from collections import deque
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Tuple, Type, Union
 
 import pep249
 from pep249 import ProcArgs, ProcName, QueryParameters, ResultRow, ResultSet, SQLQuery
@@ -58,10 +58,10 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     def rowcount(self, value: int):
         setattr(self, "_rowcount", value)
 
-    def setinputsizes(self, sizes: Sequence[int | Type | None]) -> None:
+    def setinputsizes(self, sizes: Sequence[Optional[Union[int, Type]]]) -> None:
         pass
 
-    def setoutputsize(self, size: int, column: int | None) -> None:
+    def setoutputsize(self, size: int, column: Optional[int] = None) -> None:
         pass
 
     @raise_if_closed
