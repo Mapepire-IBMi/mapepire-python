@@ -1,12 +1,18 @@
-from typing import Any, Dict, Sequence, Union
+from typing import Any, Optional, Sequence, Union
 
 import pep249
+from pep249 import ProcArgs, QueryParameters, SQLQuery
 
 from ..client.sql_job import SQLJob
 from ..core.cursor import Cursor
 from ..core.exceptions import convert_runtime_errors
 from ..core.utils import raise_if_closed
 from ..data_types import DaemonServer
+
+__all__ = ["Connection"]
+
+COMMIT = "COMMIT"
+ROLLBACK = "ROLLBACK"
 
 
 class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Connection):
@@ -32,23 +38,23 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
         self.job.close()
         self._closed = True
 
-    def execute(
-        self, operation: str, parameters: Sequence[Any] | Dict[str | int, Any] | None = None
-    ) -> Cursor:
+    def execute(self, operation: str, parameters: Optional[QueryParameters] = None) -> Cursor:
         return self.cursor().execute(operation, parameters)
 
-    def executemany(
-        self, operation: str, seq_of_parameters: Sequence[Sequence[Any] | Dict[str | int, Any]]
-    ) -> Cursor:
+    def executemany(self, operation: str, seq_of_parameters: Sequence[QueryParameters]) -> Cursor:
         return self.cursor().executemany(operation, seq_of_parameters)
 
     def callproc(
-        self, procname: str, parameters: Sequence[Any] | None = None
+        self, procname: str, parameters: Sequence[ProcArgs] = None
     ) -> Sequence[Any] | None:
         return self.cursor().callproc(procname, parameters)
 
+    def executescript(self, script: SQLQuery) -> Cursor:
+        """A lazy implementation of SQLite's `executescript`."""
+        return self.execute(script)
+
     def commit(self) -> None:
-        pass
+        self.job.query_and_run("COMMIT")
 
     def rollback(self) -> None:
-        pass
+        self.job.query_and_run("ROLLBACK")

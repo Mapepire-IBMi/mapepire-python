@@ -13,8 +13,7 @@ from pep249.aiopep249.types import (
 if TYPE_CHECKING:
     from .connection import AsyncConnection  # pylint:disable=cyclic-import
 
-from mapepire_python.core.cursor import Cursor
-
+from ..core.cursor import Cursor
 from .utils import to_thread
 
 
@@ -23,6 +22,14 @@ class AsyncCursor(
     aiopep249.IterableAsyncCursorMixin,
     aiopep249.TransactionalAsyncCursor,
 ):
+    """
+    An async DB API 2.0 compliant cursor for Mapepire, as outlined in
+    PEP 249.
+
+    Can be constructed by passing an AsyncConnection and a sync Cursor.
+
+    """
+
     def __init__(self, connection: "AsyncConnection", cursor: Cursor) -> None:
         super().__init__()
         self._connection = weakref.proxy(connection)

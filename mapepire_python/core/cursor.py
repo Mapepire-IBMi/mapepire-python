@@ -1,8 +1,9 @@
 import weakref
 from collections import deque
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Tuple, Type
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Tuple, Type
 
 import pep249
+from pep249 import ProcArgs, ProcName, QueryParameters, ResultRow, ResultSet, SQLQuery
 from pep249.cursor import CursorType
 
 from mapepire_python.core.utils import raise_if_closed
@@ -13,9 +14,11 @@ if TYPE_CHECKING:
 
 from ..client.query import Query, QueryState
 from ..client.sql_job import SQLJob
-from ..core import QueryResultSet
 from ..core.exceptions import convert_runtime_errors
+from ..core.utils import QueryResultSet
 from ..data_types import QueryOptions
+
+__all__ = ["Cursor"]
 
 
 class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.TransactionalCursor):
@@ -30,7 +33,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         self.__closed = False
 
     @property
-    def connection(self) -> "BaseConnection":
+    def connection(self) -> "Connection":
         """The parent Connection of the implementing cursor."""
         return self._connection
 
@@ -65,8 +68,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     @convert_runtime_errors
     def execute(
         self,
-        operation: str,
-        parameters: Sequence[Any] | Dict[str | int, Any] | None = None,
+        operation: SQLQuery,
+        parameters: Optional[QueryParameters] = None,
         **kwargs: Any,
     ) -> "Cursor":
         opts = kwargs.get("opts", None)
@@ -99,17 +102,15 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     @convert_runtime_errors
     def executemany(
         self: CursorType,
-        operation: str,
-        seq_of_parameters: Sequence[Sequence[Any] | Dict[str | int, Any]],
+        operation: SQLQuery,
+        seq_of_parameters: Sequence[QueryParameters],
         **kwargs: Any,
     ) -> "Cursor":
         return self.execute(operation=operation, parameters=seq_of_parameters)
 
     @raise_if_closed
     @convert_runtime_errors
-    def callproc(
-        self, procname: str, parameters: Sequence[Any] | None = None
-    ) -> Sequence[Any] | None:
+    def callproc(self, procname: ProcName, parameters: Optional[ProcArgs] = None) -> "Cursor":
         return self.execute(procname, parameters=parameters)
 
     @property
@@ -123,7 +124,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
     @raise_if_closed
     @convert_runtime_errors
-    def fetchone(self) -> Sequence[Any] | Dict[str, Any] | None:
+    def fetchone(self) -> Optional[ResultRow]:
         if not self.query or self.query.state == QueryState.RUN_DONE:
             return None
         res = self.query.fetch_more(rows_to_fetch=1)
@@ -133,7 +134,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
     @raise_if_closed
     @convert_runtime_errors
-    def fetchall(self) -> Sequence[Sequence[Any] | Dict[str, Any]]:
+    def fetchall(self) -> ResultSet:
         if not self.query:
             return None
         print(self.query.sql)
@@ -144,7 +145,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
     @raise_if_closed
     @convert_runtime_errors
-    def fetchmany(self, size: Optional[int] = None):
+    def fetchmany(self, size: Optional[int] = None) -> ResultSet:
         if size is None:
             size = self.arraysize
         if not self.query:
@@ -154,7 +155,11 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             self._result_set = QueryResultSet(res)
         return res
 
-    def nextset(self) -> bool | None:
+    def executescript(self, script: SQLQuery) -> "Cursor":
+        """A lazy implementation of SQLite's `executescript`."""
+        return self.execute(script)
+
+    def nextset(self) -> Optional[bool]:
         try:
             if len(self.query_q) > 1:
                 self.query_q.popleft()
@@ -175,7 +180,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             self._closed = True
 
     def commit(self) -> None:
-        pass
+        self.job.query_and_run("COMMIT")
 
     def rollback(self) -> None:
-        pass
+        self.job.query_and_run("ROLLBACK")

@@ -6,10 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Add PEP 249 support
+- add pep249abc dependency
 
 ## [v0.1.5](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.1.5) - 2024-08-30
--- add cl tests
- - add query manager
+- add cl tests
+- add query manager
 
 ## TP1
 - Add query manager

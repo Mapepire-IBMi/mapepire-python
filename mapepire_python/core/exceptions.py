@@ -6,7 +6,7 @@ This module covers the exceptions outlined in PEP 249.
 # pylint: disable=missing-class-docstring
 import ast
 from functools import wraps
-from typing import Callable
+from typing import Callable, TypeVar
 
 from pep249 import (
     DatabaseError,
@@ -19,11 +19,6 @@ from pep249 import (
     OperationalError,
     ProgrammingError,
 )
-
-"""Some useful generic types."""
-from typing import TypeVar
-
-__all__ = ["ReturnType"]
 
 ReturnType = TypeVar("ReturnType")
 
@@ -40,6 +35,7 @@ __all__ = [
     "ProgrammingError",
     "CONNECTION_CLOSED",
     "convert_runtime_errors",
+    "ReturnType",
 ]
 
 CONNECTION_CLOSED = ProgrammingError("Cannot operate on a closed connection.")

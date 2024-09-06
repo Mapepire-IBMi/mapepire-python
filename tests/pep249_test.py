@@ -131,12 +131,12 @@ def test_prepare_statement_mult_params_seq():
 def test_pep249_iterate():
     def rows():
         with connect(creds) as conn:
-            for row in conn.execute("select * from sample.employee"):
+            for row in conn.execute("select * from sample.department"):
                 yield row
 
     cool_rows = rows()
-    for _ in cool_rows:
-        continue
+    for row in cool_rows:
+        assert row["success"] == True
 
 
 def test_pep249_iterate_cur():
@@ -144,6 +144,9 @@ def test_pep249_iterate_cur():
         with conn.execute("select * from sample.employee") as cur:
             for _ in cur.fetchmany(5)["data"]:
                 pass
+            assert True
+            return
+    assert False
 
 
 def test_pep249_nextset():

@@ -18,3 +18,4 @@ dependencies:
     - websocket-client>=1.2.1
     - pyee
     - websockets
+    - pep249abc
