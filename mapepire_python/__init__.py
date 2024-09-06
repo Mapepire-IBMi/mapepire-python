@@ -1,17 +1,17 @@
 from typing import Any, Dict, Union
 
 from .core import (
+    Connection,
+    Cursor,
     DatabaseError,
     DataError,
     Error,
-    InterfaceError,
     IntegrityError,
+    InterfaceError,
     InternalError,
     NotSupportedError,
     OperationalError,
     ProgrammingError,
-    Connection,
-    Cursor,
 )
 from .data_types import DaemonServer
 

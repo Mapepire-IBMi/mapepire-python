@@ -1,11 +1,11 @@
 from .connection import Connection
 from .cursor import Cursor
 from .exceptions import (
-    Error,
-    InterfaceError,
     DatabaseError,
     DataError,
+    Error,
     IntegrityError,
+    InterfaceError,
     InternalError,
     NotSupportedError,
     OperationalError,
