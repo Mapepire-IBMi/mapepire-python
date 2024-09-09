@@ -12,6 +12,9 @@
 <br/>
 </div>
 
+<details>
+  <summary>Table of Contents</summary>
+  
 - [mapepire-python](#mapepire-python)
   - [Overview](#overview)
   - [Setup](#setup)
@@ -47,7 +50,7 @@
       - [2. Verify the new environment was installed:](#2-verify-the-new-environment-was-installed)
   - [Run local test suite](#run-local-test-suite)
 
-
+</details>
 
 ## Overview
 
