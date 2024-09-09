@@ -22,7 +22,8 @@ dependencies = [
   "dataclasses-json>=0.6.4",
   "websocket-client>=1.2.1",
   "websockets",
-  "pyee"
+  "pyee",
+  "pep249abc"
 ]
 license = {file = "LICENSE"}
 
@@ -39,6 +40,8 @@ dev = [
     "black>=23.0,<24.0",
     "isort>=5.12,<5.13",
     "pytest",
+    "pyee",
+    "pep249abc",
     "pytest-asyncio",
     "pytest-sphinx",
     "pytest-cov",

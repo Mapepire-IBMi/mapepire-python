@@ -17,10 +17,14 @@
   - [Setup](#setup)
     - [Install with `pip`](#install-with-pip)
     - [Server Component Setup](#server-component-setup)
-  - [Example usage](#example-usage)
+- [Usage](#usage)
+  - [1. Using the `SQLJob` object to run queries synchronously](#1-using-the-sqljob-object-to-run-queries-synchronously)
     - [Query and run](#query-and-run)
-    - [Asynchronous Query Execution](#asynchronous-query-execution)
-  - [Pooling (beta)](#pooling-beta)
+  - [2. Using the `PoolJob` object to run queries asynchronously](#2-using-the-pooljob-object-to-run-queries-asynchronously)
+  - [3. Using the `Pool` object to run queries "concurrently"](#3-using-the-pool-object-to-run-queries-concurrently)
+  - [4. Using PEP 249 Implementation](#4-using-pep-249-implementation)
+    - [`fetchmany()` and `fetchall()` methods](#fetchmany-and-fetchall-methods)
+  - [PEP 249 Asynchronous Implementation](#pep-249-asynchronous-implementation)
 - [Development Setup](#development-setup)
   - [Setup python virtual environment with pip and venv](#setup-python-virtual-environment-with-pip-and-venv)
     - [Create a new virtual environment](#create-a-new-virtual-environment)
@@ -69,9 +73,15 @@ pip install mapepire-python
 ### Server Component Setup
 To use mapire-python, you will need to have the Mapepire Server Component running on your IBM i server. Follow these instructions to set up the server component: [Mapepire Server Installation](https://mapepire-ibmi.github.io/guides/sysadmin/)
 
-## Example usage
+# Usage
 
-Setup the server credentials used to connect to the server. One way to do this is to create a `mapepire.ini` file in the root of your project with the following content:
+There are four main ways to run queries using `mapepire-python`:
+1.  Using the `SQLJob` object to run queries synchronously
+2.  Using the `PoolJob` object to run queries asynchronously
+3.  Using the `Pool` object to run queries "concurrently"
+4.  Using PEP 249 Implementation
+
+All of these methods require the `DaemonServer` object for connecting to the server. One way to set up the `DaemonServer` is to create a `mapepire.ini` file in the root of your project with the following content:
 
 ```ini
 [mapepire]
@@ -81,7 +91,8 @@ USER="USER"
 PASSWORD="PASSWORD"
 ```
 
-The following script sets up a `DaemonServer` object that will be used to connect with the Server Component. Then a single `SQLJob` is created to facilitate the connection from the client side.
+
+## 1. Using the `SQLJob` object to run queries synchronously
 
 ```python
 import configparser
@@ -262,7 +273,7 @@ with SQLJob(creds) as sql_job:
     print(result)
 ```
 
-### Asynchronous Query Execution
+## 2. Using the `PoolJob` object to run queries asynchronously
 
 The `PoolJob` object can be used to create and run queries asynchronously:
 
@@ -323,7 +334,7 @@ if __name__ == '__main__':
 ```
 
 
-## Pooling (beta)
+## 3. Using the `Pool` object to run queries "concurrently"
 
 The `Pool` object can be used to create a pool of `PoolJob` objects to run queries concurrently. 
 
@@ -373,6 +384,71 @@ This script will create a pool of 3 `PoolJob` objects and run the query `values 
 
 ```bash
 ['004460/QUSER/QZDASOINIT', '005096/QUSER/QZDASOINIT', '005319/QUSER/QZDASOINIT']
+```
+
+## 4. Using PEP 249 Implementation
+
+PEP 249 is the Python Database API Specification v2.0. The `mapepire-python` client provides a PEP 249 implementation that allows you to use the `Connection` and `Cursor` objects to interact with the Mapepire server. The same `DaemonServer` object is used by the PEP 249 implementation to connect to the server.
+
+```python
+import configparser
+from mapepire_python import connect
+from mapepire_python.data_types import DaemonServer
+
+config = configparser.ConfigParser()
+config.read('mapepire.ini')
+
+creds = DaemonServer(
+    host=config['mapepire']['SERVER'],
+    port=config['mapepire']['PORT'],
+    user=config['mapepire']['USER'],
+    password=config['mapepire']['PASSWORD'],
+    ignoreUnauthorized=True
+)
+
+with connect(creds) as conn:
+    with conn.execute("select * from sample.employee") as cursor:
+        result = cursor.fetchone()
+        print(result)
+```
+
+### `fetchmany()` and `fetchall()` methods
+
+The `Cursor` object provides the `fetchmany()` and `fetchall()` methods to fetch multiple rows from the result set:
+
+```python
+
+with connect(creds) as conn:
+    with conn.execute("select * from sample.employee") as cursor:
+        results = cursor.fetchmany(size=2)
+        print(results)
+```
+---
+
+```python
+
+with connect(creds) as conn:
+    with conn.execute("select * from sample.employee") as cursor:
+        results = cursor.fetchall()
+        print(results)
+```
+
+## PEP 249 Asynchronous Implementation
+
+The PEP 249 implementation also provides an asynchronous interface for running queries. The `connect` function returns an asynchronous context manager that can be used with the `async with` statement:
+
+```python
+import asyncio
+from mapepire_python.asycnio import connect
+
+async def main():
+    async with connect(creds) as conn:
+        async with await conn.execute("select * from sample.employee") as cursor:
+            result = await cursor.fetchone()
+            print(result)
+            
+if __name__ == '__main__':
+    asyncio.run(main())
 ```
 
 

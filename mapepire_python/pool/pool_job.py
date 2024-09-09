@@ -10,6 +10,8 @@ from pyee.asyncio import AsyncIOEventEmitter
 from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 
+__all__ = ["PoolJob"]
+
 
 class PoolJob(BaseJob):
     unique_id_counter = 0

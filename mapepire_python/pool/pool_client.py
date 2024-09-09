@@ -4,6 +4,8 @@ from typing import Any, Dict, List, Optional, Union
 from ..data_types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
 from .pool_job import PoolJob
 
+__all__ = ["Pool"]
+
 
 @dataclass
 class PoolOptions:

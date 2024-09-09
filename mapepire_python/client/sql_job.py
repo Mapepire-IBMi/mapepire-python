@@ -7,6 +7,8 @@ from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 from .websocket import WebsocketConnection
 
+__all__ = ["SQLJob"]
+
 
 class SQLJob(BaseJob):
     def __init__(self, creds: DaemonServer = None, options: Dict[Any, Any] = {}) -> None:
