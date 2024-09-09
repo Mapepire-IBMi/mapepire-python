@@ -38,8 +38,8 @@ async def test_simple_pool_cm():
                 pool.execute("values (job_name)"),
                 pool.execute("values (job_name)"),
             )
+            print(resultsA)
             job_names = [res["data"][0]["00001"] for res in resultsA]
-            print(job_names)
             assert len(job_names) == 3
             assert pool.get_active_job_count() == 3
         finally:

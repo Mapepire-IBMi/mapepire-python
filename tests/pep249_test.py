@@ -207,3 +207,59 @@ def test_pep249_execute_many():
     res = cur.fetchall()
 
     assert len(res["data"]) == 12
+
+
+def test_pep249_has_results():
+    with connect(creds) as conn:
+        cur = conn.cursor()
+        cur.execute("select * from sample.department")
+        assert cur.has_results == True
+
+        cur.execute(
+            "create or replace variable sample.coolval varchar(8) ccsid 1208 default 'abcd'"
+        )
+
+        assert cur.has_results == True
+
+        assert cur.fetchall() is not None
+
+
+def test_pep249_has_results_no_select():
+    with connect(creds) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "create or replace variable sample.coolval varchar(8) ccsid 1208 default 'abcd'"
+        )
+
+        assert cur.has_results == False
+
+        assert cur.fetchall() is None
+
+
+def test_pep249_has_results_setter():
+    with connect(creds) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "create or replace variable sample.coolval varchar(8) ccsid 1208 default 'abcd'"
+        )
+
+        assert cur.has_results == False
+
+        assert cur.fetchall() is None
+
+
+def test_pep249_has_results_flow():
+    with connect(creds) as conn:
+        with conn.execute("select * from sample.employee") as cur:
+            if cur.has_results:
+                assert cur.fetchall() is not None
+
+
+def test_pep249_has_next_set_None():
+    with connect(creds) as conn:
+        with conn.execute("select * from sample.employee") as cur:
+            if cur.has_results:
+                assert cur.fetchall() is not None
+            if not cur.nextset():
+                cur.execute("select * from sample.department")
+                assert cur.fetchone() is not None

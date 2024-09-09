@@ -39,6 +39,14 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         self.query: Query = None
         self.query_q = deque(maxlen=20)
         self.__closed = False
+        self.__has_results = False
+
+    @property
+    def has_results(self) -> bool:
+        return self.__has_results
+
+    def __set_has_results(self, value: bool):
+        self.__has_results = value
 
     @property
     def connection(self) -> "Connection":
@@ -98,6 +106,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
         if prepare_result["has_results"]:
             self.query = query
+            self.__set_has_results(True)
             self.query_q.append(query)
 
         update_count = prepare_result.get("update_count", None)
@@ -142,7 +151,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     def fetchall(self) -> ResultSet:
         if not self.query:
             return None
-        print(self.query.sql)
+
         res = self.query.fetch_more(rows_to_fetch=self.max_rows)
         if res:
             self._result_set = QueryResultSet(res)
@@ -169,6 +178,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             if len(self.query_q) > 1:
                 self.query_q.popleft()
                 self.query = self.query_q[0]
+                self.has_results = True
                 return True
             return None
         except Exception:
