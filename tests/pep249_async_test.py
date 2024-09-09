@@ -6,7 +6,6 @@ import pytest
 
 import mapepire_python
 from mapepire_python.asyncio import connect
-from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.data_types import DaemonServer
 from mapepire_python.pool.pool_client import Pool, PoolOptions
 

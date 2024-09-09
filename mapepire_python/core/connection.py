@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 import pep249
 from pep249 import ProcArgs, QueryParameters, SQLQuery
@@ -52,7 +52,7 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
         return self.execute(script)
 
     def commit(self) -> None:
-        self.job.query_and_run("COMMIT")
+        self.job.query_and_run(COMMIT)
 
     def rollback(self) -> None:
-        self.job.query_and_run("ROLLBACK")
+        self.job.query_and_run(ROLLBACK)

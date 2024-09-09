@@ -1,4 +1,4 @@
-from typing import Any, Optional, Sequence, Union
+from typing import Optional, Sequence, Union
 
 from pep249 import aiopep249
 from pep249.aiopep249 import ProcArgs, ProcName, QueryParameters, SQLQuery
@@ -75,7 +75,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
         return await self.execute(script)
 
     async def commit(self) -> None:
-        pass
+        to_thread(self._connection.commit)
 
     async def rollback(self) -> None:
-        pass
+        to_thread(self._connection.rollback)

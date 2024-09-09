@@ -1,6 +1,6 @@
 import weakref
 from collections import deque
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union
 
 import pep249
 from pep249 import (
