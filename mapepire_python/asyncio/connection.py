@@ -75,7 +75,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
         return await self.execute(script)
 
     async def commit(self) -> None:
-        to_thread(self._connection.commit)
+        await to_thread(self._connection.commit)
 
     async def rollback(self) -> None:
-        to_thread(self._connection.rollback)
+        await to_thread(self._connection.rollback)
