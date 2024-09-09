@@ -34,8 +34,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
     def __init__(self, connection: "Connection", job: SQLJob) -> None:
         super().__init__()
-        self.job = job
         self._connection = weakref.proxy(connection)
+        self.job = job
         self.query: Query = None
         self.query_q = deque(maxlen=20)
         self.__closed = False
