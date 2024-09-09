@@ -1,5 +1,6 @@
 dataclasses-json>=0.6.4
 websocket-client>=1.2.1
+pep249abc
 pytest
 pytest-asyncio
 python-dotenv

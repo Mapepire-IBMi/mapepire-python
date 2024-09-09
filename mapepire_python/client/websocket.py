@@ -34,4 +34,4 @@ class WebsocketConnection:
                 self.uri, header=self.headers, sslopt=self.ssl_opts, timeout=10
             )
         except Exception as e:
-            raise Exception(f"An error occurred while connecting to the server: {e}")
+            raise RuntimeError(f"An error occurred while connecting to the server: {e}")

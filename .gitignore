@@ -33,7 +33,12 @@ doc/_build/
 *.pem
 local_test/
 local_test.py
+
+# local test files
 _*
+
+# keep __init__.py files
+!__*
 
 # python
 

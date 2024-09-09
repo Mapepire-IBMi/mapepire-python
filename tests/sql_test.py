@@ -34,15 +34,16 @@ def test_simple():
     assert result["success"] is True
     assert result["is_done"] is False
     assert result["has_results"] is True
-    
+
+
 def test_simple_dict():
     creds_dict = {
-        'host': server,
-        'user': user,
-        'port': port,
-        'password': password,
-        'port': port,
-        'ignoreUnauthorized': True
+        "host": server,
+        "user": user,
+        "port": port,
+        "password": password,
+        "port": port,
+        "ignoreUnauthorized": True,
     }
     job = SQLJob()
     _ = job.connect(creds_dict)
@@ -52,12 +53,55 @@ def test_simple_dict():
     assert result["success"] is True
     assert result["is_done"] is False
     assert result["has_results"] is True
-    
-    
+
+
+# def test_pep249_execute_many():
+#     parameters = [
+#         ["SANJULA", "416 345 0879"],
+#         ["TONGKUN", "647 345 0879"],
+#         ["KATHERINE", "905 345 1879"],
+#         ["IRFAN", "647 345 0879"],
+#         ["SANJULA", "416 234 0879"],
+#         ["TONGKUN", "333 345 0879"],
+#         ["KATHERINE", "416 345 0000"],
+#         ["IRFAN", "416 345 3333"],
+#         ["SANJULA", "416 545 0879"],
+#         ["TONGKUN", "456 345 0879"],
+#         ["KATHERINE", "416 065 1879"],
+#         ["IRFAN", "416 345 1111"],
+#     ]
+
+#     with SQLJob(creds) as job:
+#         with job.query('select * from sample.deleteme') as q:
+#             res = q.run()
+#             print(res)
+#     cur.execute("drop table sample.deleteme if exists")
+#     cur.execute("CREATE or replace TABLE SAMPLE.DELETEME (name varchar(10), phone varchar(12))")
+#     assert len(cur.query_q) == 2
+
+#     cur.execute('INSERT INTO SAMPLE.DELETEME values (?, ?)', parameters)
+#     print(cur.query)
+#     cur.nextset()
+
+#     print(cur.query)
+#     cur.nextset()
+
+#     print(cur.query)
+#     cur.execute('select * from sample.deleteme')
+
+#     cur.nextset()
+#     print(cur.query)
+#     res = cur.fetchall()
+
+
+#     print(res)
+
+
 def test_with_q_and_run_cm():
     with SQLJob(creds=creds) as job:
-        res = job.query_and_run('select * from sample.employee')
-        assert res['success'] == True
+        res = job.query_and_run("select * from sample.employee")
+        assert res["success"] == True
+
 
 def test_query_large_dataset():
     job = SQLJob()
