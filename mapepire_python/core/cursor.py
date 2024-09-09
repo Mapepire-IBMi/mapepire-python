@@ -178,7 +178,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             if len(self.query_q) > 1:
                 self.query_q.popleft()
                 self.query = self.query_q[0]
-                self.has_results = True
+                self.__set_has_results(True)
                 return True
             return None
         except Exception:

@@ -161,6 +161,7 @@ def test_pep249_nextset_true():
     cur = conn.cursor()
     cur.execute("select * from sample.employee")
     cur.execute("select * from sample.department")
+    assert len(cur.query_q) == 2
     res = cur.nextset()
     assert res == True
 
