@@ -16,6 +16,31 @@ ROLLBACK = "ROLLBACK"
 
 
 class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Connection):
+    """
+    A DB API 2.0 compliant connection for Mapepire, as outlined in
+    PEP 249.
+
+    Can be constructed by passing a connection details object as a dict,
+    or a `DaemonServer` object:
+
+    ```
+    import asyncio
+    from mapepire_python import connect
+    from mapepire_python.data_types import DaemonServer
+    creds = DaemonServer(
+        host=SERVER,
+        port=PORT,
+        user=USER,
+        password=PASS,
+        ignoreUnauthorized=True
+    )
+    with connect(creds) as conn:
+        with conn.execute("select * from sample.employee") as cur:
+            print(await cur.fetchone())
+
+    ```
+    """
+
     @convert_runtime_errors
     def __init__(self, database: Union[DaemonServer, dict], opts={}) -> None:
         super().__init__()

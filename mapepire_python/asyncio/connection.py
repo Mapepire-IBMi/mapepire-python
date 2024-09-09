@@ -14,7 +14,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
     A DB API 2.0 compliant async connection for Mapepire, as outlined in
     PEP 249.
 
-    Can be constructed by passing a connection details as a dict,
+    Can be constructed by passing a connection details object as a dict,
     or a `DaemonServer` object:
 
     ```
