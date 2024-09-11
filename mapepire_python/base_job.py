@@ -24,7 +24,6 @@ class BaseJob:
             db2_server = dict_to_dataclass(db2_server, DaemonServer)
         elif isinstance(db2_server, (str, Path)):
             config_path = Path(os.path.abspath(os.path.expanduser(db2_server)))
-            print(config_path)
             if config_path.is_file():
                 config = configparser.ConfigParser()
                 config.read(config_path)
@@ -34,7 +33,6 @@ class BaseJob:
                 else:
                     first_group = config.sections()[0]
                     conn_settings = dict(config[first_group])
-                print(conn_settings)
                 db2_server = dict_to_dataclass(conn_settings, DaemonServer)
             else:
                 raise ValueError(f"The provided path '{db2_server}' is not a valid file.")
