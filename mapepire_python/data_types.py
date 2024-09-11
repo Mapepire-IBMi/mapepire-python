@@ -46,7 +46,7 @@ class DaemonServer:
     user: str
     password: str
     port: int
-    ignoreUnauthorized: Optional[bool] = None
+    ignoreUnauthorized: Optional[bool] = True
     ca: Optional[Union[str, bytes]] = None
 
 

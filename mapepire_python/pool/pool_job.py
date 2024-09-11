@@ -2,6 +2,7 @@ import asyncio
 import base64
 import json
 import ssl
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import websockets
@@ -16,8 +17,13 @@ __all__ = ["PoolJob"]
 class PoolJob(BaseJob):
     unique_id_counter = 0
 
-    def __init__(self, creds: DaemonServer = None, options: Optional[Dict[Any, Any]] = {}) -> None:
-        super().__init__(creds, options)
+    def __init__(
+        self,
+        creds: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None,
+        options: Optional[Dict[Any, Any]] = {},
+        **kwargs,
+    ) -> None:
+        super().__init__(creds, options, **kwargs)
         self.socket = None
         self.response_emitter = AsyncIOEventEmitter()
         self.status = JobStatus.NotStarted
@@ -31,7 +37,7 @@ class PoolJob(BaseJob):
 
     async def __aenter__(self):
         if self.creds:
-            await self.connect(self.creds)
+            await self.connect(self.creds, **self.kwargs)
         return self
 
     async def __aexit__(self, *args, **kwargs):
@@ -156,7 +162,9 @@ class PoolJob(BaseJob):
         )
         return len(self.response_emitter.event_names())
 
-    async def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[str, Any]:
+    async def connect(
+        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+    ) -> Dict[str, Any]:
         """create connection to the mapepire server
 
         Args:
@@ -168,8 +176,7 @@ class PoolJob(BaseJob):
         Returns:
             Dict[str, Any]: Connection results from the server
         """
-        if isinstance(db2_server, dict):
-            db2_server = dict_to_dataclass(db2_server, DaemonServer)
+        db2_server = self._parse_connection_input(db2_server, **kwargs)
 
         # create socket connection
         self.socket = await self.get_channel(db2_server)

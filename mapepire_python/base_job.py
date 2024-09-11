@@ -1,14 +1,49 @@
+import configparser
+import os
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from .data_types import DaemonServer, JobStatus, QueryOptions
+from .data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
 
 
 class BaseJob:
-    def __init__(self, creds: DaemonServer = None, options: Dict[Any, Any] = {}) -> None:
+    def __init__(
+        self,
+        creds: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None,
+        options: Dict[Any, Any] = {},
+        **kwargs,
+    ) -> None:
         self.creds = creds
         self.options = options
+        self.kwargs = kwargs
 
-    def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[str, Any]:
+    def _parse_connection_input(
+        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs: Any
+    ) -> DaemonServer:
+        if isinstance(db2_server, dict):
+            db2_server = dict_to_dataclass(db2_server, DaemonServer)
+        elif isinstance(db2_server, (str, Path)):
+            config_path = Path(os.path.abspath(os.path.expanduser(db2_server)))
+            print(config_path)
+            if config_path.is_file():
+                config = configparser.ConfigParser()
+                config.read(config_path)
+                system = kwargs.get("section", None)
+                if system and system in config:
+                    conn_settings = dict(config[system])
+                else:
+                    first_group = config.sections()[0]
+                    conn_settings = dict(config[first_group])
+                print(conn_settings)
+                db2_server = dict_to_dataclass(conn_settings, DaemonServer)
+            else:
+                raise ValueError(f"The provided path '{db2_server}' is not a valid file.")
+
+        return db2_server
+
+    def connect(
+        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+    ) -> Dict[str, Any]:
         raise NotImplementedError()
 
     def close(self) -> None:

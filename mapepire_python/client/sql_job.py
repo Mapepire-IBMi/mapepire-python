@@ -1,4 +1,6 @@
+import configparser
 import json
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 from websocket import WebSocket
@@ -11,8 +13,13 @@ __all__ = ["SQLJob"]
 
 
 class SQLJob(BaseJob):
-    def __init__(self, creds: DaemonServer = None, options: Dict[Any, Any] = {}) -> None:
-        super().__init__(creds, options)
+    def __init__(
+        self,
+        creds: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None,
+        options: Dict[Any, Any] = {},
+        **kwargs,
+    ) -> None:
+        super().__init__(creds, options, **kwargs)
         self._unique_id_counter: int = 0
         self._reponse_emitter = {}
         self._status: JobStatus = JobStatus.NotStarted
@@ -24,7 +31,7 @@ class SQLJob(BaseJob):
 
     def __enter__(self):
         if self.creds:
-            self.connect(self.creds)
+            self.connect(self.creds, **self.kwargs)
         return self
 
     def __exit__(self, *args, **kwargs):
@@ -70,7 +77,9 @@ class SQLJob(BaseJob):
         """
         self._socket.send(content)
 
-    def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[Any, Any]:
+    def connect(
+        self, connection_details: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+    ) -> Dict[Any, Any]:
         """create connection to the mapepire server
 
         Args:
@@ -82,8 +91,8 @@ class SQLJob(BaseJob):
         Returns:
             Dict[Any, Any]: connection results from the server
         """
-        if isinstance(db2_server, dict):
-            db2_server = dict_to_dataclass(db2_server, DaemonServer)
+        db2_server = self._parse_connection_input(connection_details, **kwargs)
+        print(db2_server)
 
         self._socket: WebSocket = self._get_channel(db2_server)
 

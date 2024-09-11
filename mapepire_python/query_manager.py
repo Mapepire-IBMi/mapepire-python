@@ -31,7 +31,6 @@ class QueryManager:
         query: str,
         opts: Optional[Union[Dict[str, Any], QueryOptions]] = None,
     ) -> Union[Query, PoolQuery]:
-
         if opts and not isinstance(opts, (dict, QueryOptions)):
             raise Exception("opts must be a dictionary, a QueryOptions object, or None")
 
