@@ -9,7 +9,7 @@ import websockets
 from pyee.asyncio import AsyncIOEventEmitter
 
 from ..base_job import BaseJob
-from ..data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
+from ..data_types import DaemonServer, JobStatus, QueryOptions
 
 __all__ = ["PoolJob"]
 

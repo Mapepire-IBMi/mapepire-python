@@ -3,7 +3,7 @@ echo "Running isort >>>>>>>>>>>>>>>>>>>>"
 isort .
 
 echo "Running ruff  >>>>>>>>>>>>>>>>>>>>"
-ruff format . --exclude tests/
+ruff .  --fix  --exclude tests/
 
 echo "Running black >>>>>>>>>>>>>>>>>>>>"
 black . --exclude tests/

@@ -1,4 +1,3 @@
-import configparser
 import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
@@ -6,7 +5,7 @@ from typing import Any, Dict, Optional, Union
 from websocket import WebSocket
 
 from ..base_job import BaseJob
-from ..data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
+from ..data_types import DaemonServer, JobStatus, QueryOptions
 from .websocket import WebsocketConnection
 
 __all__ = ["SQLJob"]
