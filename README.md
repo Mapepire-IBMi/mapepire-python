@@ -410,7 +410,7 @@ This script will create a pool of 3 `PoolJob` objects and run the query `values 
 
 ## 4. Using PEP 249 Implementation
 
-PEP 249 is the Python Database API Specification v2.0. The `mapepire-python` client provides a PEP 249 implementation that allows you to use the `Connection` and `Cursor` objects to interact with the Mapepire server. The same `DaemonServer` object is used by the PEP 249 implementation to connect to the server.
+PEP 249 is the Python Database API Specification v2.0. The `mapepire-python` client provides a PEP 249 implementation that allows you to use the `Connection` and `Cursor` objects to interact with the Mapepire server. Like the examples above, we can pass the `mapepire.ini` file to the `connect` function to create a connection to the server:
 
 ```python
 from mapepire_python import connect
