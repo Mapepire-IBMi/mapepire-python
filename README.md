@@ -63,7 +63,7 @@
 
 ## Setup
 
-`mapepire-python` requires Python 3.9 or later.
+`mapepire-python` requires Python 3.10 or later.
 
 ### Install with `pip`
 
@@ -467,7 +467,7 @@ This guide provides instructions for setting up a Python virtual environment usi
 
 ### Create a new virtual environment
 
-**Note**: This applies to supported versions of Python 3.8 and higher
+**Note**: This applies to supported versions of Python 3.10 and higher
 
 navigate to the project's directory and run the following command. This will create a new virtual environment in a local folder named `.venv`
 
