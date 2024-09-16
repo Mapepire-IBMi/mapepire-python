@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [v0.1.6](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.1.6) - 2024-09-16
 - Add PEP 249 support
 - add pep249abc dependency
 - add support for config.ini file for connection details
