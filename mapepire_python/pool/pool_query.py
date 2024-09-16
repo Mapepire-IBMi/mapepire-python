@@ -7,7 +7,7 @@ from mapepire_python.pool.pool_job import PoolJob
 
 
 class PoolQuery:
-    global_query_list: List["PoolQuery[Any]"] = []
+    global_query_list: List["PoolQuery"] = []
 
     def __init__(self, job: PoolJob, query: str, opts: QueryOptions) -> None:
         self.job = job
@@ -29,7 +29,7 @@ class PoolQuery:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
 
-    async def _execute_query(self, qeury_object: Dict[str, Any]) -> Dict[str, Any]:
+    async def _execute_query(self, qeury_object: Dict[str, Any]) -> Dict[Any, Any]:
         query_result = await self.job.send(json.dumps(qeury_object))
         return query_result
 
@@ -63,7 +63,7 @@ class PoolQuery:
                 "parameters": self.parameters,
             }
 
-        query_result: Dict[str, Any] = await self._execute_query(query_object)
+        query_result = await self._execute_query(query_object)
 
         self.state = (
             QueryState.RUN_DONE

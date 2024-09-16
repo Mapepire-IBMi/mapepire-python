@@ -36,7 +36,7 @@ class AsyncCursor(
         self._cursor = cursor
 
     @property
-    def connection(self) -> "AsyncConnection":
+    def connection(self) -> "AsyncConnection":  # type: ignore
         return self._connection
 
     @property
@@ -59,7 +59,8 @@ class AsyncCursor(
     async def callproc(
         self, procname: ProcName, parameters: Optional[ProcArgs] = None
     ) -> Optional[ProcArgs]:
-        return await to_thread(self._cursor.callproc, procname, parameters)
+        result = await to_thread(self._cursor.callproc, procname, parameters)
+        return result if isinstance(result, (list, tuple, type(None))) else None
 
     async def nextset(self) -> Optional[bool]:
         return await to_thread(self._cursor.nextset)

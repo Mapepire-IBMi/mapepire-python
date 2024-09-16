@@ -55,7 +55,6 @@ async def test_simple_pool():
     async with Pool(
         options=PoolOptions(creds=creds, opts=None, max_size=5, starting_size=3)
     ) as pool:
-
         job_names = []
         resultsA = await asyncio.gather(
             pool.execute("values (job_name)"),
@@ -165,7 +164,6 @@ async def test_pool_with_no_space_but_ready_job_returns_ready_job():
 async def test_pop_jobs_returns_free_job():
     async with Pool(PoolOptions(creds=creds, max_size=5, starting_size=5)) as pool:
         try:
-
             assert pool.get_active_job_count() == 5
             executed_promises = [
                 pool.execute("select * FROM SAMPLE.employee"),

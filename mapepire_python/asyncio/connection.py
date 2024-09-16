@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional, Sequence, Union
 
 from pep249 import aiopep249
@@ -42,9 +43,9 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
 
     """
 
-    def __init__(self, database: Union[DaemonServer, dict], opts={}) -> None:
+    def __init__(self, database: Union[DaemonServer, dict, Path], opts={}, **kwargs) -> None:
         super().__init__()
-        self._connection = Connection(database, opts=opts)
+        self._connection = Connection(database, opts=opts, **kwargs)
 
     async def cursor(self) -> AsyncCursor:
         return AsyncCursor(self, self._connection.cursor())

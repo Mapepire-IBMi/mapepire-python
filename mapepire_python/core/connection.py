@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Optional, Sequence, Union
 
 import pep249
@@ -42,9 +43,9 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
     """
 
     @convert_runtime_errors
-    def __init__(self, database: Union[DaemonServer, dict], opts={}) -> None:
+    def __init__(self, database: Union[DaemonServer, dict, Path], opts={}, **kwargs) -> None:
         super().__init__()
-        self.job = SQLJob(creds=database, options=opts)
+        self.job = SQLJob(creds=database, options=opts, **kwargs)
         self.job.connect(database)
         self._closed = False
 
@@ -69,8 +70,10 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
     def executemany(self, operation: str, seq_of_parameters: Sequence[QueryParameters]) -> Cursor:
         return self.cursor().executemany(operation, seq_of_parameters)
 
-    def callproc(self, procname: str, parameters: Sequence[ProcArgs] = None) -> Optional[ProcArgs]:
-        return self.cursor().callproc(procname, parameters)
+    def callproc(self, procname: str, parameters: Optional[ProcArgs] = None) -> Optional[ProcArgs]:
+        cursor = self.cursor()
+        cursor.callproc(procname, parameters)
+        return parameters
 
     def executescript(self, script: SQLQuery) -> Cursor:
         """A lazy implementation of SQLite's `executescript`."""
