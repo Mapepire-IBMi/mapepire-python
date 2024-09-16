@@ -15,7 +15,8 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 authors = [
-    {name = "Allen Institute for Artificial Intelligence", email = "contact@allenai.org"}
+    {name = "Adam Shedivy", email = "adam.shedivy@ibm.com"},
+    {name = "Irfan Sharif", email = "IrfanSharif@ibm.com"}
 ]
 requires-python = ">=3.8"
 dependencies = [
