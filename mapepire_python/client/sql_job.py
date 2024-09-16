@@ -77,7 +77,7 @@ class SQLJob(BaseJob):
         self._socket.send(content)
 
     def connect(
-        self, connection_details: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
     ) -> Dict[Any, Any]:
         """create connection to the mapepire server
 
@@ -90,8 +90,7 @@ class SQLJob(BaseJob):
         Returns:
             Dict[Any, Any]: connection results from the server
         """
-        db2_server = self._parse_connection_input(connection_details, **kwargs)
-        print(db2_server)
+        db2_server = self._parse_connection_input(db2_server, **kwargs)
 
         self._socket: WebSocket = self._get_channel(db2_server)
 

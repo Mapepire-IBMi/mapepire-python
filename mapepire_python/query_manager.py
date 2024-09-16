@@ -52,8 +52,8 @@ class QueryManager:
         self, query: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs
     ) -> Dict[str, Any]:
         try:
-            with self.create_query(query, opts) as query:
-                return query.run(**kwargs)
+            with self.create_query(query, opts) as query:  # type: ignore
+                return query.run(**kwargs)  # type: ignore
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}")
 
@@ -61,7 +61,7 @@ class QueryManager:
         self, query: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs
     ) -> Dict[str, Any]:
         try:
-            async with self.create_query(query, opts) as query:
-                return await query.run(**kwargs)
+            async with self.create_query(query, opts) as query:  # type: ignore
+                return await query.run(**kwargs)  # type: ignore
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}")

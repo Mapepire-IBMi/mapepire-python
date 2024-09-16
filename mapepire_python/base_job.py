@@ -37,6 +37,9 @@ class BaseJob:
             else:
                 raise ValueError(f"The provided path '{db2_server}' is not a valid file.")
 
+        if not isinstance(db2_server, DaemonServer):
+            raise TypeError("db2_server must be of type DaemonServer")
+
         return db2_server
 
     def connect(

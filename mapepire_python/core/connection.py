@@ -70,8 +70,10 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
     def executemany(self, operation: str, seq_of_parameters: Sequence[QueryParameters]) -> Cursor:
         return self.cursor().executemany(operation, seq_of_parameters)
 
-    def callproc(self, procname: str, parameters: Sequence[ProcArgs] = None) -> Optional[ProcArgs]:
-        return self.cursor().callproc(procname, parameters)
+    def callproc(self, procname: str, parameters: Optional[ProcArgs] = None) -> Optional[ProcArgs]:
+        cursor = self.cursor()
+        cursor.callproc(procname, parameters)
+        return parameters
 
     def executescript(self, script: SQLQuery) -> Cursor:
         """A lazy implementation of SQLite's `executescript`."""

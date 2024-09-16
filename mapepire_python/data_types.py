@@ -45,7 +45,7 @@ class DaemonServer:
     host: str
     user: str
     password: str
-    port: int
+    port: Optional[Union[str, int]]
     ignoreUnauthorized: Optional[bool] = True
     ca: Optional[Union[str, bytes]] = None
 
@@ -63,7 +63,7 @@ class ServerResponse:
 @dataclass_json
 @dataclass
 class ConnectionResult(ServerResponse):
-    job: str
+    job: str  # type: ignore
     id: str = field(init=False)
     success: bool = field(init=False)
     sql_rc: int = field(init=False)
@@ -74,8 +74,8 @@ class ConnectionResult(ServerResponse):
 @dataclass_json
 @dataclass
 class VersionCheckResult(ServerResponse):
-    build_date: str
-    version: str
+    build_date: str  # type: ignore
+    version: str  # type: ignore
     id: str = field(init=False)
     success: bool = field(init=False)
     sql_rc: int = field(init=False)
@@ -116,7 +116,7 @@ class ExplainResults(QueryResult):
 @dataclass_json
 @dataclass
 class GetTraceDataResult(ServerResponse):
-    tracedata: str
+    tracedata: str  # type: ignore
     id: str = field(init=False)
     success: bool = field(init=False)
     sql_rc: int = field(init=False)
@@ -139,7 +139,7 @@ class JobLogEntry:
 @dataclass_json
 @dataclass
 class CLCommandResult(ServerResponse):
-    joblog: List[JobLogEntry]
+    joblog: List[JobLogEntry]  # type: ignore
     id: str = field(init=False)
     success: bool = field(init=False)
     sql_rc: int = field(init=False)
@@ -151,15 +151,15 @@ class CLCommandResult(ServerResponse):
 class QueryOptions:
     isTerseResults: Optional[bool] = None
     isClCommand: Optional[bool] = None
-    parameters: Optional[List[str]] = None
+    parameters: Optional[List[Any]] = None
     autoClose: Optional[bool] = None
 
 
 @dataclass_json
 @dataclass
 class SetConfigResult(ServerResponse):
-    tracedest: ServerTraceDest
-    tracelevel: ServerTraceLevel
+    tracedest: ServerTraceDest  # type: ignore
+    tracelevel: ServerTraceLevel  # type: ignore
     id: str = field(init=False)
     success: bool = field(init=False)
     sql_rc: int = field(init=False)
