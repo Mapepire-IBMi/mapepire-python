@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 from ..data_types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
@@ -9,10 +10,11 @@ __all__ = ["Pool"]
 
 @dataclass
 class PoolOptions:
-    creds: DaemonServer
+    creds: Optional[Union[DaemonServer, Dict[str, Any], Path]]
     max_size: int
     starting_size: int
     opts: Optional[JDBCOptions] = None
+    section: Optional[str] = None
 
 
 @dataclass
@@ -90,7 +92,7 @@ class Pool:
             self.jobs.append(new_sql_job)
 
         if new_sql_job.get_status() == JobStatus.NotStarted:
-            await new_sql_job.connect(self.options.creds)
+            await new_sql_job.connect(self.options.creds, section=self.options.section)
 
         return new_sql_job
 

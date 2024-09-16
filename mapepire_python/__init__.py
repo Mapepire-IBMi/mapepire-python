@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, Union
 
 from .core import (
@@ -41,6 +42,8 @@ threadsafety = 1
 paramstyle = "qmark"
 
 
-def connect(connection_details: Union[DaemonServer, dict], opts: Dict[str, Any] = {}) -> Connection:
+def connect(
+    connection_details: Union[DaemonServer, dict, Path], opts: Dict[str, Any] = {}, **kwargs
+) -> Connection:
     """Connect to a Mapepire Server, returning a connection."""
-    return Connection(connection_details, opts)
+    return Connection(connection_details, opts, **kwargs)

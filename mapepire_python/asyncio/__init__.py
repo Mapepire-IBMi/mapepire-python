@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Dict, Union
 
 from ..asyncio.connection import AsyncConnection
@@ -40,7 +41,7 @@ paramstyle = "qmark"
 
 
 def connect(
-    connection_details: Union[DaemonServer, dict], opts: Dict[str, Any] = {}
+    connection_details: Union[DaemonServer, dict, Path], opts: Dict[str, Any] = {}, **kwargs
 ) -> AsyncConnection:
     """Connect to a Mapepire Server, returning a connection."""
-    return AsyncConnection(connection_details, opts)
+    return AsyncConnection(connection_details, opts, **kwargs)

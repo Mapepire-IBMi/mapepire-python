@@ -2,13 +2,14 @@ import asyncio
 import base64
 import json
 import ssl
+from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import websockets
 from pyee.asyncio import AsyncIOEventEmitter
 
 from ..base_job import BaseJob
-from ..data_types import DaemonServer, JobStatus, QueryOptions, dict_to_dataclass
+from ..data_types import DaemonServer, JobStatus, QueryOptions
 
 __all__ = ["PoolJob"]
 
@@ -16,8 +17,13 @@ __all__ = ["PoolJob"]
 class PoolJob(BaseJob):
     unique_id_counter = 0
 
-    def __init__(self, creds: DaemonServer = None, options: Optional[Dict[Any, Any]] = {}) -> None:
-        super().__init__(creds, options)
+    def __init__(
+        self,
+        creds: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None,
+        options: Optional[Dict[Any, Any]] = None,
+        **kwargs,
+    ) -> None:
+        super().__init__(creds, options or {}, **kwargs)
         self.socket = None
         self.response_emitter = AsyncIOEventEmitter()
         self.status = JobStatus.NotStarted
@@ -31,7 +37,7 @@ class PoolJob(BaseJob):
 
     async def __aenter__(self):
         if self.creds:
-            await self.connect(self.creds)
+            await self.connect(self.creds, **self.kwargs)
         return self
 
     async def __aexit__(self, *args, **kwargs):
@@ -96,7 +102,7 @@ class PoolJob(BaseJob):
 
         return socket
 
-    async def send(self, content: str) -> str:
+    async def send(self, content: str) -> Dict[Any, Any]:
         """sends content to the mapepire server
 
         Args:
@@ -108,13 +114,15 @@ class PoolJob(BaseJob):
         self._local_log(self.enable_local_trace, f"sending data: {content}")
 
         req = json.loads(content)
+        if self.socket is None:
+            raise RuntimeError("Socket is not connected")
         await self.socket.send(content)
         self.status = JobStatus.Busy
         self._local_log(self.enable_local_trace, "wating for response ...")
         response = await self.wait_for_response(req["id"])
         self._local_log(self.enable_local_trace, f"recieved response: {response}")
         self.status = JobStatus.Ready if self.get_running_count() == 0 else JobStatus.Busy
-        return response
+        return response  # type: ignore
 
     async def wait_for_response(self, req_id: str) -> str:
         """when a request is sent to the server, this method waits for the response
@@ -156,7 +164,9 @@ class PoolJob(BaseJob):
         )
         return len(self.response_emitter.event_names())
 
-    async def connect(self, db2_server: Union[DaemonServer, Dict[str, Any]]) -> Dict[str, Any]:
+    async def connect(  # type: ignore
+        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+    ) -> Any:
         """create connection to the mapepire server
 
         Args:
@@ -168,8 +178,7 @@ class PoolJob(BaseJob):
         Returns:
             Dict[str, Any]: Connection results from the server
         """
-        if isinstance(db2_server, dict):
-            db2_server = dict_to_dataclass(db2_server, DaemonServer)
+        db2_server = self._parse_connection_input(db2_server, **kwargs)
 
         # create socket connection
         self.socket = await self.get_channel(db2_server)
@@ -195,21 +204,22 @@ class PoolJob(BaseJob):
 
         result = await self.send(json.dumps(connection_props))
 
-        if result.get("success", False):
+        if result.get("success", False):  # type: ignore
             self.status = JobStatus.Ready
         else:
             self.status = JobStatus.NotStarted
             await self.close()
-            raise Exception(result.get("error", "Failed to connect to server"))
+            raise Exception(result.get("error", "Failed to connect to server"))  # type: ignore
 
-        self.id = result["job"]
+        self.id = result["job"]  # type: ignore
         self._is_tracing_channel_data = False
 
         return result
 
     async def dispose(self):
         if self.socket:
-            await self.socket.close()
+            if self.socket is not None:
+                await self.socket.close()
         self.socket = None
         self.status = JobStatus.NotStarted
         self.response_emitter.remove_all_listeners()
@@ -222,6 +232,8 @@ class PoolJob(BaseJob):
             RuntimeError: Error occured while processing message
         """
         try:
+            if self.socket is None:
+                raise RuntimeError("Socket is not connected")
             async for message in self.socket:
                 self._local_log(self.enable_local_trace, f"Received raw message: {message}")
 
@@ -279,7 +291,7 @@ class PoolJob(BaseJob):
 
         return PoolQuery(job=self, query=sql, opts=query_options)
 
-    async def query_and_run(
+    async def query_and_run(  # type: ignore
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
     ) -> Dict[str, Any]:
         """Create a PoolQuery object using provided SQL and options, then run the query.
@@ -300,6 +312,7 @@ class PoolJob(BaseJob):
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}")
 
-    async def close(self) -> None:
+    async def close(self) -> None:  # type: ignore
         self.status = JobStatus.Ended
-        await self.socket.close()
+        if self.socket:
+            await self.socket.close()
