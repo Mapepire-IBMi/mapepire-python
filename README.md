@@ -86,7 +86,7 @@ To use mapire-python, you will need to have the Mapepire Server Component runnin
 There are three ways to configure mapepire server connection details using `mapepire-python`:
 
 1. Using the `DaemonServer` object
-2. passing the connection details as a dictionary
+2. Passing the connection details as a dictionary
 3. Using a config file (`.ini`) to store the connection details
 
 ## 1. Using the `DaemonServer` object
@@ -148,7 +148,7 @@ If you use a config file (`.ini`), you can pass the path to the file as an argum
 
 First create a `mapepire.ini` file in the root of your project with the following required fields:
 
-```ini
+```ini title=mapepire.ini
 [mapepire]
 SERVER="SERVER"
 PORT="PORT"
