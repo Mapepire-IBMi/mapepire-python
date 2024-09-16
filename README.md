@@ -20,6 +20,10 @@
   - [Setup](#setup)
     - [Install with `pip`](#install-with-pip)
     - [Server Component Setup](#server-component-setup)
+- [Connection options](#connection-options)
+  - [1. Using the `DaemonServer` object](#1-using-the-daemonserver-object)
+  - [2. Passing the connection details as a dictionary](#2-passing-the-connection-details-as-a-dictionary)
+  - [3. Using a config file (`.ini`) to store the connection details](#3-using-a-config-file-ini-to-store-the-connection-details)
 - [Usage](#usage)
   - [1. Using the `SQLJob` object to run queries synchronously](#1-using-the-sqljob-object-to-run-queries-synchronously)
     - [Query and run](#query-and-run)
@@ -76,15 +80,73 @@ pip install mapepire-python
 ### Server Component Setup
 To use mapire-python, you will need to have the Mapepire Server Component running on your IBM i server. Follow these instructions to set up the server component: [Mapepire Server Installation](https://mapepire-ibmi.github.io/guides/sysadmin/)
 
-# Usage
+   
+# Connection options
 
-There are four main ways to run queries using `mapepire-python`:
-1.  Using the `SQLJob` object to run queries synchronously
-2.  Using the `PoolJob` object to run queries asynchronously
-3.  Using the `Pool` object to run queries "concurrently"
-4.  Using PEP 249 Implementation
+There are three ways to configure mapepire server connection details using `mapepire-python`:
 
-All of these methods require the `DaemonServer` object for connecting to the server. One way to set up the `DaemonServer` is to create a `mapepire.ini` file in the root of your project with the following content:
+1. Using the `DaemonServer` object
+2. passing the connection details as a dictionary
+3. Using a config file (`.ini`) to store the connection details
+
+## 1. Using the `DaemonServer` object
+
+to use the `DaemonServer` object, you will need to import the `DaemonServer` class from the `mapepire_python.data_types` module:
+
+```python
+from mapepire_python.data_types import DaemonServer
+
+creds = DaemonServer(
+    host="SERVER",
+    port="PORT",
+    user="USER",
+    password="PASSWORD",
+    ignoreUnauthorized=True
+)
+```
+
+Once you have created the `DaemonServer` object, you can pass it to the `SQLJob` object to connect to the mapepire server:
+
+```python
+from mapepire_python.client.sql_job import SQLJob
+from mapepire_python.data_types import DaemonServer
+
+creds = DaemonServer(
+    host="SERVER",
+    port="PORT",
+    user="USER",
+    password="PASSWORD",
+    ignoreUnauthorized=True
+)
+
+job = SQLJob(creds)
+```
+
+## 2. Passing the connection details as a dictionary
+
+You can also use a dictionary to configure the connection details:
+
+```python
+from mapepire_python.client.sql_job import SQLJob
+
+creds = {
+  "host": "SERVER",
+  "port": "port",
+  "user": "USER",
+  "password": "PASSWORD",
+}
+
+job = SQLJob(creds)
+```
+
+this is a convenient way to pass the connection details to the mapepire server.
+
+## 3. Using a config file (`.ini`) to store the connection details
+
+
+If you use a config file (`.ini`), you can pass the path to the file as an argument:
+
+First create a `mapepire.ini` file in the root of your project with the following required fields:
 
 ```ini
 [mapepire]
@@ -94,26 +156,37 @@ USER="USER"
 PASSWORD="PASSWORD"
 ```
 
+Then you can create a `SQLJob` object by passing the path to the `.ini` file which will handle the connection details
+
+
+```python
+from mapepire_python.client.sql_job import SQLJob
+
+job = SQLJob("./mapepire.ini", section="mapepire")
+```
+
+The `section` argument is optional and allows you to specify a specific section in the `.ini` file where the connection details are stored. This allows you to store multiple connection details to different systems in the same file. If you do not specify a `section`, the first section in the file will be used. 
+
+
+# Usage
+
+Depending on your setup and use case, you can choose the most convenient way to configure the connection details. The following usage examples are compatible with all three connection options detailed above. For simplicity, we assume there is a `mapepire.ini` file in the root of the project with the connection details.
+
+
+There are four main ways to run queries using `mapepire-python`:
+1.  Using the `SQLJob` object to run queries synchronously
+2.  Using the `PoolJob` object to run queries asynchronously
+3.  Using the `Pool` object to run queries "concurrently"
+4.  Using PEP 249 Implementation
+
+
 
 ## 1. Using the `SQLJob` object to run queries synchronously
 
 ```python
-import configparser
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import DaemonServer
 
-config = configparser.ConfigParser()
-config.read('mapepire.ini')
-
-creds = DaemonServer(
-    host=config['mapepire']['SERVER'],
-    port=config['mapepire']['PORT'],
-    user=config['mapepire']['USER'],
-    password=config['mapepire']['PASSWORD'],
-    ignoreUnauthorized=True
-)
-
-with SQLJob(creds) as sql_job:
+with SQLJob("./mapepire.ini") as sql_job:
     with sql_job.query("select * from sample.employee") as query:
         result = query.run(rows_to_fetch=1)
         print(result)
@@ -255,22 +328,9 @@ In the ouput above, the query was successful and returned one row of data.
 To create and run a query in a single step, use the `query_and_run` method: 
 
 ```python
-import configparser
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import DaemonServer
 
-config = configparser.ConfigParser()
-config.read('mapepire.ini')
-
-creds = DaemonServer(
-    host=config['mapepire']['SERVER'],
-    port=config['mapepire']['PORT'],
-    user=config['mapepire']['USER'],
-    password=config['mapepire']['PASSWORD'],
-    ignoreUnauthorized=True
-)
-
-with SQLJob(creds) as sql_job:
+with SQLJob("./mapepire.ini") as sql_job:
     # query automatically closed after running
     results = sql_job.query_and_run("select * from sample.employee", rows_to_fetch=1)
     print(result)
@@ -282,23 +342,10 @@ The `PoolJob` object can be used to create and run queries asynchronously:
 
 ```python
 import asyncio
-import configparser
 from mapepire_python.pool.pool_job import PoolJob
-from mapepire_python.data_types import DaemonServer
-
-config = configparser.ConfigParser()
-config.read('mapepire.ini')
-
-creds = DaemonServer(
-    host=config['mapepire']['SERVER'],
-    port=config['mapepire']['PORT'],
-    user=config['mapepire']['USER'],
-    password=config['mapepire']['PASSWORD'],
-    ignoreUnauthorized=True
-)
 
 async def main():
-    async with PoolJob(creds=creds) as pool_job:
+    async with PoolJob("./mapepire.ini") as pool_job:
         async with pool_job.query('select * from sample.employee') as query:
           res = await query.run(rows_to_fetch=1)
 
@@ -311,24 +358,11 @@ To run a create and run a query asynchronously in a single step, use the `query_
 
 ```python
 import asyncio
-import configparser
 from mapepire_python.pool.pool_job import PoolJob
-from mapepire_python.data_types import DaemonServer
-
-config = configparser.ConfigParser()
-config.read('mapepire.ini')
-
-creds = DaemonServer(
-    host=config['mapepire']['SERVER'],
-    port=config['mapepire']['PORT'],
-    user=config['mapepire']['USER'],
-    password=config['mapepire']['PASSWORD'],
-    ignoreUnauthorized=True
-)
 
 async def main():
-    async with PoolJob(creds=creds) as pool_job:
-        res = await pool_job.query_and_run(rows_to_fetch=1)
+    async with PoolJob("./mapepire.ini") as pool_job:
+        res = await pool_job.query_and_run("select * from sample.employee", rows_to_fetch=1)
         print(res)
 
 if __name__ == '__main__':
@@ -343,26 +377,12 @@ The `Pool` object can be used to create a pool of `PoolJob` objects to run queri
 
 ```python
 import asyncio
-import configparser
 from mapepire_python.pool.pool_client import Pool, PoolOptions
-from mapepire_python.data_types import DaemonServer
-
-config = configparser.ConfigParser()
-config.read('mapepire.ini')
-
-creds = DaemonServer(
-    host=config['mapepire']['SERVER'],
-    port=config['mapepire']['PORT'],
-    user=config['mapepire']['USER'],
-    password=config['mapepire']['PASSWORD'],
-    ignoreUnauthorized=True
-)
-
 
 async def main():
     async with Pool(
         options=PoolOptions(
-            creds=creds,
+            creds="./mapepire.ini",
             opts=None,
             max_size=5,
             starting_size=3
@@ -381,7 +401,6 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
 ```
 This script will create a pool of 3 `PoolJob` objects and run the query `values (job_name)` concurrently. The results will be printed to the console.
 
@@ -394,22 +413,9 @@ This script will create a pool of 3 `PoolJob` objects and run the query `values 
 PEP 249 is the Python Database API Specification v2.0. The `mapepire-python` client provides a PEP 249 implementation that allows you to use the `Connection` and `Cursor` objects to interact with the Mapepire server. The same `DaemonServer` object is used by the PEP 249 implementation to connect to the server.
 
 ```python
-import configparser
 from mapepire_python import connect
-from mapepire_python.data_types import DaemonServer
 
-config = configparser.ConfigParser()
-config.read('mapepire.ini')
-
-creds = DaemonServer(
-    host=config['mapepire']['SERVER'],
-    port=config['mapepire']['PORT'],
-    user=config['mapepire']['USER'],
-    password=config['mapepire']['PASSWORD'],
-    ignoreUnauthorized=True
-)
-
-with connect(creds) as conn:
+with connect("./mapepire.ini") as conn:
     with conn.execute("select * from sample.employee") as cursor:
         result = cursor.fetchone()
         print(result)
@@ -420,8 +426,7 @@ with connect(creds) as conn:
 The `Cursor` object provides the `fetchmany()` and `fetchall()` methods to fetch multiple rows from the result set:
 
 ```python
-
-with connect(creds) as conn:
+with connect("./mapepire.ini") as conn:
     with conn.execute("select * from sample.employee") as cursor:
         results = cursor.fetchmany(size=2)
         print(results)
@@ -429,8 +434,7 @@ with connect(creds) as conn:
 ---
 
 ```python
-
-with connect(creds) as conn:
+with connect("./mapepire.ini") as conn:
     with conn.execute("select * from sample.employee") as cursor:
         results = cursor.fetchall()
         print(results)
@@ -445,7 +449,7 @@ import asyncio
 from mapepire_python.asycnio import connect
 
 async def main():
-    async with connect(creds) as conn:
+    async with connect("./mapepire.ini") as conn:
         async with await conn.execute("select * from sample.employee") as cursor:
             result = await cursor.fetchone()
             print(result)
