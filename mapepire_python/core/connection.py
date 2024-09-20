@@ -25,7 +25,6 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
     or a `DaemonServer` object:
 
     ```
-    import asyncio
     from mapepire_python import connect
     from mapepire_python.data_types import DaemonServer
     creds = DaemonServer(
