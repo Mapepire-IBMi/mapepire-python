@@ -45,9 +45,9 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
     @convert_runtime_errors
     def __init__(self, database: Union[DaemonServer, dict, Path], opts={}, **kwargs) -> None:
         super().__init__()
-        self.job = SQLJob(creds=database, options=opts, **kwargs)
-        self.job.connect(database)
         self._closed = False
+        self.job = SQLJob(creds=database, options=opts, **kwargs)
+        self.job.connect(database, **kwargs)
 
     @raise_if_closed
     @convert_runtime_errors

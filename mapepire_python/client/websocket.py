@@ -16,6 +16,7 @@ class WebsocketConnection:
         }
 
         self.ssl_opts = self._build_ssl_options(db2_server)
+        self.db2_server = db2_server
 
     def _build_ssl_options(self, db2_server: DaemonServer) -> Dict[str, Any]:
         ssl_opts: Dict[str, Any] = {}
@@ -34,4 +35,6 @@ class WebsocketConnection:
                 self.uri, header=self.headers, sslopt=self.ssl_opts, timeout=10
             )
         except Exception as e:
-            raise RuntimeError(f"An error occurred while connecting to the server: {e}")
+            raise RuntimeError(
+                f"An error occurred while connecting to the server: {self.db2_server.host}"
+            )

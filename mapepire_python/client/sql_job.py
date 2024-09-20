@@ -19,6 +19,7 @@ class SQLJob(BaseJob):
         **kwargs,
     ) -> None:
         super().__init__(creds, options, **kwargs)
+        self._socket = None
         self._unique_id_counter: int = 0
         self._reponse_emitter = {}
         self._status: JobStatus = JobStatus.NotStarted
@@ -186,4 +187,5 @@ class SQLJob(BaseJob):
 
     def close(self) -> None:
         self._status = JobStatus.Ended
-        self._socket.close()
+        if self._socket:
+            self._socket.close()
