@@ -128,6 +128,24 @@ def test_prepare_statement_mult_params_seq():
     assert res["success"] == True
 
 
+# def test_prepare_statement_mult_params_seq_tuple():
+#     conn = connect(creds)
+#     cur = conn.cursor()
+#     parameters = [[500, "PRES"], [200, "PRES"]]
+#     cur.execute("select * from sample.employee where bonus > ? and job = ?", parameters=parameters)
+#     res = cur.fetchall()
+#     assert res["success"] == True
+
+
+# def test_prepare_statement_mult_params_seq_tuple_opts():
+#     conn = connect(creds)
+#     cur = conn.cursor()
+#     opts = QueryOptions(parameters=[[500, "PRES"], [200, "PRES"]])
+#     cur.execute("select * from sample.employee where bonus > ? and job = ?", opts=opts)
+#     res = cur.fetchall()
+#     assert res["success"] == True
+
+
 def test_pep249_iterate():
     def rows():
         with connect(creds) as conn:
