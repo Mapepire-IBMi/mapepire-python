@@ -22,7 +22,7 @@ requires-python = ">3.9"
 dependencies = [
   "dataclasses-json>=0.6.4",
   "websocket-client>=1.2.1",
-  "websockets",
+  "websockets==13.1",
   "pyee",
   "pep249abc"
 ]

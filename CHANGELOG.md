@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - bump minimum python version to 3.10
 
+- fix tests
+- remove python 3.9 tests
+
 ## [v0.1.7](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.1.7) - 2024-09-16
 
 ## [v0.1.6](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.1.6) - 2024-09-16
