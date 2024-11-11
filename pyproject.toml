@@ -18,7 +18,7 @@ authors = [
     {name = "Adam Shedivy", email = "adam.shedivy@ibm.com"},
     {name = "Irfan Sharif", email = "IrfanSharif@ibm.com"}
 ]
-requires-python = ">=3.9"
+requires-python = ">3.9"
 dependencies = [
   "dataclasses-json>=0.6.4",
   "websocket-client>=1.2.1",

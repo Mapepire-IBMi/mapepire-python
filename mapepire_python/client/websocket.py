@@ -34,7 +34,7 @@ class WebsocketConnection:
             return create_connection(
                 self.uri, header=self.headers, sslopt=self.ssl_opts, timeout=10
             )
-        except Exception as e:
+        except Exception:
             raise RuntimeError(
                 f"An error occurred while connecting to the server: {self.db2_server.host}"
             )
