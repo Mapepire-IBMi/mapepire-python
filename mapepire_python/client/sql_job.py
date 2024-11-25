@@ -2,11 +2,12 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from websocket import WebSocket
+from websockets.sync.client import ClientConnection
+
+from mapepire_python.client.websocket_client import WebsocketConnection
 
 from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions
-from .websocket import WebsocketConnection
 
 __all__ = ["SQLJob"]
 
@@ -49,7 +50,7 @@ class SQLJob(BaseJob):
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
 
-    def _get_channel(self, db2_server: DaemonServer) -> WebSocket:
+    def _get_channel(self, db2_server: DaemonServer) -> ClientConnection:
         """returns a websocket connection to the mapepire server
 
         Args:
@@ -75,7 +76,10 @@ class SQLJob(BaseJob):
         Args:
             content (str): JSON content to be sent
         """
-        self._socket.send(content)
+        try:
+            self._socket.send(content)
+        except Exception as e:
+            raise e
 
     def connect(
         self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
@@ -93,7 +97,7 @@ class SQLJob(BaseJob):
         """
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 
-        self._socket: WebSocket = self._get_channel(db2_server)
+        self._socket: ClientConnection = self._get_channel(db2_server)
 
         props = ";".join(
             [

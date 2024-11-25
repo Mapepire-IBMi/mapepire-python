@@ -21,8 +21,7 @@ authors = [
 requires-python = ">3.9"
 dependencies = [
   "dataclasses-json>=0.6.4",
-  "websocket-client>=1.2.1",
-  "websockets==13.1",
+  "websockets>=14.0",
   "pyee",
   "pep249abc"
 ]

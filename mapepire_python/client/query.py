@@ -170,7 +170,7 @@ class Query(Generic[T]):
         return query_result
 
     def close(self):
-        if not self.job._socket.connected:
+        if not self.job._socket:
             raise Exception("SQL Job not connected")
         if self._correlation_id and self.state is not QueryState.RUN_DONE:
             self.state = QueryState.RUN_DONE
