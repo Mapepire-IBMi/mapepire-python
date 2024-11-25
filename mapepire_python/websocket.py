@@ -33,9 +33,9 @@ def _parse_ws_error(error: RuntimeError, connection: BaseConnection):
     if not isinstance(error, RuntimeError):
         return error
     if isinstance(error, InvalidURI):
-        raise InvalidURI(f"The provided URI is not a valid WebSocket URI.")
+        raise InvalidURI("The provided URI is not a valid WebSocket URI.")
     elif isinstance(error, OSError):
-        raise OSError(f"The TCP connection failed to connect to Mapepire server")
+        raise OSError("The TCP connection failed to connect to Mapepire server")
     elif isinstance(error, InvalidHandshake):
         raise InvalidHandshake("The opening handshake failed.")
     elif isinstance(error, TimeoutError):
