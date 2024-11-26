@@ -6,6 +6,7 @@ from ..data_types import DaemonServer
 
 
 class WebsocketConnection(BaseConnection):
+
     def __init__(self, db2_server: DaemonServer) -> None:
         super().__init__(db2_server)
 

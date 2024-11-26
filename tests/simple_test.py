@@ -33,6 +33,7 @@ def parse_sql_rc(message):
 
 def test_connect_simple():
     job = SQLJob()
+    print(job)
     result = job.connect(creds)
     assert result["success"]
     job.close()

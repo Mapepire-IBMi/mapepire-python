@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -13,6 +14,8 @@ from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions
 
 __all__ = ["PoolJob"]
+
+logger = logging.getLogger("websockets.client")
 
 
 class PoolJob(BaseJob):
@@ -65,10 +68,6 @@ class PoolJob(BaseJob):
     def enable_local_channel_trace(self):
         self.is_tracing_channel_data = True
 
-    def _local_log(self, level: bool, message: str) -> None:
-        if level:
-            print(message, flush=True)
-
     async def get_channel(self, db2_server: DaemonServer) -> ClientConnection:
         """returns a websocket connection to the mapepire server
 
@@ -94,7 +93,7 @@ class PoolJob(BaseJob):
         Returns:
             str: response from the server
         """
-        self._local_log(self.enable_local_trace, f"sending data: {content}")
+        logger.debug(f"sending data: {content}")
 
         req = json.loads(content)
         if self.socket is None:
@@ -102,9 +101,9 @@ class PoolJob(BaseJob):
         try:
             await self.socket.send(content)
             self.status = JobStatus.Busy
-            self._local_log(self.enable_local_trace, "wating for response ...")
+            logger.debug("waiting for response ...")
             response = await self.wait_for_response(req["id"])
-            # self._local_log(self.enable_local_trace, f"recieved response: {response}")
+            # logger.debug(f"received response: {response}")
             self.status = JobStatus.Ready if self.get_running_count() == 0 else JobStatus.Busy
             return response  # type: ignore
         except Exception as e:
@@ -125,16 +124,14 @@ class PoolJob(BaseJob):
         future = asyncio.Future()
 
         def on_response(response):
-            self._local_log(
-                self.enable_local_trace, f"Received response for req_id: {req_id} - {response}"
-            )
+            logger.debug(f"Received response for req_id: {req_id} - {response}")
             if not future.done():
                 future.set_result(response)
             self.response_emitter.remove_listener(req_id, on_response)
 
         try:
             self.response_emitter.on(req_id, on_response)
-            self._local_log(self.enable_local_trace, f"Listener registered for req_id: {req_id}")
+            logger.debug(f"Listener registered for req_id: {req_id}")
             return await future
         except Exception as e:
             self.response_emitter.remove_listener(req_id, on_response)
@@ -144,9 +141,8 @@ class PoolJob(BaseJob):
         return self.status
 
     def get_running_count(self) -> int:
-        self._local_log(
-            self.enable_local_trace,
-            f"--- running count {self.unique_id}: {len(self.response_emitter.event_names())}, status: {self.get_status()}",
+        logger.debug(
+            f"--- running count {self.unique_id}: {len(self.response_emitter.event_names())}, status: {self.get_status()}"
         )
         return len(self.response_emitter.event_names())
 
@@ -221,20 +217,16 @@ class PoolJob(BaseJob):
             if self.socket is None:
                 raise RuntimeError("Socket is not connected")
             async for message in self.socket:
-                self._local_log(self.enable_local_trace, f"Received raw message: {message}")
+                logger.debug(f"Received raw message: {message}")
 
                 try:
                     response = json.loads(message)
                     req_id = response.get("id")
                     if req_id:
-                        self._local_log(
-                            self.enable_local_trace, f"Emitting response for req_id: {req_id}"
-                        )
+                        logger.debug(f"Emitting response for req_id: {req_id}")
                         self.response_emitter.emit(req_id, response)
                     else:
-                        self._local_log(
-                            self.enable_local_trace, f"No req_id found in response: {response}"
-                        )
+                        logger.debug(f"No req_id found in response: {response}")
                 except json.JSONDecodeError as e:
                     raise ValueError(f"Error decoding JSON: {e}")
                 except Exception as e:

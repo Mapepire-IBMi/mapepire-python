@@ -1,9 +1,9 @@
 import base64
 import ssl
 from functools import wraps
-from typing import Callable, TypeVar
+from typing import Any, Callable, TypeVar
 
-from websockets import InvalidHandshake, InvalidURI
+from websockets import ConcurrencyError, ConnectionClosed, InvalidHandshake, InvalidURI
 
 from mapepire_python.data_types import DaemonServer
 
@@ -29,28 +29,33 @@ class BaseConnection:
         return ssl_context
 
 
-def _parse_ws_error(error: RuntimeError, connection: BaseConnection):
-    if not isinstance(error, RuntimeError):
-        return error
+def _parse_ws_error(error: Exception, driver: Any = None):
+    to_str = str(driver)
+
     if isinstance(error, InvalidURI):
-        raise InvalidURI("The provided URI is not a valid WebSocket URI.")
+        raise InvalidURI(f"The provided URI is not a valid WebSocket URI: {to_str}")
     elif isinstance(error, OSError):
-        raise OSError("The TCP connection failed to connect to Mapepire server")
+        raise OSError(f"The TCP connection failed to connect to Mapepire server: {to_str}")
     elif isinstance(error, InvalidHandshake):
         raise InvalidHandshake("The opening handshake failed.")
     elif isinstance(error, TimeoutError):
         raise TimeoutError("The opening handshake timed out.")
+    elif isinstance(error, ConnectionClosed):
+        raise ConnectionClosed("The Conection was closed.")
+    elif isinstance(error, ConcurrencyError):
+        raise ConcurrencyError("Connection is sending a fragmented message")
+    elif isinstance(error, TypeError):
+        raise TypeError("Message doesn't have a supported type")
     else:
         return error
 
 
 def handle_ws_errors(function: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
-
     @wraps(function)
-    def wrapper(*args, **kwargs):
+    def _impl(self, *args, **kwargs):
         try:
-            return function(*args, **kwargs)
+            return function(self, *args, **kwargs)
         except RuntimeError as err:
-            raise _parse_ws_error(err) from err
+            raise _parse_ws_error(err, driver=self) from err
 
-    return wrapper
+    return _impl

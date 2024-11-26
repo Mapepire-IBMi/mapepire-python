@@ -2,6 +2,8 @@ import json
 from enum import Enum
 from typing import Any, Dict, Generic, List, Optional, TypeVar
 
+from mapepire_python.websocket import handle_ws_errors
+
 from ..data_types import QueryOptions
 from .sql_job import SQLJob
 
@@ -39,13 +41,14 @@ class Query(Generic[T]):
         self.close()
 
     def __str__(self):
-        return f"Query(sql={self.sql}, parameters={self.parameters}, correlation_id={self._correlation_id})"
+        return f"Query(job={str(self.job)}, sql={self.sql}, parameters={self.parameters}, correlation_id={self._correlation_id})"
 
     def _execute_query(self, qeury_object: Dict[str, Any]) -> Dict[str, Any]:
         self.job.send(json.dumps(qeury_object))
         query_result: Dict[str, Any] = json.loads(self.job._socket.recv())
         return query_result
 
+    @handle_ws_errors
     def prepare_sql_execute(self):
         # check Query state first
         if self.state == QueryState.RUN_DONE:
@@ -67,7 +70,6 @@ class Query(Generic[T]):
         )
 
         if not query_result.get("success", False) and not self.is_cl_command:
-            print(query_result)
             self.state = QueryState.ERROR
             error_keys = ["error", "sql_state", "sql_rc"]
             error_list = {
@@ -82,6 +84,7 @@ class Query(Generic[T]):
 
         return query_result
 
+    @handle_ws_errors
     def run(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
@@ -135,6 +138,7 @@ class Query(Generic[T]):
 
         return query_result
 
+    @handle_ws_errors
     def fetch_more(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
@@ -169,6 +173,7 @@ class Query(Generic[T]):
 
         return query_result
 
+    @handle_ws_errors
     def close(self):
         if not self.job._socket:
             raise Exception("SQL Job not connected")
