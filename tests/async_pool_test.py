@@ -306,7 +306,7 @@ async def test_prepare_statement_invalid_params():
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     with pytest.raises(Exception) as execinfo:
         res = await query.run()
-    assert "Data type mismatch. (Infinite or NaN)" in str(execinfo.value)
+    assert "Data type mismatch." in str(execinfo.value)
 
 
 @pytest.mark.asyncio

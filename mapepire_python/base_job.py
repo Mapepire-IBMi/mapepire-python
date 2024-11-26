@@ -39,8 +39,16 @@ class BaseJob:
 
         if not isinstance(db2_server, DaemonServer):
             raise TypeError("db2_server must be of type DaemonServer")
-
+        self.creds = db2_server
         return db2_server
+
+    def __str__(self) -> str:
+        creds_str = self.creds
+        if isinstance(self.creds, DaemonServer):
+            creds_dict = self.creds.__dict__.copy()
+            creds_dict.pop("password", None)  # Remove password if present
+            creds_str = str(creds_dict)
+        return f"BaseJob(creds={creds_str}, options={self.options})"
 
     def connect(
         self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs

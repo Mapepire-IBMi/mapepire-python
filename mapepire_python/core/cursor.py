@@ -37,7 +37,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         self._connection = weakref.proxy(connection)
         self.job = job
         self.query: Query = None
-        self.query_q = deque(maxlen=20)
+        self.query_q: deque[Query] = deque(maxlen=20)
         self.__closed = False
         self.__has_results = False
 
@@ -102,7 +102,6 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             query = Query(self.job, operation, create_opts)
 
         prepare_result = query.prepare_sql_execute()
-        # print(prepare_result)
 
         if prepare_result["has_results"]:
             self.query = query
@@ -188,7 +187,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     def close(self) -> None:
         if self._closed:
             return
-        if self.query and self.job._socket.connected:
+        if self.query:
             for q in self.query_q:
                 q.close()
             self.query_q.clear()

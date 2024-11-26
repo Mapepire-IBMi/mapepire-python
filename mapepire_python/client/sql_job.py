@@ -2,11 +2,13 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
-from websocket import WebSocket
+from websockets.sync.client import ClientConnection
+
+from mapepire_python.client.websocket_client import WebsocketConnection
+from mapepire_python.websocket import handle_ws_errors
 
 from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions
-from .websocket import WebsocketConnection
 
 __all__ = ["SQLJob"]
 
@@ -49,7 +51,7 @@ class SQLJob(BaseJob):
         self._unique_id_counter += 1
         return f"{prefix}{self._unique_id_counter}"
 
-    def _get_channel(self, db2_server: DaemonServer) -> WebSocket:
+    def _get_channel(self, db2_server: DaemonServer) -> ClientConnection:
         """returns a websocket connection to the mapepire server
 
         Args:
@@ -69,6 +71,7 @@ class SQLJob(BaseJob):
         """
         return self._status
 
+    @handle_ws_errors
     def send(self, content: str) -> None:
         """sends content to the mapepire server
 
@@ -77,6 +80,7 @@ class SQLJob(BaseJob):
         """
         self._socket.send(content)
 
+    @handle_ws_errors
     def connect(
         self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
     ) -> Dict[Any, Any]:
@@ -93,7 +97,7 @@ class SQLJob(BaseJob):
         """
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 
-        self._socket: WebSocket = self._get_channel(db2_server)
+        self._socket: ClientConnection = self._get_channel(db2_server)
 
         props = ";".join(
             [
@@ -164,6 +168,7 @@ class SQLJob(BaseJob):
 
         return Query(job=self, query=sql, opts=query_options)
 
+    @handle_ws_errors
     def query_and_run(
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
     ) -> Dict[str, Any]:

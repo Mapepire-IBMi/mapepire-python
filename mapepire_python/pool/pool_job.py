@@ -1,17 +1,21 @@
 import asyncio
-import base64
 import json
-import ssl
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import websockets
 from pyee.asyncio import AsyncIOEventEmitter
+from websockets.asyncio.client import ClientConnection
+
+from mapepire_python.pool.async_websocket_client import AsyncWebSocketConnection
 
 from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions
 
 __all__ = ["PoolJob"]
+
+logger = logging.getLogger("websockets.client")
 
 
 class PoolJob(BaseJob):
@@ -64,11 +68,7 @@ class PoolJob(BaseJob):
     def enable_local_channel_trace(self):
         self.is_tracing_channel_data = True
 
-    def _local_log(self, level: bool, message: str) -> None:
-        if level:
-            print(message, flush=True)
-
-    async def get_channel(self, db2_server: DaemonServer) -> websockets.WebSocketClientProtocol:
+    async def get_channel(self, db2_server: DaemonServer) -> ClientConnection:
         """returns a websocket connection to the mapepire server
 
         Args:
@@ -81,26 +81,8 @@ class PoolJob(BaseJob):
         Returns:
             websockets.WebSocketClientProtocol: websocket connection
         """
-        uri = f"wss://{db2_server.host}:{db2_server.port}/db/"
-        headers = {
-            "Authorization": "Basic "
-            + base64.b64encode(f"{db2_server.user}:{db2_server.password}".encode()).decode("ascii")
-        }
-
-        ssl_contest = ssl.create_default_context(cafile=db2_server.ca)
-        ssl_contest.check_hostname = False
-        ssl_contest.verify_mode = ssl.CERT_NONE
-
-        try:
-            socket = await websockets.connect(
-                uri=uri, extra_headers=headers, ssl=ssl_contest, ping_timeout=None, open_timeout=30
-            )
-        except TimeoutError as e:
-            raise TimeoutError("Failed to connect to server") from e
-        except Exception as e:
-            raise e
-
-        return socket
+        socket = AsyncWebSocketConnection(db2_server)
+        return await socket.connect()
 
     async def send(self, content: str) -> Dict[Any, Any]:
         """sends content to the mapepire server
@@ -111,18 +93,21 @@ class PoolJob(BaseJob):
         Returns:
             str: response from the server
         """
-        self._local_log(self.enable_local_trace, f"sending data: {content}")
+        logger.debug(f"sending data: {content}")
 
         req = json.loads(content)
         if self.socket is None:
             raise RuntimeError("Socket is not connected")
-        await self.socket.send(content)
-        self.status = JobStatus.Busy
-        self._local_log(self.enable_local_trace, "wating for response ...")
-        response = await self.wait_for_response(req["id"])
-        self._local_log(self.enable_local_trace, f"recieved response: {response}")
-        self.status = JobStatus.Ready if self.get_running_count() == 0 else JobStatus.Busy
-        return response  # type: ignore
+        try:
+            await self.socket.send(content)
+            self.status = JobStatus.Busy
+            logger.debug("waiting for response ...")
+            response = await self.wait_for_response(req["id"])
+            # logger.debug(f"received response: {response}")
+            self.status = JobStatus.Ready if self.get_running_count() == 0 else JobStatus.Busy
+            return response  # type: ignore
+        except Exception as e:
+            raise e
 
     async def wait_for_response(self, req_id: str) -> str:
         """when a request is sent to the server, this method waits for the response
@@ -139,16 +124,14 @@ class PoolJob(BaseJob):
         future = asyncio.Future()
 
         def on_response(response):
-            self._local_log(
-                self.enable_local_trace, f"Received response for req_id: {req_id} - {response}"
-            )
+            logger.debug(f"Received response for req_id: {req_id} - {response}")
             if not future.done():
                 future.set_result(response)
             self.response_emitter.remove_listener(req_id, on_response)
 
         try:
             self.response_emitter.on(req_id, on_response)
-            self._local_log(self.enable_local_trace, f"Listener registered for req_id: {req_id}")
+            logger.debug(f"Listener registered for req_id: {req_id}")
             return await future
         except Exception as e:
             self.response_emitter.remove_listener(req_id, on_response)
@@ -158,9 +141,8 @@ class PoolJob(BaseJob):
         return self.status
 
     def get_running_count(self) -> int:
-        self._local_log(
-            self.enable_local_trace,
-            f"--- running count {self.unique_id}: {len(self.response_emitter.event_names())}, status: {self.get_status()}",
+        logger.debug(
+            f"--- running count {self.unique_id}: {len(self.response_emitter.event_names())}, status: {self.get_status()}"
         )
         return len(self.response_emitter.event_names())
 
@@ -235,25 +217,21 @@ class PoolJob(BaseJob):
             if self.socket is None:
                 raise RuntimeError("Socket is not connected")
             async for message in self.socket:
-                self._local_log(self.enable_local_trace, f"Received raw message: {message}")
+                logger.debug(f"Received raw message: {message}")
 
                 try:
                     response = json.loads(message)
                     req_id = response.get("id")
                     if req_id:
-                        self._local_log(
-                            self.enable_local_trace, f"Emitting response for req_id: {req_id}"
-                        )
+                        logger.debug(f"Emitting response for req_id: {req_id}")
                         self.response_emitter.emit(req_id, response)
                     else:
-                        self._local_log(
-                            self.enable_local_trace, f"No req_id found in response: {response}"
-                        )
+                        logger.debug(f"No req_id found in response: {response}")
                 except json.JSONDecodeError as e:
                     raise ValueError(f"Error decoding JSON: {e}")
                 except Exception as e:
                     raise RuntimeError(f"Error: {e}")
-        except websockets.exceptions.ConnectionClosed:
+        except websockets.exceptions.ConnectionClosedError:
             await self.dispose()
 
     def query(

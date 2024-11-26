@@ -69,6 +69,13 @@
 
 `mapepire-python` requires Python 3.10 or later.
 
+ > [!NOTE] New websocket Implementation
+ > As of version 0.2.0, `mapepire-python` uses the `websockets` library for websocket connections. If you are upgrading from a previous version, make sure to update your dependecies. The `websocket-client` library is no longer supported.
+ > - To update run `pip install -U mapepire-python`
+ >
+ > - More info on [websockets](https://websockets.readthedocs.io/en/stable/)
+
+
 ### Install with `pip`
 
 `mapepire-python` is available on [PyPi](https://pypi.org/project/mapepire-python/). Just Run
