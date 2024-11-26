@@ -1,5 +1,5 @@
 dataclasses-json>=0.6.4
-websocket-client>=1.2.1
+websockets>=14.0
 pep249abc
 pytest
 pytest-asyncio

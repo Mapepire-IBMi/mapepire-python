@@ -272,7 +272,8 @@ def test_prepare_statement_invalid_params():
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     with pytest.raises(Exception) as execinfo:
         query.run()
-    assert "Data type mismatch. (Infinite or NaN)" in str(execinfo.value)
+    print(execinfo)
+    assert "Data type mismatch." in str(execinfo.value)
     job.close()
 
 

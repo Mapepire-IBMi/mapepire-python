@@ -31,6 +31,34 @@ def parse_sql_rc(message):
         return None
 
 
+def test_connect_simple():
+    job = SQLJob()
+    print(job)
+    result = job.connect(creds)
+    assert result["success"]
+    job.close()
+
+
+def test_bad_creds():
+    bad_creds = DaemonServer(
+        host=server,
+        port=port,
+        user="baduser",
+        password=password,
+        ignoreUnauthorized=True,
+    )
+
+    job = SQLJob()
+    result = None
+    try:
+        result = job.connect(bad_creds)
+        raise Exception("error not thrown")
+    except Exception as e:
+        assert "User ID is not known.:BADUSER" in e.args[0]
+    finally:
+        job.close()
+
+
 def test_simple():
     job = SQLJob()
     _ = job.connect(creds)

@@ -43,10 +43,10 @@ async def test_simple_pool_cm():
             assert len(job_names) == 3
             assert pool.get_active_job_count() == 3
         finally:
-            # Ensure all tasks are completed before exiting
+            await pool.end()
             pending = asyncio.all_tasks()
-            if pending:
-                for task in pending:
+            for task in pending:
+                if task is not asyncio.current_task():
                     task.cancel()
 
 
@@ -176,10 +176,10 @@ async def test_pop_jobs_returns_free_job():
             assert pool.get_active_job_count() == 4
             await asyncio.gather(*executed_promises)
         finally:
-            # Ensure all tasks are completed before exiting
+            await pool.end()
             pending = asyncio.all_tasks()
-            if pending:
-                for task in pending:
+            for task in pending:
+                if task is not asyncio.current_task():
                     task.cancel()
 
 
