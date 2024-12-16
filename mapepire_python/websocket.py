@@ -6,6 +6,7 @@ from typing import Any, Callable, TypeVar
 from websockets import ConcurrencyError, ConnectionClosed, InvalidHandshake, InvalidURI
 
 from mapepire_python.data_types import DaemonServer
+from mapepire_python.ssl import get_certificate
 
 ReturnType = TypeVar("ReturnType")
 
@@ -24,8 +25,18 @@ class BaseConnection:
         if db2_server.ignoreUnauthorized:
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE
-        elif db2_server.ca:
-            ssl_context.load_verify_locations(cadata=db2_server.ca)
+        else:
+            if db2_server.ca:
+                ssl_context.load_verify_locations(cadata=db2_server.ca)
+            else:
+                cert = get_certificate(db2_server)
+                if cert:
+                    ssl_context.load_verify_locations(cadata=cert)
+                else:
+                    raise ssl.SSLError("Failed to retrieve server certificate")
+
+                ssl_context.check_hostname = True
+                ssl_context.verify_mode = ssl.CERT_REQUIRED
         return ssl_context
 
 
