@@ -13,13 +13,7 @@ port = os.getenv("VITE_DB_PORT")
 if not server or not user or not password:
     raise ValueError("One or more environment variables are missing.")
 
-creds = DaemonServer(
-    host=server,
-    port=port,
-    user=user,
-    password=password,
-    ignoreUnauthorized=True,
-)
+creds = DaemonServer(host=server, port=port, user=user, password=password)
 
 
 def test_pep249():
