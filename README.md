@@ -20,10 +20,12 @@
   - [Setup](#setup)
     - [Install with `pip`](#install-with-pip)
     - [Server Component Setup](#server-component-setup)
-- [Connection options](#connection-options)
+- [Quick Start](#quick-start)
+- [Other Connection options](#other-connection-options)
   - [1. Using the `DaemonServer` object](#1-using-the-daemonserver-object)
   - [2. Passing the connection details as a dictionary](#2-passing-the-connection-details-as-a-dictionary)
   - [3. Using a config file (`.ini`) to store the connection details](#3-using-a-config-file-ini-to-store-the-connection-details)
+  - [TLS Configuration](#tls-configuration)
 - [Usage](#usage)
   - [1. Using the `SQLJob` object to run queries synchronously](#1-using-the-sqljob-object-to-run-queries-synchronously)
     - [Query and run](#query-and-run)
@@ -87,8 +89,34 @@ pip install mapepire-python
 ### Server Component Setup
 To use mapire-python, you will need to have the Mapepire Server Component running on your IBM i server. Follow these instructions to set up the server component: [Mapepire Server Installation](https://mapepire-ibmi.github.io/guides/sysadmin/)
 
-   
-# Connection options
+# Quick Start
+
+To get started with `mapepire-python`, you will need to setup a connection credentials for the Mapepire server. You can use a dictionary to store the connection details:
+
+```python
+from mapepire_python import connect
+
+creds = {
+  "host": "SERVER",
+  "port": 8076,
+  "user": "USER",
+  "password": "PASSWORD",
+}
+
+with connect(creds) as conn:
+    with conn.execute("select * from sample.employee") as cursor:
+        result = cursor.fetchone()
+        print(result)
+
+```
+
+# Other Connection options
+
+ > [!NOTE]
+ >  TLS support as of version 0.3.0 is now available. Server certificate verification is enabled by default. To disable certificate verification, set the `ignoreUnauthorized` field to `True` in the connection details.
+ > - To update run `pip install -U mapepire-python`
+ >
+ > - More info TLS Configuration [here](#tls-configuration)
 
 There are three ways to configure mapepire server connection details using `mapepire-python`:
 
@@ -107,8 +135,7 @@ creds = DaemonServer(
     host="SERVER",
     port="PORT",
     user="USER",
-    password="PASSWORD",
-    ignoreUnauthorized=True
+    password="PASSWORD"
 )
 ```
 
@@ -122,8 +149,7 @@ creds = DaemonServer(
     host="SERVER",
     port="PORT",
     user="USER",
-    password="PASSWORD",
-    ignoreUnauthorized=True
+    password="PASSWORD"
 )
 
 job = SQLJob(creds)
@@ -173,6 +199,22 @@ job = SQLJob("./mapepire.ini", section="mapepire")
 ```
 
 The `section` argument is optional and allows you to specify a specific section in the `.ini` file where the connection details are stored. This allows you to store multiple connection details to different systems in the same file. If you do not specify a `section`, the first section in the file will be used. 
+
+## TLS Configuration
+
+Server certificate verification (`ssl.CERT_REQUIRED`) is enabled by default. To disable certificate verification, set the `ignoreUnauthorized` field to `True` in the connection details.
+
+get the server certificate:
+
+```python
+from mapepire_python.data_types import DaemonServer
+from mapepire_python.ssl import get_certificate
+
+creds = DaemonServer(host=server, port=port, user=user, password=password)
+cert = get_certificate(creds)
+print(cert)
+```
+
 
 
 # Usage
