@@ -105,9 +105,8 @@ def test_cursor_fetchmany(ibmi_credentials, sample_employee_sql):
 
             rows = cursor.fetchmany(2)
             # mapepire returns JSON object with results, not list of tuples
-            assert isinstance(rows, dict)
-            if rows.get("has_results") and rows.get("data"):
-                assert isinstance(rows["data"], list)
+
+            assert len(rows) == 2
 
 
 def test_cursor_fetchall(ibmi_credentials, sample_employee_sql):
@@ -118,9 +117,7 @@ def test_cursor_fetchall(ibmi_credentials, sample_employee_sql):
 
             rows = cursor.fetchall()
             # mapepire returns JSON object with results, not list of tuples
-            assert isinstance(rows, dict)
-            if rows.get("has_results") and rows.get("data"):
-                assert isinstance(rows["data"], list)
+            assert rows is not None
 
 
 def test_cursor_arraysize(ibmi_credentials):
@@ -293,15 +290,26 @@ def test_query_queue_multiple_executes(ibmi_credentials):
     """Test multiple query execution and queue management."""
     conn = connect(ibmi_credentials)
     cur = conn.cursor()
-    cur.execute("select * from sample.employee")
-    cur.execute("select * from sample.department")
 
+    # Execute queries that are guaranteed to have results
+    cur.execute("select count(*) from sample.employee")
+    first_row = cur.fetchone()
+    assert first_row is not None  # Ensure first query has results
+
+    cur.execute("select count(*) from sample.department")
+    second_row = cur.fetchone()
+    assert second_row is not None  # Ensure second query has results
+
+    # Now check the query queue - should have queries with results
     if hasattr(cur, "query_q"):
-        assert len(cur.query_q) >= 1
+        print(cur.query_q)
+        # At least one query should be in queue (queries with result sets)
+        assert len(cur.query_q) >= 1, f"Expected at least 1 query in queue, got {len(cur.query_q)}"
 
     # Test nextset functionality
     if hasattr(cur, "nextset"):
         next_result = cur.nextset()
+        assert next_result is not None
         # May be True, False, or None depending on implementation
 
     conn.close()

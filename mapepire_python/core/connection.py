@@ -8,6 +8,7 @@ from ..client.sql_job import SQLJob
 from ..core.cursor import Cursor
 from ..core.exceptions import convert_runtime_errors
 from ..core.utils import raise_if_closed
+from ..core.query_factory import QueryFactory
 from ..data_types import DaemonServer
 
 __all__ = ["Connection"]
@@ -47,6 +48,7 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
         self._closed = False
         self.job = SQLJob(creds=database, options=opts, **kwargs)
         self.job.connect(database, **kwargs)
+        self.query_factory = QueryFactory(self.job)
 
     @raise_if_closed
     @convert_runtime_errors

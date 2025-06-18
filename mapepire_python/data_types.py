@@ -89,6 +89,10 @@ class ColumnMetaData:
     label: str
     name: str
     type: str
+    precision: Optional[int] = None
+    scale: Optional[int] = None
+    nullable: Optional[bool] = None
+    length: Optional[int] = None
 
 
 @dataclass

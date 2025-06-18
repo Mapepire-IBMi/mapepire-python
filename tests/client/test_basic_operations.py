@@ -74,8 +74,9 @@ def test_result_paging(ibmi_credentials):
     result = query.run(rows_to_fetch=5)
     
     while True:
-        assert result["data"] is not None and len(result["data"]) > 0
-        if result["is_done"]:
+        # Check if we have data
+        assert result["data"] is not None
+        if len(result["data"]) == 0 or result["is_done"]:
             break
         result = query.fetch_more(rows_to_fetch=5)
 

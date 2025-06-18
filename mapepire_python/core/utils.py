@@ -48,11 +48,17 @@ def ignore_transaction_error(
 
 
 class ColumnMetaData:
-    def __init__(self, name: str, type: str, display_size: int, label: str):
+    def __init__(self, name: str, type: str, display_size: int, label: str, 
+                 precision: Optional[int] = None, scale: Optional[int] = None, 
+                 nullable: Optional[bool] = None, length: Optional[int] = None):
         self.name = name
         self.type = type
         self.display_size = display_size
         self.label = label
+        self.precision = precision
+        self.scale = scale
+        self.nullable = nullable
+        self.length = length
 
 
 class MetaData:
@@ -68,10 +74,26 @@ class QueryResultSet:
         self.has_results = result.get("has_results", None)
         self.update_count = result.get("update_count", None)
         metadata = result.get("metadata", {})
+        
+        # Filter column metadata to only include known ColumnMetaData fields
+        columns = []
+        for col in metadata.get("columns", []):
+            filtered_col = {
+                "display_size": col.get("display_size", 0),
+                "label": col.get("label", col.get("name", "UNKNOWN")),
+                "name": col.get("name", "UNKNOWN"),
+                "type": col.get("type", "VARCHAR"),
+                "precision": col.get("precision"),
+                "scale": col.get("scale"), 
+                "nullable": col.get("nullable"),
+                "length": col.get("length")
+            }
+            columns.append(ColumnMetaData(**filtered_col))
+            
         self.metadata = MetaData(
             column_count=metadata.get("column_count", None),
             job=metadata.get("job", None),
-            columns=[ColumnMetaData(**col) for col in metadata.get("columns", [])],
+            columns=columns,
         )
         self.data = result.get("data", [])
         self.is_done = result.get("is_done", None)

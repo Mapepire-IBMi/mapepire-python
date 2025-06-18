@@ -11,6 +11,14 @@ from .exceptions import (
     OperationalError,
     ProgrammingError,
 )
+from .query_base import (
+    AsyncQueryExecutor,
+    BaseQuery,
+    BaseQueryExecutor,
+    QueryResult,
+    QueryState,
+    SyncQueryExecutor,
+)
 
 __all__ = [
     "Connection",
@@ -24,4 +32,10 @@ __all__ = [
     "NotSupportedError",
     "OperationalError",
     "ProgrammingError",
+    "BaseQuery",
+    "BaseQueryExecutor",
+    "SyncQueryExecutor",
+    "AsyncQueryExecutor",
+    "QueryResult",
+    "QueryState",
 ]

@@ -42,7 +42,7 @@ def test_connection_execute_shortcut(ibmi_credentials, simple_count_sql):
         with conn.execute(simple_count_sql) as cursor:
             result = cursor.fetchone()
             assert result is not None
-            assert len(result["data"]) == 1  # COUNT(*) returns one column
+            assert len(result) == 1  # COUNT(*) returns one column
 
 
 def test_connection_multiple_cursors(ibmi_credentials, simple_count_sql):
