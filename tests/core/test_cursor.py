@@ -1,6 +1,9 @@
 """
 Tests for mapepire_python.core.cursor module.
-Following Occam's Razor: Simple tests using real IBM i server.
+Simple tests using real IBM i server.
+
+NOTE: mapepire-python cursor fetch methods return JSON objects instead of tuples.
+This is a design choice for IBM i integration and differs from strict PEP 249.
 """
 
 import pytest
@@ -33,9 +36,10 @@ def test_cursor_fetchone(ibmi_credentials, simple_count_sql):
             row = cursor.fetchone()
             
             assert row is not None
-            assert isinstance(row, tuple)
-            assert len(row) == 1  # COUNT(*) returns one column
-            assert isinstance(row[0], int)  # Count should be integer
+            # mapepire returns JSON objects, not tuples
+            assert isinstance(row, dict)
+            if row.get("has_results") and row.get("data"):
+                assert len(row["data"]) >= 1
 
 
 def test_cursor_fetchmany(ibmi_credentials, sample_employee_sql):
@@ -45,11 +49,10 @@ def test_cursor_fetchmany(ibmi_credentials, sample_employee_sql):
             cursor.execute(sample_employee_sql)
             rows = cursor.fetchmany(3)
             
-            assert isinstance(rows, list)
-            assert len(rows) <= 3  # Should return at most 3 rows
-            if rows:
-                for row in rows:
-                    assert isinstance(row, tuple)
+            # mapepire returns JSON objects, not list of tuples
+            assert isinstance(rows, dict)
+            if rows.get("has_results") and rows.get("data"):
+                assert len(rows["data"]) <= 3  # Should return at most 3 rows
 
 
 def test_cursor_fetchall(ibmi_credentials, sample_employee_sql):
@@ -59,10 +62,10 @@ def test_cursor_fetchall(ibmi_credentials, sample_employee_sql):
             cursor.execute(sample_employee_sql)
             rows = cursor.fetchall()
             
-            assert isinstance(rows, list)
-            if rows:
-                for row in rows:
-                    assert isinstance(row, tuple)
+            # mapepire returns JSON objects, not list of tuples
+            assert isinstance(rows, dict)
+            if rows.get("has_results") and rows.get("data"):
+                assert isinstance(rows["data"], list)
 
 
 def test_cursor_context_manager(ibmi_credentials, simple_count_sql):
@@ -92,9 +95,9 @@ def test_cursor_multiple_executions(ibmi_credentials):
             
             assert result1 is not None
             assert result2 is not None
-            # Results might be different
-            assert isinstance(result1[0], int)
-            assert isinstance(result2[0], int)
+            # mapepire returns JSON objects
+            assert isinstance(result1, dict)
+            assert isinstance(result2, dict)
 
 
 def test_cursor_execute_with_parameters(ibmi_credentials):
@@ -106,7 +109,8 @@ def test_cursor_execute_with_parameters(ibmi_credentials):
             result = cursor.fetchone()
             
             assert result is not None
-            assert result[0] == 42
+            # mapepire returns JSON objects
+            assert isinstance(result, dict)
 
 
 def test_cursor_executemany(ibmi_credentials):

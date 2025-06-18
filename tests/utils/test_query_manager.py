@@ -1,27 +1,17 @@
-import os
+"""
+Tests for QueryManager functionality (migrated from query_manager_test.py).
+Simple QueryManager tests using real IBM i server.
+"""
 
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import DaemonServer
 from mapepire_python.query_manager import QueryManager
 
-# Fetch environment variables
-server = os.getenv("VITE_SERVER")
-user = os.getenv("VITE_DB_USER")
-password = os.getenv("VITE_DB_PASS")
-port = os.getenv("VITE_DB_PORT")
 
-# Check if environment variables are set
-if not server or not user or not password:
-    raise ValueError("One or more environment variables are missing.")
-
-
-creds = DaemonServer(host=server, port=port, user=user, password=password)
-
-
-def test_query_manager():
+def test_query_manager_basic(ibmi_credentials):
+    """Test basic QueryManager functionality."""
     # connection logic
     job = SQLJob()
-    job.connect(creds)
+    job.connect(ibmi_credentials)
 
     # Query Manager
     query_manager = QueryManager(job)
@@ -34,23 +24,29 @@ def test_query_manager():
 
     assert result["success"]
     job.close()
-    with SQLJob(creds) as sql_job:
+
+
+def test_query_manager_context_manager_with_query(ibmi_credentials):
+    """Test QueryManager with context manager and query context manager."""
+    with SQLJob(ibmi_credentials) as sql_job:
         query_manager = QueryManager(sql_job)
         with query_manager.create_query("select * from sample.employee") as query:
             result = query_manager.run_query(query, rows_to_fetch=1)
-            print(result)
+            assert result["success"]
 
 
-def test_query_manager_with_cm_q_and_run():
-    with SQLJob(creds=creds) as job:
+def test_query_manager_with_query_and_run(ibmi_credentials):
+    """Test QueryManager with query_and_run shortcut."""
+    with SQLJob(creds=ibmi_credentials) as job:
         query_manager = QueryManager(job)
         res = query_manager.query_and_run("select * from sample.employee")
         assert res["success"] == True
 
 
-def test_context_manager():
+def test_query_manager_with_job_context_manager(ibmi_credentials):
+    """Test QueryManager with SQLJob context manager."""
     with SQLJob() as job:
-        job.connect(creds)
+        job.connect(ibmi_credentials)
 
         query_manager = QueryManager(job)
         query = query_manager.create_query("select * from sample.department")
@@ -58,8 +54,9 @@ def test_context_manager():
         assert result["success"]
 
 
-def test_simple_v2():
-    with SQLJob(creds) as job:
+def test_query_manager_simple_v2(ibmi_credentials):
+    """Test QueryManager simple functionality with explicit close."""
+    with SQLJob(ibmi_credentials) as job:
         query_manager = QueryManager(job)
         query = query_manager.create_query("select * from sample.employee")
         result = query_manager.run_query(query, rows_to_fetch=5)
@@ -69,9 +66,10 @@ def test_simple_v2():
         query.close()
 
 
-def test_query_large_dataset():
+def test_query_manager_large_dataset(ibmi_credentials):
+    """Test QueryManager with large dataset."""
     job = SQLJob()
-    _ = job.connect(creds)
+    _ = job.connect(ibmi_credentials)
     query_manager = QueryManager(job)
     query = query_manager.create_query("select * from sample.employee")
 
@@ -85,8 +83,9 @@ def test_query_large_dataset():
     assert len(result["data"]) == 30
 
 
-def test_query_and_run():
-    with SQLJob(creds) as job:
+def test_query_manager_query_and_run_shortcut(ibmi_credentials):
+    """Test QueryManager query_and_run shortcut method."""
+    with SQLJob(ibmi_credentials) as job:
         query_manager = QueryManager(job)
         result = query_manager.query_and_run("select * from sample.employee", rows_to_fetch=5)
         assert result["success"] == True

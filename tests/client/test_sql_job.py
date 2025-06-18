@@ -1,6 +1,6 @@
 """
 Tests for mapepire_python.client.sql_job module.
-Following Occam's Razor: Simple tests using real IBM i server.
+Simple tests using real IBM i server.
 """
 
 import pytest

@@ -1,6 +1,6 @@
 """
 Shared pytest fixtures for mapepire-python tests.
-Following Occam's Razor: Simple fixtures for IBM i server testing.
+Simple fixtures for IBM i server testing.
 """
 
 import os

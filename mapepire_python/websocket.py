@@ -21,29 +21,40 @@ class BaseConnection:
         self.db2_server = db2_server
 
     def _create_ssl_context(self, db2_server: DaemonServer):
-        ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
         if db2_server.ignoreUnauthorized:
+            ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
             ssl_context.check_hostname = False
             ssl_context.verify_mode = ssl.CERT_NONE
         else:
             if db2_server.ca:
+                # Create a context that only trusts the provided CA
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                ssl_context.check_hostname = True
+                ssl_context.verify_mode = ssl.CERT_REQUIRED
+                # Don't load any default CAs, only trust the provided one
                 ssl_context.load_verify_locations(cadata=db2_server.ca)
+                # Set minimum protocol version for security
+                ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
             else:
+                ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
+                ssl_context.check_hostname = True
+                ssl_context.verify_mode = ssl.CERT_REQUIRED
+
                 cert = get_certificate(db2_server)
                 if cert:
                     ssl_context.load_verify_locations(cadata=cert)
                 else:
                     raise ssl.SSLError("Failed to retrieve server certificate")
-
-                ssl_context.check_hostname = True
-                ssl_context.verify_mode = ssl.CERT_REQUIRED
         return ssl_context
 
 
 def _parse_ws_error(error: Exception, driver: Any = None):
     to_str = str(driver)
 
-    if isinstance(error, InvalidURI):
+    if isinstance(error, ssl.SSLError):
+        # Re-raise SSL errors as-is so they can be caught by tests
+        raise error
+    elif isinstance(error, InvalidURI):
         raise InvalidURI(f"The provided URI is not a valid WebSocket URI: {to_str}")
     elif isinstance(error, OSError):
         raise OSError(f"The TCP connection failed to connect to Mapepire server: {to_str}")
