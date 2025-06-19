@@ -6,6 +6,7 @@ from websockets.sync.client import ClientConnection
 
 from mapepire_python.client.websocket_client import WebsocketConnection
 from mapepire_python.websocket import handle_ws_errors
+from mapepire_python.connection_pool import get_pooled_connection, return_pooled_connection, register_active_job
 
 from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions
@@ -30,6 +31,10 @@ class SQLJob(BaseJob):
 
         self.__unique_id = self._get_unique_id("sqljob")
         self.id: Optional[str] = None
+        self._server_config: Optional[DaemonServer] = None
+        
+        # Register this job instance for tracking
+        register_active_job(self)
 
     def __enter__(self):
         if self.creds:
@@ -60,8 +65,8 @@ class SQLJob(BaseJob):
         Returns:
             WebSocket: websocket connection
         """
-        socket = WebsocketConnection(db2_server)
-        return socket.connect()
+        # Use pooled connection for better performance
+        return get_pooled_connection(db2_server)
 
     def get_status(self) -> JobStatus:
         """returns the current status of the job
@@ -96,6 +101,7 @@ class SQLJob(BaseJob):
             Dict[Any, Any]: connection results from the server
         """
         db2_server = self._parse_connection_input(db2_server, **kwargs)
+        self._server_config = db2_server  # Store for cleanup
 
         self._socket: ClientConnection = self._get_channel(db2_server)
 
@@ -192,5 +198,8 @@ class SQLJob(BaseJob):
 
     def close(self) -> None:
         self._status = JobStatus.Ended
-        if self._socket:
-            self._socket.close()
+        if self._socket and self._server_config:
+            # Return connection to pool instead of closing
+            return_pooled_connection(self._server_config, self._socket)
+            self._socket = None
+            self._server_config = None

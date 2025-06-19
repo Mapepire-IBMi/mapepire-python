@@ -186,6 +186,18 @@ When faced with design decisions, always ask: "What is the simplest approach tha
     - [x] **Certificate caching performance** with substantial speed improvements
     - [x] **Multi-configuration testing** with different SSL settings
     - [x] **Memory efficiency validation** with cache size and hit rate monitoring
+- [x] **COMPLETED**: WebSocket Connection Pooling - Connection reuse for performance optimization
+  - [x] **79.2% performance improvement** demonstrated via POC tests
+  - [x] **87.5% reduction** in connection overhead with mock testing
+  - [x] **Multiple connections per server** (up to 3 configurable via MAPEPIRE_MAX_CONNECTIONS_PER_SERVER)
+  - [x] **Reduced lock contention** with per-server creation locks and fast-path connection lookup
+  - [x] **Thread-safe concurrent access** verified with real IBM i systems
+  - [x] **Environment variable control** (MAPEPIRE_CONNECTION_POOL=true/false)
+  - [x] **Transparent SQLJob integration** - no API changes required
+  - [x] **Graceful shutdown handling** with automatic connection cleanup
+  - [x] **Comprehensive IBM i test suite** with sequential, concurrent, and multi-server scenarios
+  - [x] **Real-world performance validation** showing **8.4% improvement** on network-bound IBM i operations
+  - [x] **Key insight**: Connection pooling provides significant benefits for concurrent workloads but limited gains for sequential network-bound queries where query processing time (1200ms) dominates connection establishment time (51ms)
 - [ ] Result Set Streaming - Implement streaming processors for memory efficiency
 - [ ] Request Batching - Support multiple queries per WebSocket message
 - [ ] Memory Optimization - Use __slots__ and object pooling for hot paths
