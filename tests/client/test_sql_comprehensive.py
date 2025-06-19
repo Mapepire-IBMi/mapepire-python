@@ -4,6 +4,7 @@ Simple comprehensive SQL tests using real IBM i server.
 """
 
 import pytest
+
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.data_types import QueryOptions
 
@@ -175,6 +176,7 @@ def test_sql_fetch_more(ibmi_credentials):
     res = query.run(rows_to_fetch=5)
     while not res["is_done"]:
         res = query.fetch_more(10)
+        print(res)
         # If no data returned, we're done (handles server correlation ID issues)
         if len(res["data"]) == 0:
             break

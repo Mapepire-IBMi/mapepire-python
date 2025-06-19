@@ -9,6 +9,8 @@ from pyee.asyncio import AsyncIOEventEmitter
 from websockets.asyncio.client import ClientConnection
 
 from mapepire_python.pool.async_websocket_client import AsyncWebSocketConnection
+from mapepire_python.websocket import handle_ws_errors
+from mapepire_python.core.exceptions import convert_runtime_errors
 
 from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions
@@ -68,6 +70,7 @@ class PoolJob(BaseJob):
     def enable_local_channel_trace(self):
         self.is_tracing_channel_data = True
 
+    @handle_ws_errors
     async def get_channel(self, db2_server: DaemonServer) -> ClientConnection:
         """returns a websocket connection to the mapepire server
 
@@ -84,6 +87,7 @@ class PoolJob(BaseJob):
         socket = AsyncWebSocketConnection(db2_server)
         return await socket.connect()
 
+    @handle_ws_errors
     async def send(self, content: str) -> Dict[Any, Any]:
         """sends content to the mapepire server
 
@@ -269,6 +273,7 @@ class PoolJob(BaseJob):
 
         return PoolQuery(job=self, query=sql, opts=query_options)
 
+    @convert_runtime_errors
     async def query_and_run(  # type: ignore
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
     ) -> Dict[str, Any]:

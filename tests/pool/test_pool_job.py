@@ -4,8 +4,9 @@ Simple async tests using real IBM i server.
 """
 
 import pytest
+
+from mapepire_python.data_types import QueryOptions
 from mapepire_python.pool.pool_job import PoolJob
-from mapepire_python.data_types import DaemonServer, QueryOptions
 from mapepire_python.query_manager import QueryManager
 
 
@@ -14,7 +15,7 @@ async def test_pool_job_basic(ibmi_credentials):
     """Test basic PoolJob functionality."""
     async with PoolJob(creds=ibmi_credentials) as job:
         query = job.query("select * from sample.employee")
-        query2 = job.query("select * from sample.department") 
+        query2 = job.query("select * from sample.department")
         res = await query.run()
         res2 = await query2.run()
         assert res["success"] is True
@@ -31,7 +32,7 @@ async def test_pool_job_with_query_manager(ibmi_credentials):
             assert res["success"] is True
 
 
-@pytest.mark.asyncio 
+@pytest.mark.asyncio
 async def test_pool_job_query_and_run(ibmi_credentials):
     """Test PoolJob query_and_run shortcut."""
     async with PoolJob(creds=ibmi_credentials) as pool_job:
@@ -99,7 +100,7 @@ async def test_pool_job_large_dataset(ibmi_credentials):
     query = job.query("select * from sample.employee")
     result = await query.run(rows_to_fetch=30)
     await job.close()
-    
+
     assert result["success"] is True
     assert result["is_done"] is False
     assert result["has_results"] is True
@@ -115,7 +116,7 @@ async def test_pool_job_terse_format(ibmi_credentials):
     query = job.query("select * from sample.employee", opts=opts)
     result = await query.run(rows_to_fetch=5)
     await job.close()
-    
+
     assert result["success"] is True
     assert result["is_done"] is False
     assert result["has_results"] is True
@@ -143,7 +144,7 @@ async def test_pool_job_edge_cases(ibmi_credentials):
     """Test PoolJob with edge case inputs."""
     job = PoolJob()
     _ = await job.connect(ibmi_credentials)
-    
+
     # Test empty query
     query = job.query("")
     try:
@@ -153,7 +154,7 @@ async def test_pool_job_edge_cases(ibmi_credentials):
         assert e.args[0]
         assert "error" in e.args[0]
         assert "A string parameter value with zero length was detected." in e.args[0]["error"]
-    
+
     await job.close()
 
 
@@ -174,11 +175,20 @@ async def test_pool_job_fetch_more(ibmi_credentials):
     job = PoolJob()
     _ = await job.connect(ibmi_credentials)
     query = job.query("select * from sample.employee")
-    res = await query.run(rows_to_fetch=5)
-    while not res["is_done"]:
-        res = await query.fetch_more(10)
+    res = await query.run(1)
+    print(res)
+    # assert len(res.data) == 5
+    total_rows = 0
+    done = res["is_done"]
+    while not done:
+        print("hello")
+        res = await query.fetch_more(1)
+        print(res)
+        total_rows += len(res.data)
         assert len(res["data"]) >= 0
-    
+        done = res["is_done"]
+    print(res)
+    print(total_rows)
     await job.close()
     assert res["is_done"]
 
@@ -225,14 +235,14 @@ async def test_pool_job_parameter_errors(ibmi_credentials):
     """Test PoolJob parameter error handling."""
     job = PoolJob()
     _ = await job.connect(ibmi_credentials)
-    
+
     # Invalid parameter type
     opts = QueryOptions(parameters=["jjfkdsajf"])
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     with pytest.raises(Exception) as excinfo:
         res = await query.run()
     assert "Data type mismatch." in str(excinfo.value)
-    
+
     await job.close()
 
 
@@ -241,11 +251,11 @@ async def test_pool_job_multiple_statements(ibmi_credentials):
     """Test PoolJob with multiple sequential statements."""
     job = PoolJob()
     _ = await job.connect(ibmi_credentials)
-    
+
     resA = await job.query("select * from sample.department").run()
     assert resA["success"] is True
-    
+
     resB = await job.query("select * from sample.employee").run()
     assert resB["success"] is True
-    
+
     await job.close()

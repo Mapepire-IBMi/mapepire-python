@@ -4,9 +4,13 @@ from typing import Any, Dict, Optional, Union
 
 from websockets.sync.client import ClientConnection
 
-from mapepire_python.client.websocket_client import WebsocketConnection
+from mapepire_python.connection_pool import (
+    get_pooled_connection,
+    register_active_job,
+    return_pooled_connection,
+)
+from mapepire_python.core.exceptions import convert_runtime_errors
 from mapepire_python.websocket import handle_ws_errors
-from mapepire_python.connection_pool import get_pooled_connection, return_pooled_connection, register_active_job
 
 from ..base_job import BaseJob
 from ..data_types import DaemonServer, JobStatus, QueryOptions
@@ -32,7 +36,7 @@ class SQLJob(BaseJob):
         self.__unique_id = self._get_unique_id("sqljob")
         self.id: Optional[str] = None
         self._server_config: Optional[DaemonServer] = None
-        
+
         # Register this job instance for tracking
         register_active_job(self)
 
@@ -175,6 +179,7 @@ class SQLJob(BaseJob):
         return Query(job=self, query=sql, opts=query_options)
 
     @handle_ws_errors
+    @convert_runtime_errors
     def query_and_run(
         self, sql: str, opts: Optional[Dict[str, Any]] = None, **kwargs
     ) -> Dict[str, Any]:
@@ -194,7 +199,7 @@ class SQLJob(BaseJob):
             with self.query(sql, opts) as query:
                 return query.run(**kwargs)
         except Exception as e:
-            raise RuntimeError(f"Failed to run query: {sql} - {e}")
+            raise RuntimeError(e)
 
     def close(self) -> None:
         self._status = JobStatus.Ended

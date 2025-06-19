@@ -46,6 +46,25 @@ async def test_async_connection_with_malformed_credentials():
             pass
 
 
+@pytest.mark.asyncio
+async def test_async_connection_basic_fail(ibmi_credentials):
+    """Test basic async connection functionality."""
+    try:
+        async with connect(ibmi_credentials) as conn:
+            async with await conn.execute("SELECT NONEXISTENT_FUNC() FROM SYSIBM.SYSDUMMY1") as cur:
+                res = await cur.fetchone()
+    except DatabaseError as e:
+        print(f"✓ Enhanced Error Message:")
+        print(f"  {e}")
+        print(f"✓ Exception Type: {type(e).__name__}")
+
+        # Show debugging attributes
+        if hasattr(e, "sql_state") and e.sql_state:
+            print(f"  SQL State: {e.sql_state}")
+        if hasattr(e, "sql_code") and e.sql_code:
+            print(f"  SQL Code: {e.sql_code}")
+
+
 # @pytest.mark.asyncio
 # async def test_async_connection_timeout_handling():
 #     """Test async connection timeout scenarios."""

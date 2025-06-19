@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any, Dict, Union
 
+
 from .core import (
     Connection,
     Cursor,

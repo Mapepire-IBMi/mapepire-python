@@ -1,7 +1,7 @@
 """
 Simple WebSocket Connection Pool for Mapepire Python.
 
-Following Occam's Razor: Simple, effective connection reuse with minimal complexity.
+Simple, effective connection reuse with minimal complexity.
 Transparently improves performance by reusing WebSocket connections across SQLJob instances.
 """
 
@@ -234,7 +234,7 @@ class WebSocketConnectionPool:
         """Check if connection pooling is enabled."""
         import os
 
-        return os.getenv("MAPEPIRE_CONNECTION_POOL", "false").lower()
+        return os.getenv("MAPEPIRE_CONNECTION_POOL", "false").lower() == "true"
 
 
 # Global connection pool instance

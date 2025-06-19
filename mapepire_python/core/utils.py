@@ -3,7 +3,9 @@
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional
 
+from .correlation_handler import CorrelationIDHandler
 from .exceptions import CONNECTION_CLOSED, ProgrammingError, ReturnType
+from .query_base import QueryResult
 
 __all__ = ["raise_if_closed"]
 
@@ -41,11 +43,22 @@ def ignore_transaction_error(
             return method(*args, **kwargs)
         except (ProgrammingError, RuntimeError) as err:
             error_msg = str(err)
-            if (
-                error_msg.endswith("no transaction is active")
-                or "invalid correlation ID" in error_msg
-            ):
+            if error_msg.endswith("no transaction is active"):
                 return None
+            
+            # Check for correlation ID expiration using CorrelationIDHandler
+            # Create a fake QueryResult to check if the error is correlation ID related
+            fake_result = QueryResult({
+                "success": False,
+                "error": error_msg,
+                "data": [],
+                "is_done": False,
+                "id": None
+            })
+            
+            if CorrelationIDHandler.is_correlation_expired(fake_result):
+                return None
+            
             raise
 
     return wrapped

@@ -6,7 +6,8 @@ NOTE: mapepire-python cursor fetch methods return JSON objects instead of tuples
 This is a design choice for IBM i integration and differs from strict PEP 249.
 """
 
-import pytest
+from pep249 import DatabaseError
+
 from mapepire_python import connect
 
 
@@ -28,13 +29,34 @@ def test_cursor_execute_simple_query(ibmi_credentials, simple_count_sql):
             # For COUNT(*), we expect one column
 
 
+def test_cursor_execute_simple_query_fail(ibmi_credentials, simple_count_sql):
+    """Test executing a simple query."""
+    try:
+        with connect(ibmi_credentials) as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT NONEXISTENT_FUNC() FROM SYSIBM.SYSDUMMY1")
+                res = cursor.fetchall()
+    except DatabaseError as e:
+        print(f"✓ Enhanced Error Message:")
+        print(f"  {e}")
+        print(f"✓ Exception Type: {type(e).__name__}")
+
+        # Show debugging attributes
+        if hasattr(e, "sql_state") and e.sql_state:
+            print(f"  SQL State: {e.sql_state}")
+        if hasattr(e, "sql_code") and e.sql_code:
+            print(f"  SQL Code: {e.sql_code}")
+            # After execute, cursor should have description if results available
+            # For COUNT(*), we expect one column
+
+
 def test_cursor_fetchone(ibmi_credentials, simple_count_sql):
     """Test fetchone method."""
     with connect(ibmi_credentials) as conn:
         with conn.cursor() as cursor:
             cursor.execute(simple_count_sql)
             row = cursor.fetchone()
-            
+
             assert row is not None
             # mapepire returns JSON objects, not tuples
             assert isinstance(row, dict)
@@ -48,7 +70,7 @@ def test_cursor_fetchmany(ibmi_credentials, sample_employee_sql):
         with conn.cursor() as cursor:
             cursor.execute(sample_employee_sql)
             rows = cursor.fetchmany(3)
-            
+
             # mapepire returns JSON objects, not list of tuples
             assert isinstance(rows, dict)
             if rows.get("has_results") and rows.get("data"):
@@ -61,7 +83,7 @@ def test_cursor_fetchall(ibmi_credentials, sample_employee_sql):
         with conn.cursor() as cursor:
             cursor.execute(sample_employee_sql)
             rows = cursor.fetchall()
-            
+
             # mapepire returns JSON objects, not list of tuples
             assert isinstance(rows, dict)
             if rows.get("has_results") and rows.get("data"):
@@ -76,7 +98,7 @@ def test_cursor_context_manager(ibmi_credentials, simple_count_sql):
             cursor = cur
             assert not cur._closed
             cur.execute(simple_count_sql)
-        
+
         # Cursor should be closed after context exit
         assert cursor._closed
 
@@ -88,11 +110,11 @@ def test_cursor_multiple_executions(ibmi_credentials):
             # Execute first query
             cursor.execute("SELECT COUNT(*) FROM sample.employee")
             result1 = cursor.fetchone()
-            
-            # Execute second query  
+
+            # Execute second query
             cursor.execute("SELECT COUNT(*) FROM sample.department")
             result2 = cursor.fetchone()
-            
+
             assert result1 is not None
             assert result2 is not None
             # mapepire returns JSON objects
@@ -107,7 +129,7 @@ def test_cursor_execute_with_parameters(ibmi_credentials):
             # Simple parameterized query
             cursor.execute("SELECT ? as test_value", (42,))
             result = cursor.fetchone()
-            
+
             assert result is not None
             # mapepire returns JSON objects
             assert isinstance(result, dict)
@@ -125,7 +147,7 @@ def test_cursor_executemany(ibmi_credentials):
 
 
 def test_cursor_rowcount(ibmi_credentials, simple_count_sql):
-    """Test rowcount property.""" 
+    """Test rowcount property."""
     with connect(ibmi_credentials) as conn:
         with conn.cursor() as cursor:
             cursor.execute(simple_count_sql)
@@ -141,7 +163,7 @@ def test_cursor_description(ibmi_credentials, sample_employee_sql):
         with conn.cursor() as cursor:
             cursor.execute(sample_employee_sql)
             description = cursor.description
-            
+
             if description is not None:  # May be None for some query types
                 assert isinstance(description, (list, tuple))
                 for col_desc in description:
@@ -154,6 +176,6 @@ def test_cursor_close_explicit(ibmi_credentials):
     with connect(ibmi_credentials) as conn:
         cursor = conn.cursor()
         assert not cursor._closed
-        
+
         cursor.close()
         assert cursor._closed

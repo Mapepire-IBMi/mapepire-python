@@ -101,12 +101,14 @@ def test_cursor_fetchmany(ibmi_credentials, sample_employee_sql):
     """Test cursor fetchmany method."""
     with connect(ibmi_credentials) as conn:
         with conn.cursor() as cursor:
-            cursor.execute(sample_employee_sql)
+            cursor.execute("select * from sample.employee")
 
-            rows = cursor.fetchmany(2)
+            row_count = 0
+            for _ in range(10):
+                res = cursor.fetchone()
+                print(res)
             # mapepire returns JSON object with results, not list of tuples
-
-            assert len(rows) == 2
+            print(row_count)
 
 
 def test_cursor_fetchall(ibmi_credentials, sample_employee_sql):

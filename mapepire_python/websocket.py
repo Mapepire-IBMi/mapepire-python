@@ -41,7 +41,7 @@ class BaseConnection:
                 # Don't load any default CAs, only trust the provided one
                 ssl_context.load_verify_locations(cadata=db2_server.ca)
                 # Set minimum protocol version for security
-                ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+                ssl_context.minimum_version = ssl.TLSVersion.TLSv1_3
             else:
                 ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
                 ssl_context.check_hostname = True
@@ -83,11 +83,23 @@ def _parse_ws_error(error: Exception, driver: Any = None):
 
 
 def handle_ws_errors(function: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
-    @wraps(function)
-    def _impl(self, *args, **kwargs):
-        try:
-            return function(self, *args, **kwargs)
-        except RuntimeError as err:
-            raise _parse_ws_error(err, driver=self) from err
-
-    return _impl
+    import inspect
+    
+    if inspect.iscoroutinefunction(function):
+        # Async function - create async wrapper
+        @wraps(function)
+        async def async_impl(self, *args, **kwargs):
+            try:
+                return await function(self, *args, **kwargs)
+            except RuntimeError as err:
+                raise _parse_ws_error(err, driver=self) from err
+        return async_impl
+    else:
+        # Sync function - create sync wrapper
+        @wraps(function)
+        def sync_impl(self, *args, **kwargs):
+            try:
+                return function(self, *args, **kwargs)
+            except RuntimeError as err:
+                raise _parse_ws_error(err, driver=self) from err
+        return sync_impl

@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional
 
+from mapepire_python.core.correlation_handler import CorrelationIDHandler
 from mapepire_python.core.query_base import AsyncQueryExecutor, BaseQuery, QueryResult, QueryState
 from mapepire_python.data_types import QueryOptions
 from mapepire_python.pool.pool_job import PoolJob
@@ -47,11 +48,21 @@ class PoolQuery(BaseQuery[PoolJob]):
         raw_result = await self.executor.execute_query(self.job, query_object)
         result = self._process_query_result(raw_result)
         
-        if not result.success:
+        # Use CorrelationIDHandler to gracefully handle correlation ID expiration
+        handled_result = CorrelationIDHandler.handle_fetch_result(result, self)
+        
+        # Check if this is a different result (correlation ID expiration was handled)
+        if handled_result is not result:
+            # Correlation ID was expired and handled - return the "done" result
+            return handled_result
+        
+        # For the original result, check for actual errors
+        if not handled_result.success:
+            # This is a real error - set error state and raise
             self.state = QueryState.ERROR
-            raise Exception(result.error or "Failed to run Query (unknown error)")
+            raise Exception(handled_result.error or "Failed to run Query (unknown error)")
             
-        return result
+        return handled_result
 
     async def close(self) -> Optional[QueryResult]:
         """Close the query and clean up resources."""
