@@ -188,7 +188,7 @@ class SQLJob(BaseJob):
             with self.query(sql, opts) as query:
                 return query.run(**kwargs)
         except Exception as e:
-            raise RuntimeError(f"Failed to run query: {e}")
+            raise RuntimeError(f"Failed to run query: {sql} - {e}")
 
     def close(self) -> None:
         self._status = JobStatus.Ended

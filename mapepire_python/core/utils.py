@@ -26,7 +26,7 @@ def raise_if_closed(method: Callable[..., ReturnType]) -> Callable[..., ReturnTy
 
 
 def ignore_transaction_error(
-    method: Callable[..., ReturnType]
+    method: Callable[..., ReturnType],
 ) -> Callable[..., Optional[ReturnType]]:
     """
     Ignore transaction errors, returning `None` instead. Useful for
@@ -40,7 +40,11 @@ def ignore_transaction_error(
         try:
             return method(*args, **kwargs)
         except (ProgrammingError, RuntimeError) as err:
-            if str(err).endswith("no transaction is active"):
+            error_msg = str(err)
+            if (
+                error_msg.endswith("no transaction is active")
+                or "invalid correlation ID" in error_msg
+            ):
                 return None
             raise
 
@@ -48,9 +52,17 @@ def ignore_transaction_error(
 
 
 class ColumnMetaData:
-    def __init__(self, name: str, type: str, display_size: int, label: str, 
-                 precision: Optional[int] = None, scale: Optional[int] = None, 
-                 nullable: Optional[bool] = None, length: Optional[int] = None):
+    def __init__(
+        self,
+        name: str,
+        type: str,
+        display_size: int,
+        label: str,
+        precision: Optional[int] = None,
+        scale: Optional[int] = None,
+        nullable: Optional[bool] = None,
+        length: Optional[int] = None,
+    ):
         self.name = name
         self.type = type
         self.display_size = display_size
@@ -74,7 +86,7 @@ class QueryResultSet:
         self.has_results = result.get("has_results", None)
         self.update_count = result.get("update_count", None)
         metadata = result.get("metadata", {})
-        
+
         # Filter column metadata to only include known ColumnMetaData fields
         columns = []
         for col in metadata.get("columns", []):
@@ -84,12 +96,12 @@ class QueryResultSet:
                 "name": col.get("name", "UNKNOWN"),
                 "type": col.get("type", "VARCHAR"),
                 "precision": col.get("precision"),
-                "scale": col.get("scale"), 
+                "scale": col.get("scale"),
                 "nullable": col.get("nullable"),
-                "length": col.get("length")
+                "length": col.get("length"),
             }
             columns.append(ColumnMetaData(**filtered_col))
-            
+
         self.metadata = MetaData(
             column_count=metadata.get("column_count", None),
             job=metadata.get("job", None),

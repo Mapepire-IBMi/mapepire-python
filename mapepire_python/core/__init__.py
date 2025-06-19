@@ -11,6 +11,7 @@ from .exceptions import (
     OperationalError,
     ProgrammingError,
 )
+from .parameter_parser import ParameterParser
 from .query_base import (
     AsyncQueryExecutor,
     BaseQuery,
@@ -38,4 +39,5 @@ __all__ = [
     "AsyncQueryExecutor",
     "QueryResult",
     "QueryState",
+    "ParameterParser",
 ]

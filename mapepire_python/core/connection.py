@@ -7,8 +7,8 @@ from pep249 import ProcArgs, QueryParameters, SQLQuery
 from ..client.sql_job import SQLJob
 from ..core.cursor import Cursor
 from ..core.exceptions import convert_runtime_errors
-from ..core.utils import raise_if_closed
 from ..core.query_factory import QueryFactory
+from ..core.utils import ignore_transaction_error, raise_if_closed
 from ..data_types import DaemonServer
 
 __all__ = ["Connection"]
@@ -80,8 +80,10 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
         """A lazy implementation of SQLite's `executescript`."""
         return self.execute(script)
 
+    @ignore_transaction_error
     def commit(self) -> None:
         self.job.query_and_run(COMMIT)
 
+    @ignore_transaction_error
     def rollback(self) -> None:
         self.job.query_and_run(ROLLBACK)

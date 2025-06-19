@@ -121,7 +121,15 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         seq_of_parameters: Sequence[QueryParameters],
         **kwargs: Any,
     ) -> "Cursor":
-        return self.execute(operation=operation, parameters=seq_of_parameters)
+        """Execute the operation for each parameter sequence in seq_of_parameters."""
+        if not seq_of_parameters:
+            return self
+
+        # Execute the operation for each parameter set
+        for parameters in seq_of_parameters:
+            self.execute(operation=operation, parameters=parameters, **kwargs)
+
+        return self
 
     @raise_if_closed
     @convert_runtime_errors
