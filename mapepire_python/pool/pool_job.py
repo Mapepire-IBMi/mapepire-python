@@ -253,20 +253,10 @@ class PoolJob(BaseJob):
         Query: A configured Query object.
         """
         from .pool_query import PoolQuery
+        from mapepire_python.query_executor import QueryExecutor
 
-        if opts is not None and not isinstance(opts, (dict, QueryOptions)):
-            raise ValueError("opts must be a dictionary, a QueryOptions object, or None")
-
-        query_options = (
-            opts
-            if isinstance(opts, QueryOptions)
-            else (
-                QueryOptions(**opts)
-                if opts
-                else QueryOptions(isClCommand=False, parameters=None, autoClose=False)
-            )
-        )
-
+        QueryExecutor.validate_query_options(opts)
+        query_options = QueryExecutor.build_query_options(opts)
         return PoolQuery(job=self, query=sql, opts=query_options)
 
     async def query_and_run(  # type: ignore
