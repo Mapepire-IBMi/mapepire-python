@@ -7,6 +7,7 @@ from websockets import ConcurrencyError, ConnectionClosed, InvalidHandshake, Inv
 
 from mapepire_python.data_types import DaemonServer
 from mapepire_python.ssl import get_certificate
+from mapepire_python.ssl_cache import cache_ssl_context, get_cached_ssl_context
 
 ReturnType = TypeVar("ReturnType")
 
@@ -21,6 +22,12 @@ class BaseConnection:
         self.db2_server = db2_server
 
     def _create_ssl_context(self, db2_server: DaemonServer):
+        # Check cache first
+        cached_context = get_cached_ssl_context(db2_server)
+        if cached_context is not None:
+            return cached_context
+
+        # Create new SSL context
         if db2_server.ignoreUnauthorized:
             ssl_context = ssl.create_default_context(purpose=ssl.Purpose.SERVER_AUTH)
             ssl_context.check_hostname = False
@@ -45,6 +52,9 @@ class BaseConnection:
                     ssl_context.load_verify_locations(cadata=cert)
                 else:
                     raise ssl.SSLError("Failed to retrieve server certificate")
+
+        # Cache the new context
+        cache_ssl_context(db2_server, ssl_context)
         return ssl_context
 
 

@@ -48,6 +48,7 @@ class DaemonServer:
     port: Optional[Union[str, int]]
     ignoreUnauthorized: Optional[bool] = False
     ca: Optional[Union[str, bytes]] = None
+    ssl_cache_enabled: Optional[bool] = None
 
 
 @dataclass_json
