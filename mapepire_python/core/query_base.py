@@ -27,7 +27,7 @@ class QueryState(Enum):
 class QueryResult(dict):
     """
     Unified result set interface for query results.
-    
+
     Inherits from dict for perfect backward compatibility while providing
     modern property access and type safety.
     """
@@ -35,7 +35,7 @@ class QueryResult(dict):
     def __init__(self, raw_result: Dict[str, Any]):
         # Initialize dict with raw result for full compatibility
         super().__init__(raw_result)
-        
+
         # Cache properties for performance
         self._success = raw_result.get("success", False)
         self._is_done = raw_result.get("is_done", False)
@@ -105,6 +105,9 @@ class QueryResult(dict):
     def __getitem__(self, key: str) -> Any:
         """Enhanced dict access that computes some properties dynamically."""
         if key == "has_results":
+            # Use server's has_results field if available, fallback to data check
+            if "has_results" in super().keys():
+                return super().__getitem__("has_results")
             return len(self._data) > 0
         elif key == "update_count":
             return self._metadata.get("update_count")
@@ -252,14 +255,15 @@ class BaseQuery(ABC, Generic[T]):
         else:
             raise ValueError(f"Unknown operation type: {operation_type}")
 
-    def _process_query_result(self, raw_result: Dict[str, Any]) -> QueryResult:
+    def _process_query_result(self, raw_result: Dict[str, Any], update_correlation_id: bool = True) -> QueryResult:
         """Process raw query result into QueryResult object."""
         result = QueryResult(raw_result)
 
         # Update query state based on result
         if result.success or self.is_cl_command:
             self.state = QueryState.RUN_DONE if result.is_done else QueryState.RUN_MORE_DATA_AVAIL
-            if result.correlation_id:
+            # Only update correlation ID for initial operations, not fetch_more
+            if update_correlation_id and result.correlation_id:
                 self._correlation_id = result.correlation_id
         else:
             self.state = QueryState.ERROR

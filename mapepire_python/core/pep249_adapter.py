@@ -32,6 +32,9 @@ class PEP249QueryResult:
     @property
     def has_results(self) -> bool:
         """Check if the result contains data rows."""
+        # Use server's has_results field if available, fallback to data check
+        if 'has_results' in self.result:
+            return self.result['has_results']
         return not self.processor.is_empty_result(self.result)
 
     @property
@@ -179,7 +182,7 @@ class PEP249QueryAdapter:
                 result = self.fetch_results(rows_to_fetch=1)
                 if not result or not result.data:
                     return None
-                
+
                 # Store the new result and reset row index
                 self._last_result = result
                 self._current_row_index = 0
@@ -189,7 +192,7 @@ class PEP249QueryAdapter:
                     row = self._last_result.data[self._current_row_index]
                     self._current_row_index += 1
                     return row
-                    
+
             except RuntimeError as e:
                 # The fetch_more method already handles correlation ID expiration using CorrelationIDHandler
                 # If we get an exception here, it's a real error, so re-raise it

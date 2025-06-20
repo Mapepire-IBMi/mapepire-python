@@ -35,8 +35,9 @@ def test_sql_job_query_and_run(ibmi_credentials, simple_count_sql):
 def test_sql_job_query_context_manager(ibmi_credentials, simple_count_sql):
     """Test creating queries with context manager."""
     with SQLJob(ibmi_credentials) as job:
-        with job.query(simple_count_sql) as query:
+        with job.query("select * from sample.employee limit 3") as query:
             result = query.run()
+            print(result)
 
             assert result is not None
             assert isinstance(result, dict)

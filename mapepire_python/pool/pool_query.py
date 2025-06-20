@@ -46,7 +46,7 @@ class PoolQuery(BaseQuery[PoolJob]):
             
         query_object = self._build_query_object("fetch_more", rows_to_fetch)
         raw_result = await self.executor.execute_query(self.job, query_object)
-        result = self._process_query_result(raw_result)
+        result = self._process_query_result(raw_result, update_correlation_id=False)
         
         # Use CorrelationIDHandler to gracefully handle correlation ID expiration
         handled_result = CorrelationIDHandler.handle_fetch_result(result, self)
@@ -73,7 +73,7 @@ class PoolQuery(BaseQuery[PoolJob]):
             self.state = QueryState.RUN_DONE
             query_object = self._build_query_object("close")
             raw_result = await self.executor.execute_query(self.job, query_object)
-            return self._process_query_result(raw_result)
+            return self._process_query_result(raw_result, update_correlation_id=False)
         elif not self._correlation_id:
             self.state = QueryState.RUN_DONE
             return None

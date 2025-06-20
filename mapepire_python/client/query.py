@@ -59,21 +59,9 @@ class Query(BaseQuery[SQLJob]):
 
         query_object = self._build_query_object("fetch_more", rows_to_fetch)
         raw_result = self.executor.execute_query(self.job, query_object)
-        result = self._process_query_result(raw_result)
+        result = self._process_query_result(raw_result, update_correlation_id=False)
 
-        # # Use CorrelationIDHandler to gracefully handle correlation ID expiration
-        # handled_result = CorrelationIDHandler.handle_fetch_result(result, self)
-
-        # # Check if this is a different result (correlation ID expiration was handled)
-        # if handled_result is not result:
-        #     # Correlation ID was expired and handled - return the "done" result
-        #     return handled_result
-
-        # For the original result, check for actual errors
-        if not result.success:
-            # This is a real error - set error state and raise
-            self.state = QueryState.ERROR
-            raise RuntimeError(result.error or "Failed to run Query (unknown error)")
+        self._handle_query_error(result)
 
         return result
 
@@ -87,7 +75,7 @@ class Query(BaseQuery[SQLJob]):
             self.state = QueryState.RUN_DONE
             query_object = self._build_query_object("close")
             raw_result = self.executor.execute_query(self.job, query_object)
-            return self._process_query_result(raw_result)
+            return self._process_query_result(raw_result, update_correlation_id=False)
         elif not self._correlation_id:
             self.state = QueryState.RUN_DONE
             return None

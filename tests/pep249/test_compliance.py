@@ -106,9 +106,36 @@ def test_cursor_fetchmany(ibmi_credentials, sample_employee_sql):
             row_count = 0
             for _ in range(10):
                 res = cursor.fetchone()
-                print(res)
+                assert res is not None
+                row_count += 1
             # mapepire returns JSON object with results, not list of tuples
-            print(row_count)
+            assert row_count == 10
+
+
+def test_cursor_fetchmany_iter(ibmi_credentials, sample_employee_sql):
+    """Test cursor fetchmany method."""
+    with connect(ibmi_credentials) as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("select * from sample.employee")
+
+            row_count = 0
+            assert cursor.has_results == True
+            for _ in range(10):
+                res = cursor.fetchmany(2)
+                row_count += len(res)
+            # mapepire returns JSON object with results, not list of tuples
+            assert row_count == 20
+
+
+def test_pep249_iterate(ibmi_credentials):
+    def rows():
+        with connect(ibmi_credentials) as conn:
+            for row in conn.execute("select * from sample.department limit 5"):
+                yield row
+
+    cool_rows = rows()
+    for row in cool_rows:
+        assert row is not None
 
 
 def test_cursor_fetchall(ibmi_credentials, sample_employee_sql):
@@ -135,6 +162,9 @@ def test_cursor_arraysize(ibmi_credentials):
         if hasattr(cursor, "arraysize"):
             cursor.arraysize = 10
             assert cursor.arraysize == 10
+        cursor.execute("select * from sample.employee")
+        res = cursor.fetchmany()
+        assert len(res) == 10
 
 
 def test_parameter_substitution(ibmi_credentials):
