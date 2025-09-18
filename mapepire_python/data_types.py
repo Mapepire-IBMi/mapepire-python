@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, Callable
 
 from dataclasses_json import dataclass_json
 
@@ -44,11 +44,14 @@ class ServerTraceDest(Enum):
 class DaemonServer:
     host: str
     user: str
-    password: str
+    password: Union[str, Callable[[], str]]
     port: Optional[Union[str, int]]
     ignoreUnauthorized: Optional[bool] = False
     ca: Optional[Union[str, bytes]] = None
-
+    def get_password(self) -> str:
+        if isinstance(self.password, Callable):
+            return self.password()
+        return self.password 
 
 @dataclass_json
 @dataclass

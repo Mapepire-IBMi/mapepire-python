@@ -16,7 +16,7 @@ class BaseConnection:
         self.uri = f"wss://{db2_server.host}:{db2_server.port}/db/"
         self.headers = {
             "Authorization": "Basic "
-            + base64.b64encode(f"{db2_server.user}:{db2_server.password}".encode()).decode("ascii")
+            + base64.b64encode(f"{db2_server.user}:{db2_server.get_password()}".encode()).decode("ascii")
         }
         self.db2_server = db2_server
 
