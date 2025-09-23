@@ -4,7 +4,7 @@ import os
 import time
 import platform
 
-from typing import Optional
+from typing import Optional, Final
 
 sspi = None
 gssapi = None
@@ -20,6 +20,8 @@ else:
         import gssapi
     except ImportError:
         pass
+
+TOKEN_PREFIX: Final = "_KERBEROSAUTH_"
 
 class KerberosTokenProvider:
     def __init__(
@@ -60,6 +62,14 @@ class KerberosTokenProvider:
             self._refresh_token_unix()
 
 
+    def _set_token(self, token: bytes, lifetime: float):
+        token_b64 = base64.b64encode(token).decode("utf-8")
+
+        self._token = TOKEN_PREFIX +  token_b64
+        self.token_lifetime = lifetime
+        self._token_used = False
+
+
     def _refresh_token_windows(self):
         # Prefer using kerberos-sspi if available
         target = f"krbsvr400/{self.host}"
@@ -73,12 +83,7 @@ class KerberosTokenProvider:
 
         if isinstance(token, str):
             raise Exception
-        ticket_b64 = base64.b64encode(token).decode("utf-8")
-        print(base64.b64decode(ticket_b64)[:10]) 
-
-
-        self._token = "_KERBEROSAUTH_" + ticket_b64
-        self._token_expiry = time.time() + self.token_lifetime
+        self._set_token(token, self.token_lifetime)
     
     def _refresh_token_unix(self):
         if gssapi is None:
@@ -104,14 +109,9 @@ class KerberosTokenProvider:
         ctx = gssapi.SecurityContext(name=server_name, mech=mech, creds=cred, usage="initiate")
 
         token = ctx.step(b"")
-        ticket_b64 = base64.b64encode(token).decode("utf-8")
-        self._token = "_KERBEROSAUTH_" + ticket_b64
 
         lifetime = cred.lifetime
-        indefinite_lifetimes = [0xFFFFFFFF, -1]
-        if lifetime is None or lifetime in indefinite_lifetimes:
-            self._token_expiry = time.time() + self.token_lifetime
-        else:
-            self._token_expiry = time.time() + lifetime
-
-        self._token_used = False
+        if not lifetime or lifetime in (0xFFFFFFFF, -1):
+            lifetime = self.token_lifetime
+        
+        self._set_token(token, time.time() + lifetime)
