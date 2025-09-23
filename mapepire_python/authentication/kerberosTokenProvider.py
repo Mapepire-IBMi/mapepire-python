@@ -71,18 +71,14 @@ class KerberosTokenProvider:
 
 
     def _refresh_token_windows(self):
-        # Prefer using kerberos-sspi if available
         target = f"krbsvr400/{self.host}"
         client = sspi.ClientAuth("Kerberos", targetspn=target)
 
         err, out_buffer = client.authorize(None)
         if err != 0:
-            raise RuntimeError(f"SSPI error: {hex(err)}")
+            raise RuntimeError(f"Windows SSPI error when attempting Kerberos login: {hex(err)}")
 
         token = out_buffer[0].Buffer
-
-        if isinstance(token, str):
-            raise Exception
         self._set_token(token, self.token_lifetime)
     
     def _refresh_token_unix(self):
