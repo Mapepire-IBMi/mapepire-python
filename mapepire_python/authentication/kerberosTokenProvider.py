@@ -6,19 +6,20 @@ import platform
 
 from typing import Optional
 
-try:
-    import gssapi
-except OSError:
-    gssapi = None
+sspi = None
+gssapi = None
 
 # For Windows SSPI token generation:
-# if platform.system() == "Windows":
-#     try:
-#         import sspi
-#         import sspicon
-#     except ImportError:
-#         kerberos_sspi = None
-import sspi
+if platform.system() == "Windows":
+    try:
+        import sspi
+    except ImportError:
+        pass
+else:
+    try:
+        import gssapi
+    except ImportError:
+        pass
 
 class KerberosTokenProvider:
     def __init__(
@@ -63,7 +64,6 @@ class KerberosTokenProvider:
         # Prefer using kerberos-sspi if available
         target = f"krbsvr400/{self.host}"
         client = sspi.ClientAuth("Kerberos", targetspn=target)
-
 
         err, out_buffer = client.authorize(None)
         if err != 0:
