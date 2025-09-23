@@ -8,16 +8,17 @@ from typing import Optional
 
 try:
     import gssapi
-except ImportError:
+except OSError:
     gssapi = None
 
 # For Windows SSPI token generation:
-if platform.system() == "Windows":
-    try:
-        from kerberos_sspi import ClientAuth # type: ignore
-    except ImportError:
-        ClientAuth = None
-
+# if platform.system() == "Windows":
+#     try:
+#         import sspi
+#         import sspicon
+#     except ImportError:
+#         kerberos_sspi = None
+import sspi
 
 class KerberosTokenProvider:
     def __init__(
@@ -60,19 +61,24 @@ class KerberosTokenProvider:
 
     def _refresh_token_windows(self):
         # Prefer using kerberos-sspi if available
-        if ClientAuth is None:
-            raise RuntimeError(
-                "kerberos-sspi package not installed, cannot generate Kerberos token on Windows"
-            )
+        target = f"krbsvr400/{self.host}"
+        client = sspi.ClientAuth("Kerberos", targetspn=target)
 
-        service_spn = f"krbsvr400/{self.host}"
-        auth = ClientAuth(service_spn)
-        token = auth.authorize(None)
 
+        err, out_buffer = client.authorize(None)
+        if err != 0:
+            raise RuntimeError(f"SSPI error: {hex(err)}")
+
+        token = out_buffer[0].Buffer
+
+        if isinstance(token, str):
+            raise Exception
         ticket_b64 = base64.b64encode(token).decode("utf-8")
+        print(base64.b64decode(ticket_b64)[:10]) 
+
+
         self._token = "_KERBEROSAUTH_" + ticket_b64
         self._token_expiry = time.time() + self.token_lifetime
-        self._token_used = False
     
     def _refresh_token_unix(self):
         if gssapi is None:
