@@ -65,8 +65,8 @@ class KerberosTokenProvider:
     def _set_token(self, token: bytes, lifetime: float):
         token_b64 = base64.b64encode(token).decode("utf-8")
 
-        self._token = TOKEN_PREFIX +  token_b64
-        self.token_lifetime = lifetime
+        self._token = TOKEN_PREFIX + token_b64
+        self._token_expiry = time.time() + lifetime
         self._token_used = False
 
 
@@ -110,4 +110,4 @@ class KerberosTokenProvider:
         if not lifetime or lifetime in (0xFFFFFFFF, -1):
             lifetime = self.token_lifetime
         
-        self._set_token(token, time.time() + lifetime)
+        self._set_token(token, lifetime)
