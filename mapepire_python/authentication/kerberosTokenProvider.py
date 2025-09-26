@@ -109,6 +109,8 @@ class KerberosTokenProvider:
             if token is None:
                 raise RuntimeError("Failed to generate Kerberos token. No token returned from GSSAPI context.")
         except gssapi.exceptions.GSSError as e: # type: ignore
+            if "No credentials were supplied" in str(e) or "Unavailable" in str(e):
+                raise RuntimeError("No valid TGT found in credential cache.")
             raise RuntimeError(f"Kerberos token generation error when attempting Kerberos login: {str(e)}")
 
         lifetime = cred.lifetime
