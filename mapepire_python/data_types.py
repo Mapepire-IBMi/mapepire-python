@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Union, Callable
 
 from dataclasses_json import dataclass_json
+from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
 
 
 def dict_to_dataclass(data: Dict[str, Any], dataclass_type: Any) -> Any:
@@ -44,13 +45,13 @@ class ServerTraceDest(Enum):
 class DaemonServer:
     host: str
     user: str
-    password: Union[str, Callable[[], str]]
+    password: Union[str, KerberosTokenProvider]
     port: Optional[Union[str, int]]
     ignoreUnauthorized: Optional[bool] = False
     ca: Optional[Union[str, bytes]] = None
     def get_password(self) -> str:
-        if isinstance(self.password, Callable):
-            return self.password()
+        if isinstance(self.password, KerberosTokenProvider):
+            return self.password.get_token()
         return self.password 
 
 @dataclass_json

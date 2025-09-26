@@ -40,7 +40,7 @@ if use_kerberos:
     creds = DaemonServer(
         host=server,
         user=user,
-        password=token_provider.get_token,
+        password=token_provider,
         port=port,
         ignoreUnauthorized=ignoreUnauthorized,
         ca=ca
