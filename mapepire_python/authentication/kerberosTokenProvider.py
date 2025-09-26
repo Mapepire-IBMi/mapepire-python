@@ -1,4 +1,3 @@
-import subprocess
 import base64
 import os
 import time
@@ -11,15 +10,9 @@ gssapi = None
 
 # For Windows SSPI token generation:
 if platform.system() == "Windows":
-    try:
-        import sspi
-    except ImportError:
-        pass
+    import sspi
 else:
-    try:
-        import gssapi
-    except ImportError:
-        pass
+    import gssapi
 
 TOKEN_PREFIX: Final = "_KERBEROSAUTH_"
 
@@ -32,7 +25,6 @@ class KerberosTokenProvider:
         krb5_path: str,
         ticket_cache: Optional[str] = None,
         krb5_mech: Optional[str] = None,
-        token_lifetime_seconds: int = 600  # default: 10 minutes
     ):
         self.realm = realm
         self.realm_user = realm_user
@@ -40,7 +32,7 @@ class KerberosTokenProvider:
         self.krb5_path = krb5_path
         self.ticket_cache = ticket_cache
         self.krb5_mech = krb5_mech
-        self.token_lifetime = token_lifetime_seconds
+        self.token_lifetime = 600  # default: 10 minutes
 
         self._token = None
         self._token_expiry = 0
