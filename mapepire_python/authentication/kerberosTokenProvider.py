@@ -19,20 +19,33 @@ TOKEN_PREFIX: Final = "_KERBEROSAUTH_"
 class KerberosTokenProvider:
     def __init__(
         self,
-        realm: str,
-        realm_user: str,
         host: str,
-        krb5_path: str,
+        realm: Optional[str] = None,
+        realm_user: Optional[str] = None,
+        krb5_path: Optional[str] = None,
         ticket_cache: Optional[str] = None,
         krb5_mech: Optional[str] = None,
     ):
+        self.host = host
         self.realm = realm
         self.realm_user = realm_user
-        self.host = host
         self.krb5_path = krb5_path
         self.ticket_cache = ticket_cache
         self.krb5_mech = krb5_mech
         self.token_lifetime = 600  # default: 10 minutes
+
+        if platform.system() != "Windows":
+            missing = []
+            if not self.realm:
+                missing.append("realm")
+            if not self.realm_user:
+                missing.append("realm_user")
+            if not self.krb5_path:
+                missing.append("krb5_path")
+            if missing:
+                raise ValueError(
+                    f"Missing required parameters: {', '.join(missing)}"
+                )
 
         self._token = None
         self._token_expiry = 0

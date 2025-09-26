@@ -1,5 +1,6 @@
 # Fetch environment variables
 import os
+import platform
 
 from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
 from mapepire_python.data_types import DaemonServer
@@ -30,12 +31,15 @@ if use_kerberos:
     if not realm or not realm_user or not krb5_path:
         raise ValueError("One or more Kerberos environment variables are missing.")
     
-    token_provider = KerberosTokenProvider (
-        realm=realm,
-        realm_user=realm_user,
-        host=server,
-        krb5_path=krb5_path
-    )
+    if platform.system() == "Windows":
+        token_provider = KerberosTokenProvider(host=server)
+    else:
+        token_provider = KerberosTokenProvider (
+            realm=realm,
+            realm_user=realm_user,
+            host=server,
+            krb5_path=krb5_path
+        )
 
     creds = DaemonServer(
         host=server,
