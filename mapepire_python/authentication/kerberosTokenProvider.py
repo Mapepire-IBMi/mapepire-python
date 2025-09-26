@@ -95,16 +95,21 @@ class KerberosTokenProvider:
             else gssapi.OID.from_int_seq(self.krb5_mech)
         )
 
-        user_name = gssapi.Name(
-            f"{self.realm_user}@{self.realm}", name_type=gssapi.NameType.user
-        )
-        cred = gssapi.Credentials(name=user_name, usage="initiate", mechs=[mech])
-        server_name = gssapi.Name(
-            f"krbsvr400@{self.host}", name_type=gssapi.NameType.hostbased_service
-        )
-        ctx = gssapi.SecurityContext(name=server_name, mech=mech, creds=cred, usage="initiate")
+        try:
+            user_name = gssapi.Name(
+                f"{self.realm_user}@{self.realm}", name_type=gssapi.NameType.user
+            )
+            cred = gssapi.Credentials(name=user_name, usage="initiate", mechs=[mech])
+            server_name = gssapi.Name(
+                f"krbsvr400@{self.host}", name_type=gssapi.NameType.hostbased_service
+            )
+            ctx = gssapi.SecurityContext(name=server_name, mech=mech, creds=cred, usage="initiate")
 
-        token = ctx.step(b"")
+            token = ctx.step(b"")
+            if token is None:
+                raise RuntimeError("Failed to generate Kerberos token. No token returned from GSSAPI context.")
+        except gssapi.exceptions.GSSError as e: # type: ignore
+            raise RuntimeError(f"Kerberos token generation error when attempting Kerberos login: {str(e)}")
 
         lifetime = cred.lifetime
         if not lifetime or lifetime in (0xFFFFFFFF, -1):
