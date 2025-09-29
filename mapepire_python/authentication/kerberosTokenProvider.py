@@ -32,7 +32,6 @@ class KerberosTokenProvider:
         self.krb5_path = krb5_path
         self.ticket_cache = ticket_cache
         self.krb5_mech = krb5_mech
-        self.token_lifetime = 600  # default: 10 minutes
 
         if platform.system() != "Windows":
             missing = []
@@ -47,35 +46,23 @@ class KerberosTokenProvider:
                     f"Missing required parameters: {', '.join(missing)}"
                 )
 
-        self._token = None
-        self._token_expiry = 0
-        self._token_used = False
 
     def get_token(self) -> str:
-        if self._token is None or self._token_used or self._is_expired():
-            self._refresh_token()
-        self._token_used = True
-        return self._token # type: ignore
-
-    def _is_expired(self) -> bool:
-        return time.time() >= self._token_expiry
+        return self._refresh_token()  # type: ignore
     
-    def _refresh_token(self):
+    def _refresh_token(self)  -> str:
         if platform.system() == "Windows":
-            self._refresh_token_windows()
+            return self._refresh_token_windows()
         else:
-            self._refresh_token_unix()
+            return self._refresh_token_unix()
 
 
-    def _set_token(self, token: bytes, lifetime: float):
+    def _format_token(self, token: bytes) -> str:
         token_b64 = base64.b64encode(token).decode("utf-8")
-
-        self._token = TOKEN_PREFIX + token_b64
-        self._token_expiry = time.time() + lifetime
-        self._token_used = False
+        return TOKEN_PREFIX + token_b64
 
 
-    def _refresh_token_windows(self):
+    def _refresh_token_windows(self) -> str:
         target = f"krbsvr400/{self.host}"
         client = sspi.ClientAuth("Kerberos", targetspn=target)
 
@@ -84,9 +71,9 @@ class KerberosTokenProvider:
             raise RuntimeError(f"Windows SSPI error when attempting Kerberos login: {hex(err)}")
 
         token = out_buffer[0].Buffer
-        self._set_token(token, self.token_lifetime)
+        return self._format_token(token)
     
-    def _refresh_token_unix(self):
+    def _refresh_token_unix(self) -> str:
         if gssapi is None:
             raise RuntimeError("gssapi module not installed, cannot generate Kerberos token on Unix")
 
@@ -118,8 +105,4 @@ class KerberosTokenProvider:
                 raise RuntimeError("No valid TGT found in credential cache.")
             raise RuntimeError(f"Kerberos token generation error when attempting Kerberos login: {str(e)}")
 
-        lifetime = cred.lifetime
-        if not lifetime or lifetime in (0xFFFFFFFF, -1):
-            lifetime = self.token_lifetime
-        
-        self._set_token(token, lifetime)
+        return self._format_token(token)
