@@ -1,20 +1,21 @@
 import base64
 import os
-import time
 import platform
 
 from typing import Optional, Final
 
 sspi = None
 gssapi = None
+PLATFORM = platform.system()
+TOKEN_PREFIX: Final = "_KERBEROSAUTH_"
+
 
 # For Windows SSPI token generation:
-if platform.system() == "Windows":
+if PLATFORM == "Windows":
     import sspi
 else:
     import gssapi
 
-TOKEN_PREFIX: Final = "_KERBEROSAUTH_"
 
 class KerberosTokenProvider:
     def __init__(
@@ -33,7 +34,7 @@ class KerberosTokenProvider:
         self.ticket_cache = ticket_cache
         self.krb5_mech = krb5_mech
 
-        if platform.system() != "Windows":
+        if PLATFORM != "Windows":
             missing = []
             if not self.realm:
                 missing.append("realm")
@@ -51,7 +52,7 @@ class KerberosTokenProvider:
         return self._refresh_token()
     
     def _refresh_token(self)  -> str:
-        if platform.system() == "Windows":
+        if PLATFORM == "Windows":
             return self._refresh_token_windows()
         else:
             return self._refresh_token_unix()
