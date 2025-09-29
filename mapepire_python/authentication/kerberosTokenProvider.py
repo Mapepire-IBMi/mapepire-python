@@ -48,7 +48,7 @@ class KerberosTokenProvider:
 
 
     def get_token(self) -> str:
-        return self._refresh_token()  # type: ignore
+        return self._refresh_token()
     
     def _refresh_token(self)  -> str:
         if platform.system() == "Windows":
@@ -74,9 +74,6 @@ class KerberosTokenProvider:
         return self._format_token(token)
     
     def _refresh_token_unix(self) -> str:
-        if gssapi is None:
-            raise RuntimeError("gssapi module not installed, cannot generate Kerberos token on Unix")
-
         os.environ["KRB5_CONFIG"] = self.krb5_path
         if self.ticket_cache:
             os.environ["KRB5CCNAME"] = self.ticket_cache
@@ -100,7 +97,7 @@ class KerberosTokenProvider:
             token = ctx.step(b"")
             if token is None:
                 raise RuntimeError("Failed to generate Kerberos token. No token returned from GSSAPI context.")
-        except gssapi.exceptions.GSSError as e: # type: ignore
+        except gssapi.exceptions.GSSError as e:
             if "No credentials were supplied" in str(e) or "Unavailable" in str(e):
                 raise RuntimeError("No valid TGT found in credential cache.")
             raise RuntimeError(f"Kerberos token generation error when attempting Kerberos login: {str(e)}")
