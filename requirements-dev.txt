@@ -12,4 +12,4 @@ mypy
 websockets
 pyee
 gssapi
-pywin32
+pywin32; sys_platform == "win32"
