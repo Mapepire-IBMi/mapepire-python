@@ -23,6 +23,9 @@
 - [Quick Start](#quick-start)
 - [Other Connection options](#other-connection-options)
   - [1. Using the `DaemonServer` object](#1-using-the-daemonserver-object)
+    - [1.1 Authenticating with Kerberos](#11-authenticating-with-kerberos)
+      - [1.1.1 Windows](#111-windows)
+      - [1.1.2 Other Platforms](#112-other-platforms)
   - [2. Passing the connection details as a dictionary](#2-passing-the-connection-details-as-a-dictionary)
   - [3. Using a config file (`.ini`) to store the connection details](#3-using-a-config-file-ini-to-store-the-connection-details)
   - [TLS Configuration](#tls-configuration)
@@ -150,6 +153,63 @@ creds = DaemonServer(
     port="PORT",
     user="USER",
     password="PASSWORD"
+)
+
+job = SQLJob(creds)
+```
+
+### 1.1 Authenticating with Kerberos
+If your IBM i is configured to support Kerberos authentication, you can authenticate using Kerberos instead of passing a plain-text password to the `DaemonServer` Object.
+
+#### 1.1.1 Windows
+
+If your Windows machine is part of a Kerberos realm and supports SSPI authentication, you can authenticate by creating the `DaemonServer` as shown below:
+```python
+from mapepire_python.data_types import DaemonServer
+from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
+
+creds = DaemonServer(
+    host="SERVER",
+    password=KerberosTokenProvider(host="SERVER"),
+    user="USER",
+    port="PORT",
+)
+
+job = SQLJob(creds)
+```
+
+#### 1.1.2 Other Platforms
+
+For non-Windows platforms, Kerberos authentication requires a valid Ticket Granting Ticket (TGT) in your credential cache.
+
+Required Parameters:
+
+1. `host`: The IBM i host you are connecting to
+2. `realm`: Your Kerberos realm
+3. `realm_user`: Your Kerberos username
+4. `krb5_path`: Path to your `krb5.conf` configuration file
+
+Optional Parameters:
+
+1. `ticket_cache`: Path to your ticket cache (if not default)
+2. `krb5_mech`: The Kerberos 5 mechanism to use (if not default)
+
+```python
+from mapepire_python.data_types import DaemonServer
+from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
+
+token_provider = KerberosTokenProvider(
+                  realm="REALM",
+                  realm_user="REALM_USER",
+                  host="SERVER",
+                  krb5_path="KRB5_PATH"
+                )
+
+creds = DaemonServer(
+    host="SERVER",
+    password=token_provider,
+    user="USER",
+    port="PORT",
 )
 
 job = SQLJob(creds)
