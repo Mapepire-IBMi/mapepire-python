@@ -2,6 +2,7 @@ import re
 
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.data_types import DaemonServer
+
 from .test_setup import *
 
 
@@ -36,7 +37,10 @@ def test_bad_creds():
         result = job.connect(bad_creds)
         raise Exception("error not thrown")
     except Exception as e:
-        assert "java.sql.SQLNonTransientConnectionException: The application server rejected the connection." in e.args[0]
+        assert (
+            "java.sql.SQLNonTransientConnectionException: The application server rejected the connection."
+            in e.args[0]
+        )
     finally:
         job.close()
 

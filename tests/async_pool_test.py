@@ -7,7 +7,9 @@ from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.data_types import QueryOptions
 from mapepire_python.pool.pool_job import PoolJob
 from mapepire_python.query_manager import QueryManager
+
 from .test_setup import *
+
 
 @pytest.mark.asyncio
 async def test_pool():

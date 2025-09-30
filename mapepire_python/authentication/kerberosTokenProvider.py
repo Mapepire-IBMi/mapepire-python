@@ -1,8 +1,7 @@
 import base64
 import os
 import platform
-
-from typing import Optional, Final
+from typing import Final, Optional
 
 sspi = None
 gssapi = None
@@ -43,25 +42,20 @@ class KerberosTokenProvider:
             if not self.krb5_path:
                 missing.append("krb5_path")
             if missing:
-                raise ValueError(
-                    f"Missing required parameters: {', '.join(missing)}"
-                )
-
+                raise ValueError(f"Missing required parameters: {', '.join(missing)}")
 
     def get_token(self) -> str:
         return self._refresh_token()
-    
-    def _refresh_token(self)  -> str:
+
+    def _refresh_token(self) -> str:
         if PLATFORM == "Windows":
             return self._refresh_token_windows()
         else:
             return self._refresh_token_unix()
 
-
     def _format_token(self, token: bytes) -> str:
         token_b64 = base64.b64encode(token).decode("utf-8")
         return TOKEN_PREFIX + token_b64
-
 
     def _refresh_token_windows(self) -> str:
         target = f"krbsvr400/{self.host}"
@@ -73,7 +67,7 @@ class KerberosTokenProvider:
 
         token = out_buffer[0].Buffer
         return self._format_token(token)
-    
+
     def _refresh_token_unix(self) -> str:
         os.environ["KRB5_CONFIG"] = self.krb5_path
         if self.ticket_cache:
@@ -97,10 +91,14 @@ class KerberosTokenProvider:
 
             token = ctx.step(b"")
             if token is None:
-                raise RuntimeError("Failed to generate Kerberos token. No token returned from GSSAPI context.")
+                raise RuntimeError(
+                    "Failed to generate Kerberos token. No token returned from GSSAPI context."
+                )
         except gssapi.exceptions.GSSError as e:
             if "No credentials were supplied" in str(e) or "Unavailable" in str(e):
                 raise RuntimeError("No valid TGT found in credential cache.")
-            raise RuntimeError(f"Kerberos token generation error when attempting Kerberos login: {str(e)}")
+            raise RuntimeError(
+                f"Kerberos token generation error when attempting Kerberos login: {str(e)}"
+            )
 
         return self._format_token(token)

@@ -2,7 +2,9 @@ import os
 
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.query_manager import QueryManager
+
 from .test_setup import *
+
 
 def test_query_manager():
     # connection logic

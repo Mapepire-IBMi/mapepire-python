@@ -26,7 +26,7 @@ def raise_if_closed(method: Callable[..., ReturnType]) -> Callable[..., ReturnTy
 
 
 def ignore_transaction_error(
-    method: Callable[..., ReturnType]
+    method: Callable[..., ReturnType],
 ) -> Callable[..., Optional[ReturnType]]:
     """
     Ignore transaction errors, returning `None` instead. Useful for

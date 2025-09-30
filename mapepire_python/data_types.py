@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union, Callable
+from typing import Any, Dict, List, Optional, Union
 
 from dataclasses_json import dataclass_json
+
 from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
 
 
@@ -49,10 +50,12 @@ class DaemonServer:
     port: Optional[Union[str, int]]
     ignoreUnauthorized: Optional[bool] = False
     ca: Optional[Union[str, bytes]] = None
+
     def get_password(self) -> str:
         if isinstance(self.password, KerberosTokenProvider):
             return self.password.get_token()
-        return self.password 
+        return self.password
+
 
 @dataclass_json
 @dataclass

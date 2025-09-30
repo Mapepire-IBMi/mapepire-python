@@ -2,6 +2,7 @@ import os
 
 from mapepire_python import connect
 from mapepire_python.data_types import QueryOptions
+
 from .test_setup import *
 
 
