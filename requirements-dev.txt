@@ -12,3 +12,4 @@ mypy
 websockets
 pyee
 gssapi
+pywin32
