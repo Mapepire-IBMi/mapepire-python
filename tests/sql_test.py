@@ -2,9 +2,8 @@ import os
 
 import pytest
 
-from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import DaemonServer, QueryOptions
+from mapepire_python.data_types import QueryOptions
 from .test_setup import *
 
 def test_simple():

@@ -3,9 +3,8 @@ import os
 
 import pytest
 
-from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import DaemonServer, JobStatus
+from mapepire_python.data_types import JobStatus
 from mapepire_python.pool.pool_client import Pool, PoolOptions
 from .test_setup import *
 
