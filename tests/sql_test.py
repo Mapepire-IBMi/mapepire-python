@@ -3,20 +3,9 @@ import os
 import pytest
 
 from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import DaemonServer, QueryOptions
+from mapepire_python.data_types import QueryOptions
 
-# Fetch environment variables
-server = os.getenv("VITE_SERVER")
-user = os.getenv("VITE_DB_USER")
-password = os.getenv("VITE_DB_PASS")
-port = os.getenv("VITE_DB_PORT")
-
-# Check if environment variables are set
-if not server or not user or not password:
-    raise ValueError("One or more environment variables are missing.")
-
-
-creds = DaemonServer(host=server, port=port, user=user, password=password)
+from .test_setup import *
 
 
 def test_simple():

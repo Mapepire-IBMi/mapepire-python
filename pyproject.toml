@@ -56,7 +56,11 @@ dev = [
     "sphinx-autobuild==2021.3.14",
     "sphinx-autodoc-typehints==1.23.3",
     "packaging",
-    "pre-commit"
+    "pre-commit",
+    "python-dotenv",
+    "pytest-env",
+    "gssapi",
+    'pywin32; sys_platform == "win32"'
 ]
 
 [tool.setuptools.packages.find]

@@ -1,20 +1,9 @@
-import os
 import re
 
 from mapepire_python.client.sql_job import SQLJob
 from mapepire_python.data_types import DaemonServer
 
-# Fetch environment variables
-server = os.getenv("VITE_SERVER")
-user = os.getenv("VITE_DB_USER")
-password = os.getenv("VITE_DB_PASS")
-port = os.getenv("VITE_DB_PORT")
-
-# Check if environment variables are set
-if not server or not user or not password:
-    raise ValueError("One or more environment variables are missing.")
-
-creds = DaemonServer(host=server, port=port, user=user, password=password)
+from .test_setup import *
 
 
 def parse_sql_rc(message):
@@ -48,7 +37,10 @@ def test_bad_creds():
         result = job.connect(bad_creds)
         raise Exception("error not thrown")
     except Exception as e:
-        assert "User ID is not known.:BADUSER" in e.args[0]
+        assert (
+            "java.sql.SQLNonTransientConnectionException: The application server rejected the connection."
+            in e.args[0]
+        )
     finally:
         job.close()
 

@@ -11,3 +11,5 @@ ruff
 mypy
 websockets
 pyee
+gssapi
+pywin32; sys_platform == "win32"
