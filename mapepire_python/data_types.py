@@ -96,6 +96,13 @@ class ColumnMetaData:
     label: str
     name: str
     type: str
+    precision: int
+    scale: int
+    autoIncrement: bool
+    nullable: int
+    readOnly: bool
+    writeable: bool
+    table: str
 
 
 @dataclass
