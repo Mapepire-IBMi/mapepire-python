@@ -35,11 +35,39 @@ class ServerTraceLevel(Enum):
     ON = "ON"
     ERRORS = "ERRORS"
     DATASTREAM = "DATASTREAM"
+    INPUT_AND_ERRORS = "INPUT_AND_ERRORS"
 
 
 class ServerTraceDest(Enum):
     FILE = "FILE"
     IN_MEM = "IN_MEM"
+
+class MessageType(Enum):
+    CONNECT = "connect"
+    SQL = "sql"
+    PREPARE_SQL = "prepare_sql"
+    PREPARE_SQL_EXECUTE = "prepare_sql_execute"
+    EXECUTE = "execute"
+    SQL_MORE = "sqlmore"
+    SQL_CLOSE = "sqlclose"
+    CL = "cl"
+    PING = "ping"
+    GET_DB_JOB = "getdbjob"
+    GET_VERSION = "getversion"
+    SET_CONFIG = "setconfig"
+    GET_TRACE_DATA = "gettracedata"
+    EXIT = "exit"
+
+class ConnectionTechnique(Enum):
+    TCP = "tcp"
+    CLI = "cli"
+
+class ParameterMode(Enum):
+    IN = "IN"
+    OUT = "OUT"
+    INOUT = "INOUT"
+    UNKNOWN = "UNKNOWN"
+    
 
 
 @dataclass
@@ -65,6 +93,7 @@ class ServerResponse:
     sql_rc: int
     sql_state: str
     error: Optional[str] = None
+    execution_time: Optional[int] = None
 
 
 @dataclass_json
@@ -96,6 +125,13 @@ class ColumnMetaData:
     label: str
     name: str
     type: str
+    precision: Optional[int] = None
+    scale: Optional[int] = None
+    autoIncrement: Optional[bool] = None
+    nullable: Optional[bool] = None
+    readOnly: Optional[bool] = None
+    writeable: Optional[bool] = None
+    table: Optional[str] = None
 
 
 @dataclass
@@ -103,6 +139,26 @@ class QueryMetaData:
     column_count: int
     columns: List[ColumnMetaData]
     job: str
+
+
+@dataclass
+class ParameterDetail:
+    name: str
+    type: str
+    mode: ParameterMode
+    precision: Optional[int] = None
+    scale: Optional[int] = None
+
+
+@dataclass
+class ParameterResult:
+    index: int
+    type: str
+    precision: int
+    scale: int
+    name: str
+    ccsid: Optional[int] = None
+    value: Optional[Union[str, int, float, bool]] = None
 
 
 @dataclass
