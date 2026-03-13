@@ -227,15 +227,22 @@ class ParameterResult:
     value: Optional[Union[str, int, float, bool]] = None
 
 
+@dataclass_json
 @dataclass
 class QueryResult:
-    metadata: QueryMetaData
-    is_done: bool
-    has_results: bool
-    update_count: int
-    data: List[Any]
+    is_done: bool = False
+    has_results: bool = False
+    update_count: int = 0
+    data: List[Any] = field(default_factory=list)
+    metadata: Optional[QueryMetaData] = None
     parameter_count: Optional[int] = None
     output_parms: Optional[List[ParameterResult]] = None
+    id: str = field(default="", init=False)
+    success: bool = field(default=False, init=False)
+    sql_rc: int = field(default=0, init=False)
+    sql_state: str = field(default="", init=False)
+    error: Optional[str] = field(default=None, init=False)
+    execution_time: Optional[int] = field(default=None, init=False)
 
 
 @dataclass
@@ -398,6 +405,30 @@ class GetTraceDataRequest(BaseRequest):
 @dataclass
 class ExitRequest(BaseRequest):
     type: str = field(default=MessageType.EXIT.value, init=False)
+
+
+@dataclass_json
+@dataclass
+class UnparsableError(ServerResponse):
+    pass
+
+
+@dataclass_json
+@dataclass
+class IncompleteError(ServerResponse):
+    pass
+
+
+@dataclass_json
+@dataclass
+class UnknownError(ServerResponse):
+    pass
+
+
+@dataclass_json
+@dataclass
+class BadRequestError(ServerResponse):
+    pass
 
 
 @dataclass
