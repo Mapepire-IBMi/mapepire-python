@@ -1,3 +1,12 @@
+# Protocol type definitions for the Mapepire WebSocket protocol.
+#
+# Generation strategy: hand-written (Option B)
+# These types are manually maintained to match the canonical definitions in
+# https://github.com/Mapepire-IBMi/mapepire-protocol. If the protocol changes,
+# update this file by hand. A future improvement (Option A) would auto-generate
+# these from the protocol's JSON Schema files using datamodel-codegen, which
+# would prevent drift. See issue #96 for details.
+
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -99,24 +108,15 @@ class ServerResponse:
 @dataclass_json
 @dataclass
 class ConnectionResult(ServerResponse):
-    job: str  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    job: str = ""
+    
 
 
 @dataclass_json
 @dataclass
 class VersionCheckResult(ServerResponse):
-    build_date: str  # type: ignore
-    version: str  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    build_date: str = ""
+    version: str  = ""
 
 
 @dataclass_json
@@ -124,22 +124,12 @@ class VersionCheckResult(ServerResponse):
 class PingResponse(ServerResponse):
     alive: Optional[bool] = None
     db_alive: Optional[bool] = None
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
 
 
 @dataclass_json
 @dataclass
 class PrepareSqlResponse(ServerResponse):
     parameter_count: Optional[int] = None
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
 
 
 @dataclass_json
@@ -147,42 +137,24 @@ class PrepareSqlResponse(ServerResponse):
 class SqlMoreResponse(ServerResponse):
     data: List[Any] = field(default_factory=list)
     is_done: bool = field(default=False)
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
 
 
 @dataclass_json
 @dataclass
 class SqlCloseResponse(ServerResponse):
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    pass
 
 
 @dataclass_json
 @dataclass
 class GetDbJobResponse(ServerResponse):
     job: str = field(default="")
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
 
 
 @dataclass_json
 @dataclass
 class ExitResponse(ServerResponse):
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    pass
 
 
 @dataclass
@@ -254,13 +226,8 @@ class ExplainResults(QueryResult):
 @dataclass_json
 @dataclass
 class GetTraceDataResult(ServerResponse):
-    tracedata: str  # type: ignore
+    tracedata: str = ""
     jtopentracedata: Optional[str] = None
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
 
 
 @dataclass
@@ -278,12 +245,7 @@ class JobLogEntry:
 @dataclass_json
 @dataclass
 class CLCommandResult(ServerResponse):
-    joblog: List[JobLogEntry]  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    joblog: List[JobLogEntry] = field(default_factory=list)
 
 
 @dataclass
@@ -297,15 +259,10 @@ class QueryOptions:
 @dataclass_json
 @dataclass
 class SetConfigResult(ServerResponse):
-    tracedest: ServerTraceDest  # type: ignore
-    tracelevel: ServerTraceLevel  # type: ignore
+    tracedest: ServerTraceDest = ServerTraceDest.FILE  # type: ignore
+    tracelevel: ServerTraceLevel = ServerTraceLevel.OFF  # type: ignore
     jtopentracedest: Optional[ServerTraceDest] = None
     jtopentracelevel: Optional[ServerTraceLevel] = None
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
 
 
 @dataclass
