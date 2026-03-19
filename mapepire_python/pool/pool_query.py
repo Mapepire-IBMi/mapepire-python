@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from mapepire_python.client.query import QueryState
 from mapepire_python.data_types import (
+    BaseRequest,
     ClRequest,
     PrepareSqlExecuteRequest,
     QueryOptions,
@@ -41,7 +42,7 @@ class PoolQuery:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
 
-    async def _execute_query(self, request) -> Dict[Any, Any]:
+    async def _execute_query(self, request: BaseRequest) -> Dict[Any, Any]:
         query_result = await self.job.send(json.dumps(dataclasses.asdict(request)))
         return query_result
 

@@ -6,6 +6,7 @@ from typing import Any, Dict, Generic, List, Optional, TypeVar
 from mapepire_python.websocket import handle_ws_errors
 
 from ..data_types import (
+    BaseRequest,
     ClRequest,
     PrepareSqlExecuteRequest,
     QueryOptions,
@@ -54,7 +55,7 @@ class Query(Generic[T]):
     def __str__(self):
         return f"Query(job={str(self.job)}, sql={self.sql}, parameters={self.parameters}, correlation_id={self._correlation_id})"
 
-    def _execute_query(self, request) -> Dict[str, Any]:
+    def _execute_query(self, request: BaseRequest) -> Dict[str, Any]:
         self.job.send(json.dumps(dataclasses.asdict(request)))
         if self.job._socket is None:
             raise RuntimeError("SQL Job not connected")
