@@ -2,57 +2,58 @@
 
 These tests do not require a server connection.
 """
+import dataclasses
+import json
 import sys
 from unittest.mock import MagicMock
 
-sys.modules['gssapi'] = MagicMock()
-sys.modules['gssapi.raw'] = MagicMock()
-import dataclasses
-import json
+sys.modules["gssapi"] = MagicMock()
+sys.modules["gssapi.raw"] = MagicMock()
 
+# isort: split
 import pytest
 
 from mapepire_python.data_types import (
     BadRequestError,
     CLCommandResult,
+    ClRequest,
     ColumnMetaData,
+    ConnectRequest,
     ConnectionResult,
+    ConnectionTechnique,
+    ExecuteRequest,
+    ExitRequest,
     ExitResponse,
+    GetDbJobRequest,
     GetDbJobResponse,
+    GetTraceDataRequest,
     GetTraceDataResult,
+    GetVersionRequest,
     IncompleteError,
     JobLogEntry,
     MessageType,
-    ConnectionTechnique,
     ParameterDetail,
     ParameterMode,
     ParameterResult,
+    PingRequest,
     PingResponse,
+    PrepareSqlExecuteRequest,
+    PrepareSqlRequest,
     PrepareSqlResponse,
     QueryMetaData,
     QueryResult,
     ServerTraceDest,
     ServerTraceLevel,
+    SetConfigRequest,
     SetConfigResult,
+    SqlCloseRequest,
     SqlCloseResponse,
+    SqlMoreRequest,
     SqlMoreResponse,
+    SqlRequest,
     UnknownError,
     UnparsableError,
     VersionCheckResult,
-    ConnectRequest,
-    SqlRequest,
-    PrepareSqlRequest,
-    PrepareSqlExecuteRequest,
-    ExecuteRequest,
-    SqlMoreRequest,
-    SqlCloseRequest,
-    ClRequest,
-    PingRequest,
-    GetDbJobRequest,
-    GetVersionRequest,
-    SetConfigRequest,
-    GetTraceDataRequest,
-    ExitRequest,
 )
 
 
