@@ -10,8 +10,15 @@ from pyee.asyncio import AsyncIOEventEmitter
 from websockets.asyncio.client import ClientConnection
 
 from mapepire_python.pool.async_websocket_client import AsyncWebSocketConnection
+
 from ..base_job import BaseJob
-from ..data_types import ConnectRequest, ConnectionResult, DaemonServer, JobStatus, QueryOptions
+from ..data_types import (
+    ConnectionResult,
+    ConnectRequest,
+    DaemonServer,
+    JobStatus,
+    QueryOptions,
+)
 
 __all__ = ["PoolJob"]
 

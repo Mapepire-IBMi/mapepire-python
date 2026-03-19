@@ -7,8 +7,15 @@ from websockets.sync.client import ClientConnection
 
 from mapepire_python.client.websocket_client import WebsocketConnection
 from mapepire_python.websocket import handle_ws_errors
+
 from ..base_job import BaseJob
-from ..data_types import ConnectRequest, ConnectionResult, DaemonServer, JobStatus, QueryOptions
+from ..data_types import (
+    ConnectionResult,
+    ConnectRequest,
+    DaemonServer,
+    JobStatus,
+    QueryOptions,
+)
 
 __all__ = ["SQLJob"]
 

@@ -18,9 +18,9 @@ from mapepire_python.data_types import (
     CLCommandResult,
     ClRequest,
     ColumnMetaData,
-    ConnectRequest,
     ConnectionResult,
     ConnectionTechnique,
+    ConnectRequest,
     ExecuteRequest,
     ExitRequest,
     ExitResponse,
@@ -55,7 +55,6 @@ from mapepire_python.data_types import (
     UnparsableError,
     VersionCheckResult,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
