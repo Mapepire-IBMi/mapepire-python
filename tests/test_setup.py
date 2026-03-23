@@ -32,7 +32,7 @@ krb5_path = os.getenv("VITE_KRB5_PATH", None)
 
 # Optional environemnt variables
 port = os.getenv("VITE_DB_PORT")
-ignoreUnauthorized = os.getenv("VITE_IGNORE_UNATH", "false").lower() == "true"
+ignoreUnauthorized = True # to silence ssl warnings 
 ca = os.getenv("VITE_CA", None)
 
 # Check if necessary environment variables are set
