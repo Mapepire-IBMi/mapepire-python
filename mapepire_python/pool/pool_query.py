@@ -59,7 +59,7 @@ class PoolQuery:
         query_result = await self.job.send(json.dumps(dataclasses.asdict(request)))
         return query_result
 
-    async def run(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
+    async def run(self, rows_to_fetch: Optional[int] = None) -> QueryResult:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:
@@ -109,7 +109,7 @@ class PoolQuery:
 
         return query_result
 
-    async def fetch_more(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
+    async def fetch_more(self, rows_to_fetch: Optional[int] = None) -> SqlMoreResponse:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:

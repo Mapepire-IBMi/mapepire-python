@@ -116,7 +116,7 @@ class PoolJob(BaseJob):
         except Exception as e:
             raise e
 
-    async def wait_for_response(self, req_id: str) -> str:
+    async def wait_for_response(self, req_id: str) -> Dict[str, Any]:
         """when a request is sent to the server, this method waits for the response
 
         Args:

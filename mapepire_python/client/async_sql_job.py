@@ -76,7 +76,7 @@ class AsyncSQLJob(BaseJob):
         except Exception as e:
             raise e
 
-    async def wait_for_response(self, req_id: str) -> str:
+    async def wait_for_response(self, req_id: str) -> Dict[str, Any]:
         future: asyncio.Future = asyncio.Future()
 
         def on_response(response):

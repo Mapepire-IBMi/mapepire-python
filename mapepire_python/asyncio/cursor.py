@@ -1,5 +1,5 @@
 import weakref
-from typing import TYPE_CHECKING, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Sequence, Type, Union
 
 from pep249 import QueryParameters, ResultRow, aiopep249
 from pep249.aiopep249.types import (
@@ -11,10 +11,18 @@ from pep249.aiopep249.types import (
 )
 
 if TYPE_CHECKING:
-    from .connection import AsyncConnection  # pylint:disable=cyclic-import
+    from .connection import AsyncConnection
 
-from ..core.cursor import Cursor
-from .utils import to_thread
+from ..client.async_sql_job import AsyncSQLJob
+from ..data_types import QueryOptions
+from ..pool.pool_query import PoolQuery
+
+_DB_TYPE_MAP: dict = {
+    "VARCHAR": str, "CHAR": str, "CLOB": str, "NVARCHAR": str, "NCHAR": str,
+    "INTEGER": int, "INT": int, "SMALLINT": int, "BIGINT": int,
+    "DECIMAL": float, "NUMERIC": float, "FLOAT": float, "DOUBLE": float, "REAL": float,
+    "BOOLEAN": bool,
+}
 
 
 class AsyncCursor(
@@ -26,14 +34,19 @@ class AsyncCursor(
     An async DB API 2.0 compliant cursor for Mapepire, as outlined in
     PEP 249.
 
-    Can be constructed by passing an AsyncConnection and a sync Cursor.
-
+    Backed by AsyncSQLJob and PoolQuery — native async WebSocket I/O,
+    no thread delegation.
     """
 
-    def __init__(self, connection: "AsyncConnection", cursor: Cursor) -> None:
+    def __init__(self, connection: "AsyncConnection", job: AsyncSQLJob) -> None:
         super().__init__()
         self._connection = weakref.proxy(connection)
-        self._cursor = cursor
+        self._job = job
+        self._query: Optional[PoolQuery] = None
+        self._buffer: List = []
+        self._is_done: bool = True
+        self._metadata = None
+        self._rowcount: int = -1
 
     @property
     def connection(self) -> "AsyncConnection":  # type: ignore
@@ -41,40 +54,41 @@ class AsyncCursor(
 
     @property
     def description(self) -> Optional[Sequence[ColumnDescription]]:
-        return self._cursor.description
+        if not self._metadata or not self._metadata.columns:
+            return None
+        return [
+            (
+                col.name,                                  
+                _DB_TYPE_MAP.get(col.type.upper(), str),  
+                col.display_size,  
+                None,        
+                col.precision,     
+                col.scale,         
+                col.nullable,      
+            )
+            for col in self._metadata.columns
+        ]
 
     @property
     def rowcount(self) -> int:
-        return self._cursor.rowcount
-
-    async def commit(self) -> None:
-        await to_thread(self._cursor.commit)
-
-    async def rollback(self) -> None:
-        await to_thread(self._cursor.rollback)
-
-    async def close(self) -> None:
-        await to_thread(self._cursor.close)
-
-    async def callproc(
-        self, procname: ProcName, parameters: Optional[ProcArgs] = None
-    ) -> Optional[ProcArgs]:
-        result = await to_thread(self._cursor.callproc, procname, parameters)
-        return result if isinstance(result, (list, tuple, type(None))) else None
-
-    async def nextset(self) -> Optional[bool]:
-        return await to_thread(self._cursor.nextset)
+        return self._rowcount
 
     def setinputsizes(self, sizes: Sequence[Optional[Union[int, Type]]]) -> None:
-        self._cursor.setinputsizes(sizes)
+        pass
 
     def setoutputsize(self, size: int, column: Optional[int] = None) -> None:
-        self._cursor.setoutputsize(size, column)
+        pass
 
     async def execute(
         self, operation: SQLQuery, parameters: Optional[QueryParameters] = None
     ) -> "AsyncCursor":
-        await to_thread(self._cursor.execute, operation, parameters)
+        opts = QueryOptions(parameters=list(parameters) if parameters else None)
+        self._query = self._job.query(operation, opts=opts)
+        result = await self._query.run()
+        self._buffer = list(result.data or [])
+        self._is_done = result.is_done
+        self._metadata = result.metadata
+        self._rowcount = result.update_count if result.update_count else -1
         return self
 
     async def executescript(self, script: SQLQuery) -> "AsyncCursor":
@@ -84,16 +98,60 @@ class AsyncCursor(
     async def executemany(
         self, operation: SQLQuery, seq_of_parameters: Sequence[QueryParameters]
     ) -> "AsyncCursor":
-        await to_thread(self._cursor.executemany, operation, seq_of_parameters)
+        for params in seq_of_parameters:
+            await self.execute(operation, params)
         return self
 
     async def fetchone(self) -> Optional[ResultRow]:
-        return await to_thread(self._cursor.fetchone)
+        if self._buffer:
+            return self._buffer.pop(0)
+        if self._is_done or self._query is None:
+            return None
+        result = await self._query.fetch_more(rows_to_fetch=1)
+        self._is_done = result.is_done
+        self._buffer.extend(result.data or [])
+        return self._buffer.pop(0) if self._buffer else None
 
     async def fetchmany(self, size: Optional[int] = None) -> ResultSet:
         if size is None:
             size = self.arraysize
-        return await to_thread(self._cursor.fetchmany, size)
+        rows = []
+        while len(rows) < size:
+            if self._buffer:
+                rows.append(self._buffer.pop(0))
+            elif self._is_done or self._query is None:
+                break
+            else:
+                result = await self._query.fetch_more(rows_to_fetch=size - len(rows))
+                self._is_done = result.is_done
+                self._buffer.extend(result.data or [])
+        return rows
 
     async def fetchall(self) -> ResultSet:
-        return await to_thread(self._cursor.fetchall)
+        rows = list(self._buffer)
+        self._buffer.clear()
+        while not self._is_done and self._query is not None:
+            result = await self._query.fetch_more(rows_to_fetch=100)
+            self._is_done = result.is_done
+            rows.extend(result.data or [])
+        return rows
+
+    async def close(self) -> None:
+        if self._query is not None:
+            await self._query.close()
+            self._query = None
+
+    async def callproc(
+        self, procname: ProcName, parameters: Optional[ProcArgs] = None
+    ) -> Optional[ProcArgs]:
+        await self.execute(procname, parameters)
+        return parameters
+
+    async def nextset(self) -> Optional[bool]:
+        return None
+
+    async def commit(self) -> None:
+        pass
+
+    async def rollback(self) -> None:
+        pass
