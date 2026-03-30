@@ -103,14 +103,13 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
         prepare_result = query.prepare_sql_execute()
 
-        if prepare_result["has_results"]:
+        if prepare_result.has_results:
             self.query = query
             self.__set_has_results(True)
             self.query_q.append(query)
 
-        update_count = prepare_result.get("update_count", None)
-        if update_count:
-            self.rowcount = update_count
+        if prepare_result.update_count:
+            self.rowcount = prepare_result.update_count
 
         return self
 

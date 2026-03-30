@@ -551,18 +551,57 @@ with connect("./mapepire.ini") as conn:
 
 ## PEP 249 Asynchronous Implementation
 
-The PEP 249 implementation also provides an asynchronous interface for running queries. The `connect` function returns an asynchronous context manager that can be used with the `async with` statement:
+The PEP 249 implementation provides a native async interface backed by non-blocking WebSocket I/O — no thread delegation. The `connect` function returns an asynchronous context manager that can be used with the `async with` statement:
 
 ```python
 import asyncio
-from mapepire_python.asycnio import connect
+from mapepire_python.asyncio import connect
 
 async def main():
     async with connect("./mapepire.ini") as conn:
         async with await conn.execute("select * from sample.employee") as cursor:
             result = await cursor.fetchone()
             print(result)
-            
+
+if __name__ == '__main__':
+    asyncio.run(main())
+```
+
+Fetch multiple rows at once with `fetchmany` or drain the full result set with `fetchall`:
+
+```python
+async def main():
+    async with connect("./mapepire.ini") as conn:
+        async with await conn.execute("select * from sample.employee") as cursor:
+            page = await cursor.fetchmany(10)   # first 10 rows
+            rest = await cursor.fetchall()       # remaining rows
+
+if __name__ == '__main__':
+    asyncio.run(main())
+```
+
+Stream rows one at a time using `async for`:
+
+```python
+async def main():
+    async with connect("./mapepire.ini") as conn:
+        async for row in await conn.execute("select * from sample.employee"):
+            print(row)
+
+if __name__ == '__main__':
+    asyncio.run(main())
+```
+
+Use `AsyncSQLJob` directly for lower-level access without a pool:
+
+```python
+from mapepire_python.client.async_sql_job import AsyncSQLJob
+
+async def main():
+    async with AsyncSQLJob("./mapepire.ini") as job:
+        result = await job.query_and_run("select * from sample.employee")
+        print(result.data)
+
 if __name__ == '__main__':
     asyncio.run(main())
 ```

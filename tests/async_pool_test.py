@@ -18,8 +18,8 @@ async def test_pool():
         query2 = job.query("select * from sample.department")
         res = await query.run()
         res2 = await query2.run()
-        assert res["success"] == True
-        assert res2["success"] == True
+        assert res.success == True
+        assert res2.success == True
 
     async with PoolJob(creds=creds) as pool_job:
         query_manager = QueryManager(pool_job)
@@ -33,14 +33,14 @@ async def test_pool_with_cm():
         query_manager = QueryManager(pool_job)
         async with query_manager.create_query("select * from sample.employee") as query:
             res = await query.run(rows_to_fetch=1)
-            assert res["success"] == True
+            assert res.success == True
 
 
 @pytest.mark.asyncio
 async def test_pool_with_q_and_run():
     async with PoolJob(creds=creds) as pool_job:
         res = await pool_job.query_and_run("select * from sample.employee")
-        assert res["success"] == True
+        assert res.success == True
 
 
 @pytest.mark.asyncio
@@ -48,7 +48,7 @@ async def test_pool_with_cm_q_and_run():
     async with PoolJob(creds=creds) as pool_job:
         query_manager = QueryManager(pool_job)
         res = await query_manager.query_and_run_async("select * from sample.employee")
-        assert res["success"] == True
+        assert res.success == True
 
 
 @pytest.mark.asyncio
@@ -56,7 +56,7 @@ async def test_pool_raw():
     async with PoolJob(creds=creds) as pool_job:
         async with pool_job.query("select * from sample.employee") as query:
             res = await query.run(rows_to_fetch=1)
-            assert res["success"] == True
+            assert res.success == True
 
 
 def test_pool2():
@@ -65,8 +65,8 @@ def test_pool2():
         query2 = job.query("select * from sample.department")
         res = query.run()
         res2 = query2.run()
-        assert res["success"] == True
-        assert res2["success"] == True
+        assert res.success == True
+        assert res2.success == True
 
 
 @pytest.mark.asyncio
@@ -84,9 +84,9 @@ async def test_simple_dict():
     query = job.query("select * from sample.employee")
     result = await query.run(rows_to_fetch=5)
     await job.close()
-    assert result["success"] is True
-    assert result["is_done"] is False
-    assert result["has_results"] is True
+    assert result.success is True
+    assert result.is_done is False
+    assert result.has_results is True
 
 
 @pytest.mark.asyncio
@@ -97,9 +97,9 @@ async def test_simple2():
     query = job.query("select * from sample.employee")
     result = await query.run(rows_to_fetch=5)
     await job.close()
-    assert result["success"] == True
-    assert result["is_done"] == False
-    assert result["has_results"] == True
+    assert result.success == True
+    assert result.is_done == False
+    assert result.has_results == True
 
 
 @pytest.mark.asyncio
@@ -109,9 +109,9 @@ async def test_simple():
     query = job.query("select * from sample.employee")
     result = await query.run(rows_to_fetch=5)
     await job.close()
-    assert result["success"] == True
-    assert result["is_done"] == False
-    assert result["has_results"] == True
+    assert result.success == True
+    assert result.is_done == False
+    assert result.has_results == True
 
 
 @pytest.mark.asyncio
@@ -122,10 +122,10 @@ async def test_query_large_dataset():
     result = await query.run(rows_to_fetch=30)
     await job.close()
 
-    assert result["success"] == True
-    assert result["is_done"] == False
-    assert result["has_results"] == True
-    assert len(result["data"]) == 30
+    assert result.success == True
+    assert result.is_done == False
+    assert result.has_results == True
+    assert len(result.data) == 30
 
 
 @pytest.mark.asyncio
@@ -137,12 +137,10 @@ async def test_run_query_terse_format():
     result = await query.run(rows_to_fetch=5)
     await job.close()
 
-    assert result["success"] == True
-    assert result["is_done"] == False
-    assert result["has_results"] == True
-    assert (
-        "metadata" in result and result["metadata"]
-    ), "The 'metadata' key is missing or has no data"
+    assert result.success == True
+    assert result.is_done == False
+    assert result.has_results == True
+    assert result.metadata is not None, "The 'metadata' field is missing or has no data"
 
 
 @pytest.mark.asyncio
@@ -207,18 +205,18 @@ async def test_run_sql_query_with_edge_case_inputs():
     # Test valid query with zero rows to fetch
     query = job.query("SELECT * FROM SAMPLE.employee")
     res = await query.run(rows_to_fetch=0)
-    assert res["data"] == [], "Expected empty result set when rows_to_fetch is 0"
+    assert res.data == [], "Expected empty result set when rows_to_fetch is 0"
 
     # Test valid query with non-numeric rows to fetch
     # use async default rows_to_fetch == 100
     query = job.query("select * from sample.department")
     res = await query.run(rows_to_fetch="s")
-    assert res["success"]
+    assert res.success
 
     # Test valid query with negative rows to fetch
     query = job.query("select * from sample.department")
     res = await query.run(rows_to_fetch=-1)
-    assert res["data"] == [], "Expected empty result set when rows_to_fetch < 0"
+    assert res.data == [], "Expected empty result set when rows_to_fetch < 0"
 
     # query.close()
     await job.close()
@@ -230,7 +228,7 @@ async def test_drop_table():
     _ = await job.connect(creds)
     query = job.query("drop table sample.delete if exists")
     res = await query.run()
-    assert res["has_results"] == False
+    assert res.has_results == False
     await job.close()
 
 
@@ -240,12 +238,12 @@ async def test_fetch_more():
     _ = await job.connect(creds)
     query = job.query("select * from sample.employee")
     res = await query.run(rows_to_fetch=5)
-    while not res["is_done"]:
+    while not res.is_done:
         res = await query.fetch_more(10)
-        assert len(res["data"]) > 0
+        assert len(res.data) > 0
 
     await job.close()
-    assert res["is_done"]
+    assert res.is_done
 
 
 @pytest.mark.asyncio
@@ -255,8 +253,8 @@ async def test_prepare_statement():
     opts = QueryOptions(parameters=[500])
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     res = await query.run()
-    assert res["success"]
-    assert len(res["data"]) >= 17
+    assert res.success
+    assert len(res.data) >= 17
 
 
 @pytest.mark.asyncio
@@ -266,9 +264,9 @@ async def test_prepare_statement_terse():
     opts = QueryOptions(parameters=[500], isTerseResults=True)
     query = job.query("select * from sample.employee where bonus > ?", opts=opts)
     res = await query.run()
-    assert res["success"]
-    assert len(res["data"]) >= 17
-    assert "metadata" in res
+    assert res.success
+    assert len(res.data) >= 17
+    assert res.metadata is not None
 
 
 @pytest.mark.asyncio
@@ -278,7 +276,7 @@ async def test_prepare_statement_mult_params():
     opts = QueryOptions(parameters=[500, "PRES"])
     query = job.query("select * from sample.employee where bonus > ? and job = ?", opts=opts)
     res = await query.run()
-    assert res["success"]
+    assert res.success
     await job.close()
 
 
@@ -337,7 +335,7 @@ async def test_run_from_job():
     job = PoolJob()
     _ = await job.connect(creds)
     res = await job.query_and_run("select * from sample.employee")
-    assert res["success"]
+    assert res.success
 
 
 @pytest.mark.asyncio
@@ -346,9 +344,9 @@ async def test_multiple_statements():
     _ = await job.connect(creds)
 
     resA = await job.query("select * from sample.department").run()
-    assert resA["success"] is True
+    assert resA.success is True
 
     resB = await job.query("select * from sample.employee").run()
-    assert resB["success"] is True
+    assert resB.success is True
 
     await job.close()

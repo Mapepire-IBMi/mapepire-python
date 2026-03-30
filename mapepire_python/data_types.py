@@ -99,8 +99,8 @@ class DaemonServer:
 class ServerResponse:
     id: str
     success: bool
-    sql_rc: int
-    sql_state: str
+    sql_rc: int = 0
+    sql_state: str = ""
     error: Optional[str] = None
     execution_time: Optional[int] = None
 
@@ -174,9 +174,9 @@ class ColumnMetaData:
 
 @dataclass
 class QueryMetaData:
-    column_count: int
-    columns: List[ColumnMetaData]
-    job: str
+    column_count: int = 0
+    columns: List[ColumnMetaData] = field(default_factory=list)
+    job: str = ""
 
 
 @dataclass
@@ -209,12 +209,12 @@ class QueryResult:
     metadata: Optional[QueryMetaData] = None
     parameter_count: Optional[int] = None
     output_parms: Optional[List[ParameterResult]] = None
-    id: str = field(default="", init=False)
-    success: bool = field(default=False, init=False)
-    sql_rc: int = field(default=0, init=False)
-    sql_state: str = field(default="", init=False)
-    error: Optional[str] = field(default=None, init=False)
-    execution_time: Optional[int] = field(default=None, init=False)
+    id: str = field(default="")
+    success: bool = field(default=False)
+    sql_rc: int = field(default=0)
+    sql_state: str = field(default="")
+    error: Optional[str] = field(default=None)
+    execution_time: Optional[int] = field(default=None)
 
 
 @dataclass

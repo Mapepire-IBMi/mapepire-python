@@ -1,5 +1,6 @@
 """Some useful utility pieces."""
 
+import dataclasses
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional
 
@@ -63,7 +64,9 @@ class MetaData:
 
 
 class QueryResultSet:
-    def __init__(self, result: Dict[str, Any]):
+    def __init__(self, result):
+        if dataclasses.is_dataclass(result) and not isinstance(result, type):
+            result = dataclasses.asdict(result)
         self.id = result.get("id", None)
         self.has_results = result.get("has_results", None)
         self.update_count = result.get("update_count", None)
