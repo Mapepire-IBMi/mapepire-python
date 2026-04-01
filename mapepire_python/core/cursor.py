@@ -142,7 +142,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         res = self.query.fetch_more(rows_to_fetch=1)
         if res:
             self._result_set = QueryResultSet(res)
-        return res
+            return res.data[0] if res.data else None
+        return None
 
     @raise_if_closed
     @convert_runtime_errors
@@ -153,7 +154,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         res = self.query.fetch_more(rows_to_fetch=self.max_rows)
         if res:
             self._result_set = QueryResultSet(res)
-            return res
+            return res.data
+        return []
 
     @raise_if_closed
     @convert_runtime_errors
@@ -165,7 +167,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         res = self.query.fetch_more(rows_to_fetch=size)
         if res:
             self._result_set = QueryResultSet(res)
-        return res
+            return res.data
+        return []
 
     def executescript(self, script: SQLQuery) -> "Cursor":
         """A lazy implementation of SQLite's `executescript`."""
