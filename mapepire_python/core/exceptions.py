@@ -4,7 +4,7 @@ This module covers the exceptions outlined in PEP 249.
 """
 
 # pylint: disable=missing-class-docstring
-import ast
+import json
 from functools import wraps
 from typing import Callable, TypeVar
 
@@ -48,7 +48,7 @@ OPERATIONAL_ERRORS = ()
 NOT_SUPPORTED_ERRORS = ()
 
 
-def _parse_runtime_error(error: RuntimeError) -> DatabaseError:
+def _parse_runtime_error(error: RuntimeError) -> Error:
     """
     Parse a runtime error straight from DuckDB and return a more
     appropriate exception.
@@ -60,12 +60,12 @@ def _parse_runtime_error(error: RuntimeError) -> DatabaseError:
     error_message = None
     new_error_type = DatabaseError
     try:
-        error_dict = ast.literal_eval(error_string)
+        error_dict = json.loads(error_string)
         error_message = error_dict["error"]
         if any(err in error_message for err in PROGRAMMING_ERRORS):
             new_error_type = ProgrammingError
         return new_error_type(error_message)
-    except Exception:
+    except (ValueError, KeyError, SyntaxError):
         pass
 
     # if error_type in INTEGRITY_ERRORS:

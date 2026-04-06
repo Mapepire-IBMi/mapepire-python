@@ -39,7 +39,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
     ```
     """
 
-    def __init__(self, database: Union[DaemonServer, dict, Path], opts: Dict[str, Any] = {}, **kwargs) -> None:
+    def __init__(self, database: Union[DaemonServer, dict, Path], opts: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         super().__init__()
         self._job = AsyncSQLJob(options=opts)
         self._database = database

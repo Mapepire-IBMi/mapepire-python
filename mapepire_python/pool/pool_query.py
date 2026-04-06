@@ -32,7 +32,7 @@ class _SQLJobProtocol(Protocol):
 
 
 class PoolQuery:
-    global_query_list: List["PoolQuery"] = []
+    
 
     def __init__(self, job: _SQLJobProtocol, query: str, opts: QueryOptions) -> None:
         self.job = job
@@ -47,7 +47,7 @@ class PoolQuery:
         self.state: QueryState = QueryState.NOT_YET_RUN
         self._correlation_id: Optional[str] = None
 
-        PoolQuery.global_query_list.append(self)
+        
 
     async def __aenter__(self):
         return self

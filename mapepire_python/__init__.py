@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Optional, Union
 
 from .core import (
     Connection,
@@ -43,7 +43,7 @@ paramstyle = "qmark"
 
 
 def connect(
-    connection_details: Union[DaemonServer, dict, Path], opts: Dict[str, Any] = {}, **kwargs
+    connection_details: Union[DaemonServer, dict, Path], opts: Optional[Dict[str, Any]] = None, **kwargs
 ) -> Connection:
     """Connect to a Mapepire Server, returning a connection."""
     return Connection(connection_details, opts, **kwargs)

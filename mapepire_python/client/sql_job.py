@@ -24,7 +24,7 @@ class SQLJob(BaseJob):
     def __init__(
         self,
         creds: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None,
-        options: Dict[Any, Any] = {},
+        options: Optional[Dict[Any, Any]] = None,
         **kwargs,
     ) -> None:
         super().__init__(creds, options, **kwargs)

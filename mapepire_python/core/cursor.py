@@ -1,4 +1,5 @@
 import weakref
+import logging 
 from collections import deque
 from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union
 
@@ -28,7 +29,7 @@ from ..data_types import QueryOptions
 
 __all__ = ["Cursor"]
 
-
+logger = logging.getLogger(__name__)
 class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.TransactionalCursor):
     max_rows = 2147483647
 
@@ -182,7 +183,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
                 self.__set_has_results(True)
                 return True
             return None
-        except Exception:
+        except Exception as e:
+            logger.exception("Error in nextset: %s", e)
             return None
 
     @convert_runtime_errors

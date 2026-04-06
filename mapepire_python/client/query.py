@@ -30,7 +30,7 @@ class QueryState(Enum):
 
 
 class Query(Generic[T]):
-    global_query_list: List["Query[Any]"] = []
+    
 
     def __init__(self, job: SQLJob, query: str, opts: QueryOptions) -> None:
         self.job = job
@@ -44,7 +44,7 @@ class Query(Generic[T]):
         self._rows_to_fetch: int = 100
         self.state: QueryState = QueryState.NOT_YET_RUN
         self._correlation_id: Optional[str] = None
-        Query.global_query_list.append(self)
+       
 
     def __enter__(self):
         return self

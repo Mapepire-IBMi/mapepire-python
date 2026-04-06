@@ -10,11 +10,11 @@ class BaseJob:
     def __init__(
         self,
         creds: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None,
-        options: Dict[Any, Any] = {},
+        options: Optional[Dict[Any, Any]] = None,
         **kwargs,
     ) -> None:
         self.creds = creds
-        self.options = options
+        self.options = options if options is not None else {}
         self.kwargs = kwargs
 
     def _parse_connection_input(
