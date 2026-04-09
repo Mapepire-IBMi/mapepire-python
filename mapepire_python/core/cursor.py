@@ -1,5 +1,5 @@
+import logging
 import weakref
-import logging 
 from collections import deque
 from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union
 
