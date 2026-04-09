@@ -1,4 +1,5 @@
 import asyncio
+import dataclasses
 import json
 import logging
 from pathlib import Path
@@ -11,7 +12,13 @@ from websockets.asyncio.client import ClientConnection
 from mapepire_python.pool.async_websocket_client import AsyncWebSocketConnection
 
 from ..base_job import BaseJob
-from ..data_types import DaemonServer, JobStatus, QueryOptions
+from ..data_types import (
+    ConnectionResult,
+    ConnectRequest,
+    DaemonServer,
+    JobStatus,
+    QueryOptions,
+)
 
 __all__ = ["PoolJob"]
 
@@ -176,24 +183,21 @@ class PoolJob(BaseJob):
             ]
         )
 
-        connection_props = {
-            "id": self._get_unique_id(),
-            "type": "connect",
-            "technique": "tcp",
-            "application": "Python Client",
-            "props": props if len(props) > 0 else "",
-        }
+        connect_req = ConnectRequest(
+            id=self._get_unique_id(),
+            props=props if len(props) > 0 else "",
+        )
 
-        result = await self.send(json.dumps(connection_props))
+        result = ConnectionResult.from_dict(await self.send(json.dumps(dataclasses.asdict(connect_req))))  # type: ignore
 
-        if result.get("success", False):  # type: ignore
+        if result.success:
             self.status = JobStatus.Ready
         else:
             self.status = JobStatus.NotStarted
             await self.close()
-            raise Exception(result.get("error", "Failed to connect to server"))  # type: ignore
+            raise Exception(result.error or "Failed to connect to server")
 
-        self.id = result["job"]  # type: ignore
+        self.id = result.job
         self._is_tracing_channel_data = False
 
         return result

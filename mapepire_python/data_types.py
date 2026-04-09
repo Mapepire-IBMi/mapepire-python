@@ -1,3 +1,12 @@
+# Protocol type definitions for the Mapepire WebSocket protocol.
+#
+# Generation strategy: hand-written (Option B)
+# These types are manually maintained to match the canonical definitions in
+# https://github.com/Mapepire-IBMi/mapepire-protocol. If the protocol changes,
+# update this file by hand. A future improvement (Option A) would auto-generate
+# these from the protocol's JSON Schema files using datamodel-codegen, which
+# would prevent drift. See issue #96 for details.
+
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -35,11 +44,39 @@ class ServerTraceLevel(Enum):
     ON = "ON"
     ERRORS = "ERRORS"
     DATASTREAM = "DATASTREAM"
+    INPUT_AND_ERRORS = "INPUT_AND_ERRORS"
 
 
 class ServerTraceDest(Enum):
     FILE = "FILE"
     IN_MEM = "IN_MEM"
+
+class MessageType(Enum):
+    CONNECT = "connect"
+    SQL = "sql"
+    PREPARE_SQL = "prepare_sql"
+    PREPARE_SQL_EXECUTE = "prepare_sql_execute"
+    EXECUTE = "execute"
+    SQL_MORE = "sqlmore"
+    SQL_CLOSE = "sqlclose"
+    CL = "cl"
+    PING = "ping"
+    GET_DB_JOB = "getdbjob"
+    GET_VERSION = "getversion"
+    SET_CONFIG = "setconfig"
+    GET_TRACE_DATA = "gettracedata"
+    EXIT = "exit"
+
+class ConnectionTechnique(Enum):
+    TCP = "tcp"
+    CLI = "cli"
+
+class ParameterMode(Enum):
+    IN = "IN"
+    OUT = "OUT"
+    INOUT = "INOUT"
+    UNKNOWN = "UNKNOWN"
+    
 
 
 @dataclass
@@ -65,29 +102,59 @@ class ServerResponse:
     sql_rc: int
     sql_state: str
     error: Optional[str] = None
+    execution_time: Optional[int] = None
 
 
 @dataclass_json
 @dataclass
 class ConnectionResult(ServerResponse):
-    job: str  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    job: str = ""
+    
 
 
 @dataclass_json
 @dataclass
 class VersionCheckResult(ServerResponse):
-    build_date: str  # type: ignore
-    version: str  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    build_date: str = ""
+    version: str  = ""
+
+
+@dataclass_json
+@dataclass
+class PingResponse(ServerResponse):
+    alive: Optional[bool] = None
+    db_alive: Optional[bool] = None
+
+
+@dataclass_json
+@dataclass
+class PrepareSqlResponse(ServerResponse):
+    parameter_count: Optional[int] = None
+
+
+@dataclass_json
+@dataclass
+class SqlMoreResponse(ServerResponse):
+    data: List[Any] = field(default_factory=list)
+    is_done: bool = field(default=False)
+
+
+@dataclass_json
+@dataclass
+class SqlCloseResponse(ServerResponse):
+    pass
+
+
+@dataclass_json
+@dataclass
+class GetDbJobResponse(ServerResponse):
+    job: str = field(default="")
+
+
+@dataclass_json
+@dataclass
+class ExitResponse(ServerResponse):
+    pass
 
 
 @dataclass
@@ -96,6 +163,13 @@ class ColumnMetaData:
     label: str
     name: str
     type: str
+    precision: Optional[int] = None
+    scale: Optional[int] = None
+    autoIncrement: Optional[bool] = None
+    nullable: Optional[bool] = None
+    readOnly: Optional[bool] = None
+    writeable: Optional[bool] = None
+    table: Optional[str] = None
 
 
 @dataclass
@@ -106,35 +180,60 @@ class QueryMetaData:
 
 
 @dataclass
+class ParameterDetail:
+    name: str
+    type: str
+    mode: ParameterMode
+    precision: Optional[int] = None
+    scale: Optional[int] = None
+
+
+@dataclass
+class ParameterResult:
+    index: int
+    type: str
+    precision: int
+    scale: int
+    name: str
+    ccsid: Optional[int] = None
+    value: Optional[Union[str, int, float, bool]] = None
+
+
+@dataclass_json
+@dataclass
 class QueryResult:
-    metadata: QueryMetaData
-    is_done: bool
-    has_results: bool
-    update_count: int
-    data: List[Any]
+    is_done: bool = False
+    has_results: bool = False
+    update_count: int = 0
+    data: List[Any] = field(default_factory=list)
+    metadata: Optional[QueryMetaData] = None
+    parameter_count: Optional[int] = None
+    output_parms: Optional[List[ParameterResult]] = None
+    id: str = field(default="", init=False)
+    success: bool = field(default=False, init=False)
+    sql_rc: int = field(default=0, init=False)
+    sql_state: str = field(default="", init=False)
+    error: Optional[str] = field(default=None, init=False)
+    execution_time: Optional[int] = field(default=None, init=False)
 
 
 @dataclass
 class ExplainResults(QueryResult):
-    vemetadata: QueryMetaData
-    vedata: Any
+    vemetadata: Optional[QueryMetaData] = None
+    vedata: Optional[Any] = None
 
 
 @dataclass_json
 @dataclass
 class GetTraceDataResult(ServerResponse):
-    tracedata: str  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    tracedata: str = ""
+    jtopentracedata: Optional[str] = None
 
 
 @dataclass
 class JobLogEntry:
     MESSAGE_ID: str
-    SEVERITY: str
+    SEVERITY: int
     MESSAGE_TIMESTAMP: str
     FROM_LIBRARY: str
     FROM_PROGRAM: str
@@ -146,12 +245,7 @@ class JobLogEntry:
 @dataclass_json
 @dataclass
 class CLCommandResult(ServerResponse):
-    joblog: List[JobLogEntry]  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    joblog: List[JobLogEntry] = field(default_factory=list)
 
 
 @dataclass
@@ -165,13 +259,133 @@ class QueryOptions:
 @dataclass_json
 @dataclass
 class SetConfigResult(ServerResponse):
-    tracedest: ServerTraceDest  # type: ignore
-    tracelevel: ServerTraceLevel  # type: ignore
-    id: str = field(init=False)
-    success: bool = field(init=False)
-    sql_rc: int = field(init=False)
-    sql_state: str = field(init=False)
-    error: Optional[str] = field(default=None, init=False)
+    tracedest: ServerTraceDest = ServerTraceDest.FILE  # type: ignore
+    tracelevel: ServerTraceLevel = ServerTraceLevel.OFF  # type: ignore
+    jtopentracedest: Optional[ServerTraceDest] = None
+    jtopentracelevel: Optional[ServerTraceLevel] = None
+
+
+@dataclass
+class BaseRequest:
+    id: str
+    type: str
+
+
+@dataclass
+class ConnectRequest(BaseRequest):
+    technique: str = field(default=ConnectionTechnique.TCP.value)
+    application: str = "Python Client"
+    props: str = ""
+    type: str = field(default=MessageType.CONNECT.value, init=False)
+
+
+@dataclass
+class SqlRequest(BaseRequest):
+    sql: str = ""
+    rows: int = 0
+    terse: Optional[bool] = None
+    parameters: Optional[List[Any]] = None
+    type: str = field(default=MessageType.SQL.value, init=False)
+
+
+@dataclass
+class PrepareSqlRequest(BaseRequest):
+    sql: str = ""
+    type: str = field(default=MessageType.PREPARE_SQL.value, init=False)
+
+
+@dataclass
+class PrepareSqlExecuteRequest(BaseRequest):
+    sql: str = ""
+    rows: int = 0
+    terse: Optional[bool] = None
+    parameters: Optional[List[Any]] = None
+    type: str = field(default=MessageType.PREPARE_SQL_EXECUTE.value, init=False)
+
+
+@dataclass
+class ExecuteRequest(BaseRequest):
+    cont_id: str = ""
+    rows: int = 0
+    parameters: Optional[List[Any]] = None
+    type: str = field(default=MessageType.EXECUTE.value, init=False)
+
+
+@dataclass
+class SqlMoreRequest(BaseRequest):
+    cont_id: str = ""
+    sql: str = ""
+    rows: int = 0
+    type: str = field(default=MessageType.SQL_MORE.value, init=False)
+
+
+@dataclass
+class SqlCloseRequest(BaseRequest):
+    cont_id: str = ""
+    type: str = field(default=MessageType.SQL_CLOSE.value, init=False)
+
+
+@dataclass
+class ClRequest(BaseRequest):
+    cmd: str = ""
+    terse: Optional[bool] = None
+    type: str = field(default=MessageType.CL.value, init=False)
+
+
+@dataclass
+class PingRequest(BaseRequest):
+    type: str = field(default=MessageType.PING.value, init=False)
+
+
+@dataclass
+class GetDbJobRequest(BaseRequest):
+    type: str = field(default=MessageType.GET_DB_JOB.value, init=False)
+
+
+@dataclass
+class GetVersionRequest(BaseRequest):
+    type: str = field(default=MessageType.GET_VERSION.value, init=False)
+
+
+@dataclass
+class SetConfigRequest(BaseRequest):
+    tracedest: Optional[str] = None
+    tracelevel: Optional[str] = None
+    type: str = field(default=MessageType.SET_CONFIG.value, init=False)
+
+
+@dataclass
+class GetTraceDataRequest(BaseRequest):
+    type: str = field(default=MessageType.GET_TRACE_DATA.value, init=False)
+
+
+@dataclass
+class ExitRequest(BaseRequest):
+    type: str = field(default=MessageType.EXIT.value, init=False)
+
+
+@dataclass_json
+@dataclass
+class UnparsableError(ServerResponse):
+    pass
+
+
+@dataclass_json
+@dataclass
+class IncompleteError(ServerResponse):
+    pass
+
+
+@dataclass_json
+@dataclass
+class UnknownError(ServerResponse):
+    pass
+
+
+@dataclass_json
+@dataclass
+class BadRequestError(ServerResponse):
+    pass
 
 
 @dataclass

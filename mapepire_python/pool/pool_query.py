@@ -1,8 +1,20 @@
+import dataclasses
 import json
 from typing import Any, Dict, List, Optional
 
 from mapepire_python.client.query import QueryState
-from mapepire_python.data_types import QueryOptions
+from mapepire_python.data_types import (
+    BaseRequest,
+    ClRequest,
+    PrepareSqlExecuteRequest,
+    QueryOptions,
+    QueryResult,
+    SqlCloseRequest,
+    SqlCloseResponse,
+    SqlMoreRequest,
+    SqlMoreResponse,
+    SqlRequest,
+)
 from mapepire_python.pool.pool_job import PoolJob
 
 
@@ -20,6 +32,7 @@ class PoolQuery:
 
         self._rows_to_fetch: int = 100
         self.state: QueryState = QueryState.NOT_YET_RUN
+        self._correlation_id: Optional[str] = None
 
         PoolQuery.global_query_list.append(self)
 
@@ -29,8 +42,8 @@ class PoolQuery:
     async def __aexit__(self, exc_type, exc_value, traceback):
         await self.close()
 
-    async def _execute_query(self, qeury_object: Dict[str, Any]) -> Dict[Any, Any]:
-        query_result = await self.job.send(json.dumps(qeury_object))
+    async def _execute_query(self, request: BaseRequest) -> Dict[Any, Any]:
+        query_result = await self.job.send(json.dumps(dataclasses.asdict(request)))
         return query_result
 
     async def run(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
@@ -45,44 +58,41 @@ class PoolQuery:
         elif self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
 
-        query_object: Dict[str, Any] = {}
         if self.is_cl_command:
-            query_object = {
-                "id": self.job._get_unique_id("clcommand"),
-                "type": "cl",
-                "terse": self.is_terse_results,
-                "cmd": self.sql,
-            }
+            request = ClRequest(
+                id=self.job._get_unique_id("clcommand"),
+                cmd=self.sql,
+                terse=self.is_terse_results,
+            )
+        elif self.is_prepared:
+            request = PrepareSqlExecuteRequest(
+                id=self.job._get_unique_id("query"),
+                sql=self.sql,
+                terse=self.is_terse_results,
+                rows=rows_to_fetch,
+                parameters=self.parameters,
+            )
         else:
-            query_object = {
-                "id": self.job._get_unique_id("query"),
-                "type": "prepare_sql_execute" if self.is_prepared else "sql",
-                "sql": self.sql,
-                "terse": self.is_terse_results,
-                "rows": rows_to_fetch,
-                "parameters": self.parameters,
-            }
+            request = SqlRequest(
+                id=self.job._get_unique_id("query"),
+                sql=self.sql,
+                terse=self.is_terse_results,
+                rows=rows_to_fetch,
+                parameters=self.parameters,
+            )
 
-        query_result = await self._execute_query(query_object)
+        query_result = QueryResult.from_dict(await self._execute_query(request))  # type: ignore
 
-        self.state = (
-            QueryState.RUN_DONE
-            if query_result.get("is_done", False)
-            else QueryState.RUN_MORE_DATA_AVAIL
-        )
+        self.state = QueryState.RUN_DONE if query_result.is_done else QueryState.RUN_MORE_DATA_AVAIL
 
-        if not query_result.get("success", False) and not self.is_cl_command:
+        if not query_result.success and not self.is_cl_command:
             self.state = QueryState.ERROR
-            error_keys = ["error", "sql_state", "sql_rc"]
-            error_list = {
-                key: query_result[key] for key in error_keys if key in query_result.keys()
-            }
-            if len(error_list) == 0:
+            error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v is not None}
+            if not error_list:
                 error_list["error"] = "failed to run query for unknown reason"
-
             raise Exception(error_list)
 
-        self._correlation_id = query_result["id"]
+        self._correlation_id = query_result.id
 
         return query_result
 
@@ -97,26 +107,24 @@ class PoolQuery:
         elif self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
 
-        query_object = {
-            "id": self.job._get_unique_id("fetchMore"),
-            "cont_id": self._correlation_id,
-            "type": "sqlmore",
-            "sql": self.sql,
-            "rows": rows_to_fetch,
-        }
-
+        assert self._correlation_id is not None
         self._rows_to_fetch = rows_to_fetch
-        query_result: Dict[str, Any] = await self._execute_query(query_object)
-
-        self.state = (
-            QueryState.RUN_DONE
-            if query_result.get("is_done", False)
-            else QueryState.RUN_MORE_DATA_AVAIL
+        query_result = SqlMoreResponse.from_dict(  # type: ignore
+            await self._execute_query(
+                SqlMoreRequest(
+                    id=self.job._get_unique_id("fetchMore"),
+                    cont_id=self._correlation_id,
+                    sql=self.sql,
+                    rows=rows_to_fetch,
+                )
+            )
         )
 
-        if not query_result["success"]:
+        self.state = QueryState.RUN_DONE if query_result.is_done else QueryState.RUN_MORE_DATA_AVAIL
+
+        if not query_result.success:
             self.state = QueryState.ERROR
-            raise Exception(query_result["error"] or "Failed to run Query (unknown error)")
+            raise Exception(query_result.error or "Failed to run Query (unknown error)")
 
         return query_result
 
@@ -125,12 +133,13 @@ class PoolQuery:
             raise Exception("SQL Job not connected")
         if self._correlation_id and self.state is not QueryState.RUN_DONE:
             self.state = QueryState.RUN_DONE
-            query_object = {
-                "id": self.job._get_unique_id("sqlclose"),
-                "cont_id": self._correlation_id,
-                "type": "sqlclose",
-            }
-
-            return await self._execute_query(query_object)
+            return SqlCloseResponse.from_dict(  # type: ignore
+                await self._execute_query(
+                    SqlCloseRequest(
+                        id=self.job._get_unique_id("sqlclose"),
+                        cont_id=self._correlation_id,
+                    )
+                )
+            )
         elif not self._correlation_id:
             self.state = QueryState.RUN_DONE

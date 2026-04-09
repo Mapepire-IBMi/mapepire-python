@@ -1,3 +1,4 @@
+import dataclasses
 import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
@@ -8,7 +9,13 @@ from mapepire_python.client.websocket_client import WebsocketConnection
 from mapepire_python.websocket import handle_ws_errors
 
 from ..base_job import BaseJob
-from ..data_types import DaemonServer, JobStatus, QueryOptions
+from ..data_types import (
+    ConnectionResult,
+    ConnectRequest,
+    DaemonServer,
+    JobStatus,
+    QueryOptions,
+)
 
 __all__ = ["SQLJob"]
 
@@ -78,6 +85,8 @@ class SQLJob(BaseJob):
         Args:
             content (str): JSON content to be sent
         """
+        if self._socket is None:
+            raise RuntimeError("SQL Job not connected")
         self._socket.send(content)
 
     @handle_ws_errors
@@ -97,7 +106,7 @@ class SQLJob(BaseJob):
         """
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 
-        self._socket: ClientConnection = self._get_channel(db2_server)
+        self._socket = self._get_channel(db2_server)
 
         props = ";".join(
             [
@@ -106,29 +115,25 @@ class SQLJob(BaseJob):
             ]
         )
 
-        connection_props = {
-            "id": self._get_unique_id(),
-            "type": "connect",
-            "technique": "tcp",
-            "application": "Python Client",
-            "props": props if len(props) > 0 else "",
-        }
+        connect_req = ConnectRequest(
+            id=self._get_unique_id(),
+            props=props if len(props) > 0 else "",
+        )
 
-        self.send(json.dumps(connection_props))
-        result: Dict[str, Any] = {}
+        self.send(json.dumps(dataclasses.asdict(connect_req)))
         try:
-            result = json.loads(self._socket.recv())
+            result = ConnectionResult.from_dict(json.loads(self._socket.recv()))  # type: ignore
         except Exception as e:
-            print(f"an error occured while loading connect result: {e}")
+            raise Exception(f"Failed to parse connect response: {e}")
 
-        if result.get("success", False):
+        if result.success:
             self._status = JobStatus.Ready
         else:
             self._status = JobStatus.NotStarted
             self.close()
-            raise Exception(result.get("error", "Failed to connect to server"))
+            raise Exception(result.error or "Failed to connect to server")
 
-        self.id = result["job"]
+        self.id = result.job
         self._is_tracing_channeldata = False
 
         return result
