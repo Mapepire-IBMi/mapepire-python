@@ -104,6 +104,15 @@ class ServerResponse:
     error: Optional[str] = None
     execution_time: Optional[int] = None
 
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key: object) -> bool:
+        return hasattr(self, key) if isinstance(key, str) else False
+
 
 @dataclass_json
 @dataclass
@@ -215,6 +224,15 @@ class QueryResult:
     sql_state: str = field(default="")
     error: Optional[str] = field(default=None)
     execution_time: Optional[int] = field(default=None)
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key: object) -> bool:
+        return hasattr(self, key) if isinstance(key, str) else False
 
 
 @dataclass

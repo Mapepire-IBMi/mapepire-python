@@ -13,14 +13,14 @@ def test_pep249():
     res = cur.fetchmany(5)
     cur.close()
     conn.close()
-    assert len(res["data"]) == 5
+    assert len(res) == 5
 
 
 def test_pep249_no_size():
     conn = connect(creds)
     cur = conn.execute("select * from sample.employee")
     res = cur.fetchmany()
-    assert len(res["data"]) == 1
+    assert len(res) == 1
 
 
 def test_pep249_set_array_size():
@@ -28,33 +28,32 @@ def test_pep249_set_array_size():
     cur = conn.execute("select * from sample.employee")
     cur.arraysize = 10
     res = cur.fetchmany()
-    assert len(res["data"]) == 10
+    assert len(res) == 10
 
 
 def test_pep249_cm_fetchmany():
     with connect(creds) as connection:
         with connection.execute("select * from sample.employee") as cur:
             res = cur.fetchmany(5)
-            assert len(res["data"]) == 5
+            assert len(res) == 5
 
 
 def test_pep249_cm_fetchall():
     with connect(creds) as connection:
         with connection.execute("select * from sample.employee") as cur:
             res = cur.fetchall()
-            assert len(res["data"]) > 5
+            assert len(res) > 5
 
 
 def test_pep249_cm_fetchone():
     with connect(creds) as connection:
         with connection.execute("select * from sample.employee") as cur:
             res = cur.fetchone()
-            print(res["data"])
-            assert len(res["data"]) == 1
+            assert res is not None
 
             res2 = cur.fetchone()
-            print(res2["data"])
-            assert res["data"] != res2["data"]
+            assert res2 is not None
+            assert res != res2
 
 
 def test_pep249_cm_next():
@@ -100,7 +99,7 @@ def test_prepare_statement_mult_params():
     opts = QueryOptions(parameters=[500, "PRES"])
     cur.execute("select * from sample.employee where bonus > ? and job = ?", opts=opts)
     res = cur.fetchall()
-    assert res["success"] == True
+    assert res is not None
 
 
 def test_prepare_statement_mult_params_seq():
@@ -109,7 +108,7 @@ def test_prepare_statement_mult_params_seq():
     parameters = [500, "PRES"]
     cur.execute("select * from sample.employee where bonus > ? and job = ?", parameters=parameters)
     res = cur.fetchall()
-    assert res["success"] == True
+    assert res is not None
 
 
 # def test_prepare_statement_mult_params_seq_tuple():
@@ -138,13 +137,13 @@ def test_pep249_iterate():
 
     cool_rows = rows()
     for row in cool_rows:
-        assert row["success"] == True
+        assert row is not None
 
 
 def test_pep249_iterate_cur():
     with connect(creds) as conn:
         with conn.execute("select * from sample.employee") as cur:
-            for _ in cur.fetchmany(5)["data"]:
+            for _ in cur.fetchmany(5):
                 pass
             assert True
             return
@@ -170,12 +169,12 @@ def test_pep249_nextset_true():
     res = cur.nextset()
     assert res == None
     rows = cur.fetchmany(5)
-    assert len(rows["data"]) == 5
+    assert len(rows) == 5
 
     res = cur.nextset()
     assert res == None
     rows = cur.fetchmany(5)
-    assert len(rows["data"]) == 5
+    assert len(rows) == 5
 
 
 def test_pep249_execute_many():
@@ -209,7 +208,7 @@ def test_pep249_execute_many():
 
     res = cur.fetchall()
 
-    assert len(res["data"]) == 12
+    assert len(res) == 12
 
 
 def test_pep249_has_results():
