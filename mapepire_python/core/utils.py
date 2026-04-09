@@ -2,7 +2,7 @@
 
 import dataclasses
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 
 from .exceptions import CONNECTION_CLOSED, ProgrammingError, ReturnType
 
