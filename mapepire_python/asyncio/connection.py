@@ -78,8 +78,24 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
         """A lazy implementation of SQLite's `executescript`."""
         return await self.execute(script)
 
+    def _raise_if_closed(self) -> None:
+        closed_statuses = {
+            status
+            for status in (
+                getattr(JobStatus, "Closed", None),
+                getattr(JobStatus, "Closing", None),
+                getattr(JobStatus, "Ended", None),
+                getattr(JobStatus, "Stopped", None),
+            )
+            if status is not None
+        }
+        if self._job.status in closed_statuses:
+            raise RuntimeError("Connection is closed")
+
     async def commit(self) -> None:
-        pass
+        self._raise_if_closed()
+        await self.execute("COMMIT")
 
     async def rollback(self) -> None:
-        pass
+        self._raise_if_closed()
+        await self.execute("ROLLBACK")
