@@ -204,7 +204,7 @@ class AsyncBaseJob(BaseJob):
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}") from e
 
-    async def close(self) -> None:  # type: ignore[override]
+    async def close(self) -> None: # type: ignore[override]
+        await self.dispose()
         self.status = JobStatus.Ended
-        if self.socket:
-            await self.socket.close()
+        
