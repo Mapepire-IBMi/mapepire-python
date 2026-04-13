@@ -82,13 +82,13 @@ class AsyncCursor(
     async def execute(
         self, operation: SQLQuery, parameters: Optional[QueryParameters] = None
     ) -> "AsyncCursor":
-        opts = QueryOptions(parameters=list(parameters) if parameters else None)
+        opts = QueryOptions(parameters=parameters)
         self._query = self._job.query(operation, opts=opts)
         result = await self._query.run()
         self._buffer = list(result.data or [])
         self._is_done = result.is_done
         self._metadata = result.metadata
-        self._rowcount = result.update_count if result.update_count else -1
+        self._rowcount = result.update_count if result.update_count is not None else -1
         return self
 
     async def executescript(self, script: SQLQuery) -> "AsyncCursor":
@@ -151,7 +151,7 @@ class AsyncCursor(
         return None
 
     async def commit(self) -> None:
-        pass
+        await self._job.query("COMMIT").run()
 
     async def rollback(self) -> None:
-        pass
+        await self._job.query("ROLLBACK").run()

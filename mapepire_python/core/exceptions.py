@@ -4,6 +4,7 @@ This module covers the exceptions outlined in PEP 249.
 """
 
 # pylint: disable=missing-class-docstring
+import ast
 import json
 from functools import wraps
 from typing import Callable, TypeVar
@@ -59,27 +60,24 @@ def _parse_runtime_error(error: RuntimeError) -> Error:
     error_string = str(error)
     error_message = None
     new_error_type = DatabaseError
+    error_dict = None
+
     try:
         error_dict = json.loads(error_string)
-        error_message = error_dict["error"]
-        if any(err in error_message for err in PROGRAMMING_ERRORS):
-            new_error_type = ProgrammingError
-        return new_error_type(error_message)
-    except (ValueError, KeyError, SyntaxError):
-        pass
+    except ValueError:
+        try:
+            error_dict = ast.literal_eval(error_string)
+        except (ValueError, SyntaxError):
+            error_dict = None
 
-    # if error_type in INTEGRITY_ERRORS:
-    #     new_error_type = IntegrityError
-    # elif error_type in PROGRAMMING_ERRORS:
-    #     new_error_type = ProgrammingError
-    # elif error_type in DATA_ERRORS:
-    #     new_error_type = DataError
-    # elif error_type in INTERNAL_ERRORS:
-    #     new_error_type = InternalError
-    # elif error_type in OPERATIONAL_ERRORS:
-    #     new_error_type = OperationalError
-    # elif error_type in NOT_SUPPORTED_ERRORS:
-    #     new_error_type = NotSupportedError
+    try:
+        if isinstance(error_dict, dict):
+            error_message = error_dict["error"]
+            if any(err in error_message for err in PROGRAMMING_ERRORS):
+                new_error_type = ProgrammingError
+            return new_error_type(error_message)
+    except KeyError:
+        pass
 
     return new_error_type(error_string)
 

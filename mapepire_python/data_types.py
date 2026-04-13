@@ -9,7 +9,7 @@
 
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 from dataclasses_json import dataclass_json
 
@@ -270,7 +270,7 @@ class CLCommandResult(ServerResponse):
 class QueryOptions:
     isTerseResults: Optional[bool] = None
     isClCommand: Optional[bool] = None
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     autoClose: Optional[bool] = None
 
 

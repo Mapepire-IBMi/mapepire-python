@@ -198,7 +198,7 @@ def test_pep249_execute_many():
     cur.execute("CREATE or replace TABLE SAMPLE.DELETEMEPY (name varchar(10), phone varchar(12))")
     assert len(cur.query_q) == 0
     res = cur.fetchall()
-    assert res == None
+    assert res == []
 
     cur.executemany("INSERT INTO SAMPLE.DELETEMEPY values (?, ?)", parameters)
 
@@ -235,7 +235,7 @@ def test_pep249_has_results_no_select():
 
         assert cur.has_results == False
 
-        assert cur.fetchall() is None
+        assert cur.fetchall() == []
 
 
 def test_pep249_has_results_setter():
@@ -247,7 +247,7 @@ def test_pep249_has_results_setter():
 
         assert cur.has_results == False
 
-        assert cur.fetchall() is None
+        assert cur.fetchall() == []
 
 
 def test_pep249_has_results_flow():

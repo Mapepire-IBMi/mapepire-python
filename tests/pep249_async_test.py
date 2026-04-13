@@ -52,7 +52,7 @@ async def test_pep249_async_for():
         assert row is not None
     time2 = asyncio.get_event_loop().time()
 
-    print(f"fime: {time2 - time1}")
+    print(f"time: {time2 - time1}")
 
 
 def test_sync_pep249():
@@ -155,10 +155,12 @@ async def test_async_executemany():
         ["CAROL", "416 111 0003"],
     ]
     async with connect(creds) as conn:
-        await conn.execute("drop table sample.async_em_test if exists")
-        await conn.execute(
+        async with await conn.execute("drop table sample.async_em_test if exists") as cur:
+            pass
+        async with await conn.execute(
             "CREATE TABLE SAMPLE.async_em_test (name varchar(10), phone varchar(12))"
-        )
+        ) as cur:
+            pass
         cur = await conn.cursor()
         await cur.executemany("INSERT INTO SAMPLE.async_em_test values (?, ?)", params)
         await cur.close()
