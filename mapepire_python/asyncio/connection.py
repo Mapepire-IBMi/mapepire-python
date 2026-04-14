@@ -1,13 +1,12 @@
 from pathlib import Path
-from typing import Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
 from pep249 import aiopep249
 from pep249.aiopep249 import ProcArgs, ProcName, QueryParameters, SQLQuery
 
-from ..core.connection import Connection
-from ..data_types import DaemonServer
+from ..client.async_sql_job import AsyncSQLJob
+from ..data_types import DaemonServer, JobStatus
 from .cursor import AsyncCursor
-from .utils import to_thread
 
 
 class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnection):
@@ -15,8 +14,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
     A DB API 2.0 compliant async connection for Mapepire, as outlined in
     PEP 249.
 
-    Can be constructed by passing a connection details object as a dict,
-    or a `DaemonServer` object:
+    Backed by AsyncSQLJob — native async WebSocket I/O, no thread delegation.
 
     ```
     import asyncio
@@ -39,19 +37,24 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
     ...     asyncio.run(main())
 
     ```
-
-
     """
 
-    def __init__(self, database: Union[DaemonServer, dict, Path], opts={}, **kwargs) -> None:
+    def __init__(self, database: Union[DaemonServer, dict, Path], opts: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         super().__init__()
-        self._connection = Connection(database, opts=opts, **kwargs)
+        self._job = AsyncSQLJob(options=opts)
+        self._database = database
+        self._kwargs = kwargs
+
+    async def _ensure_connected(self) -> None:
+        if self._job.status == JobStatus.NotStarted:
+            await self._job.connect(self._database, **self._kwargs)
 
     async def cursor(self) -> AsyncCursor:
-        return AsyncCursor(self, self._connection.cursor())
+        await self._ensure_connected()
+        return AsyncCursor(self, self._job)
 
     async def close(self) -> None:
-        await to_thread(self._connection.close)
+        await self._job.close()
 
     async def execute(
         self, operation: SQLQuery, parameters: Optional[QueryParameters] = None
@@ -75,8 +78,24 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
         """A lazy implementation of SQLite's `executescript`."""
         return await self.execute(script)
 
+    def _raise_if_closed(self) -> None:
+        closed_statuses = {
+            status
+            for status in (
+                getattr(JobStatus, "Closed", None),
+                getattr(JobStatus, "Closing", None),
+                getattr(JobStatus, "Ended", None),
+                getattr(JobStatus, "Stopped", None),
+            )
+            if status is not None
+        }
+        if self._job.status in closed_statuses:
+            raise RuntimeError("Connection is closed")
+
     async def commit(self) -> None:
-        await to_thread(self._connection.commit)
+        self._raise_if_closed()
+        await self.execute("COMMIT")
 
     async def rollback(self) -> None:
-        await to_thread(self._connection.rollback)
+        self._raise_if_closed()
+        await self.execute("ROLLBACK")

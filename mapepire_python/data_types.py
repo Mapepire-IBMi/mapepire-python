@@ -9,7 +9,7 @@
 
 from dataclasses import dataclass, field, fields
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
 
 from dataclasses_json import dataclass_json
 
@@ -99,10 +99,19 @@ class DaemonServer:
 class ServerResponse:
     id: str
     success: bool
-    sql_rc: int
-    sql_state: str
+    sql_rc: int = 0
+    sql_state: str = ""
     error: Optional[str] = None
     execution_time: Optional[int] = None
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key: object) -> bool:
+        return hasattr(self, key) if isinstance(key, str) else False
 
 
 @dataclass_json
@@ -174,9 +183,9 @@ class ColumnMetaData:
 
 @dataclass
 class QueryMetaData:
-    column_count: int
-    columns: List[ColumnMetaData]
-    job: str
+    column_count: int = 0
+    columns: List[ColumnMetaData] = field(default_factory=list)
+    job: str = ""
 
 
 @dataclass
@@ -209,12 +218,21 @@ class QueryResult:
     metadata: Optional[QueryMetaData] = None
     parameter_count: Optional[int] = None
     output_parms: Optional[List[ParameterResult]] = None
-    id: str = field(default="", init=False)
-    success: bool = field(default=False, init=False)
-    sql_rc: int = field(default=0, init=False)
-    sql_state: str = field(default="", init=False)
-    error: Optional[str] = field(default=None, init=False)
-    execution_time: Optional[int] = field(default=None, init=False)
+    id: str = field(default="")
+    success: bool = field(default=False)
+    sql_rc: int = field(default=0)
+    sql_state: str = field(default="")
+    error: Optional[str] = field(default=None)
+    execution_time: Optional[int] = field(default=None)
+
+    def __getitem__(self, key: str) -> Any:
+        try:
+            return getattr(self, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key: object) -> bool:
+        return hasattr(self, key) if isinstance(key, str) else False
 
 
 @dataclass
@@ -252,7 +270,7 @@ class CLCommandResult(ServerResponse):
 class QueryOptions:
     isTerseResults: Optional[bool] = None
     isClCommand: Optional[bool] = None
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     autoClose: Optional[bool] = None
 
 
@@ -284,7 +302,7 @@ class SqlRequest(BaseRequest):
     sql: str = ""
     rows: int = 0
     terse: Optional[bool] = None
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     type: str = field(default=MessageType.SQL.value, init=False)
 
 
@@ -299,7 +317,7 @@ class PrepareSqlExecuteRequest(BaseRequest):
     sql: str = ""
     rows: int = 0
     terse: Optional[bool] = None
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     type: str = field(default=MessageType.PREPARE_SQL_EXECUTE.value, init=False)
 
 
@@ -307,7 +325,7 @@ class PrepareSqlExecuteRequest(BaseRequest):
 class ExecuteRequest(BaseRequest):
     cont_id: str = ""
     rows: int = 0
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     type: str = field(default=MessageType.EXECUTE.value, init=False)
 
 

@@ -1,6 +1,7 @@
+import logging
 import weakref
 from collections import deque
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union, cast
 
 import pep249
 from pep249 import (
@@ -12,7 +13,6 @@ from pep249 import (
     ResultSet,
     SQLQuery,
 )
-from pep249.cursor import CursorType
 
 from mapepire_python.core.utils import raise_if_closed
 
@@ -28,7 +28,7 @@ from ..data_types import QueryOptions
 
 __all__ = ["Cursor"]
 
-
+logger = logging.getLogger(__name__)
 class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.TransactionalCursor):
     max_rows = 2147483647
 
@@ -36,8 +36,9 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         super().__init__()
         self._connection = weakref.proxy(connection)
         self.job = job
-        self.query: Query = None
+        self.query: Optional[Query] = None
         self.query_q: deque[Query] = deque(maxlen=20)
+        self._result_set: Optional[QueryResultSet] = None
         self.__closed = False
         self.__has_results = False
 
@@ -103,31 +104,31 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
         prepare_result = query.prepare_sql_execute()
 
-        if prepare_result["has_results"]:
+        if prepare_result.has_results:
             self.query = query
             self.__set_has_results(True)
             self.query_q.append(query)
 
-        update_count = prepare_result.get("update_count", None)
-        if update_count:
-            self.rowcount = update_count
+        if prepare_result.update_count is not None:
+            self.rowcount = prepare_result.update_count
 
         return self
 
     @raise_if_closed
     @convert_runtime_errors
     def executemany(
-        self: CursorType,
+        self,
         operation: SQLQuery,
         seq_of_parameters: Sequence[QueryParameters],
         **kwargs: Any,
     ) -> "Cursor":
-        return self.execute(operation=operation, parameters=seq_of_parameters)
+        return self.execute(operation=operation, parameters=cast(QueryParameters, seq_of_parameters))
 
     @raise_if_closed
     @convert_runtime_errors
-    def callproc(self, procname: ProcName, parameters: Optional[ProcArgs] = None) -> "Cursor":
-        return self.execute(procname, parameters=parameters)
+    def callproc(self, procname: ProcName, parameters: Optional[ProcArgs] = None) -> Optional[ProcArgs]:
+        self.execute(procname, parameters=parameters)
+        return parameters
 
     @property
     def description(
@@ -143,18 +144,20 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         res = self.query.fetch_more(rows_to_fetch=1)
         if res:
             self._result_set = QueryResultSet(res)
-        return res
+            return self._result_set.data[0] if self._result_set.data else None
+        return None
 
     @raise_if_closed
     @convert_runtime_errors
     def fetchall(self) -> ResultSet:
         if not self.query:
-            return None
+            return []
 
         res = self.query.fetch_more(rows_to_fetch=self.max_rows)
         if res:
             self._result_set = QueryResultSet(res)
-            return res
+            return self._result_set.data
+        return []
 
     @raise_if_closed
     @convert_runtime_errors
@@ -162,11 +165,12 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         if size is None:
             size = self.arraysize
         if not self.query:
-            return None
+            return []
         res = self.query.fetch_more(rows_to_fetch=size)
         if res:
             self._result_set = QueryResultSet(res)
-        return res
+            return self._result_set.data
+        return []
 
     def executescript(self, script: SQLQuery) -> "Cursor":
         """A lazy implementation of SQLite's `executescript`."""
@@ -180,7 +184,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
                 self.__set_has_results(True)
                 return True
             return None
-        except Exception:
+        except Exception as e:
+            logger.exception("Error in nextset: %s", e)
             return None
 
     @convert_runtime_errors

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Sequence, Union
+from typing import Any, Dict, Optional, Sequence, Union
 
 import pep249
 from pep249 import ProcArgs, QueryParameters, SQLQuery
@@ -42,7 +42,7 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
     """
 
     @convert_runtime_errors
-    def __init__(self, database: Union[DaemonServer, dict, Path], opts={}, **kwargs) -> None:
+    def __init__(self, database: Union[DaemonServer, dict, Path], opts: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         super().__init__()
         self._closed = False
         self.job = SQLJob(creds=database, options=opts, **kwargs)

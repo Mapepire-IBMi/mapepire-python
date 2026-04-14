@@ -110,7 +110,7 @@ reportPrivateImportUsage = false
 line-length = 115
 target-version = "py39"
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 
 [tool.mypy]
@@ -131,6 +131,8 @@ python_classes = [
 ]
 log_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 log_level = "DEBUG"
+asyncio_mode = "auto"
+env_files = [".env"]
 
 [dependency-groups]
 dev = [

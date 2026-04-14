@@ -45,9 +45,6 @@ class QueryManager:
         except Exception as e:
             raise RuntimeError(f"Failed to create query: {e}")
 
-    def run_query(self, query: Query, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
-        return query.run(rows_to_fetch=rows_to_fetch)
-
     def query_and_run(
         self, query: str, opts: Optional[Union[Dict[str, Any], QueryOptions]] = None, **kwargs
     ) -> Dict[str, Any]:

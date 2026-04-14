@@ -1,6 +1,6 @@
 import dataclasses
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Mapping, Optional, Protocol, Sequence, Union
 
 from mapepire_python.client.query import QueryState
 from mapepire_python.data_types import (
@@ -15,17 +15,30 @@ from mapepire_python.data_types import (
     SqlMoreResponse,
     SqlRequest,
 )
-from mapepire_python.pool.pool_job import PoolJob
+
+
+class _SQLJobProtocol(Protocol):
+    """Structural protocol describing the job interface PoolQuery requires.
+
+    Any job class that provides these three members — socket, send(), and
+    _get_unique_id() — works with PoolQuery without needing to subclass it.
+    Both PoolJob and AsyncSQLJob satisfy this protocol.
+    """
+
+    socket: Any
+
+    def _get_unique_id(self, prefix: str = "id") -> str: ...
+    async def send(self, content: str) -> Dict[Any, Any]: ...
 
 
 class PoolQuery:
-    global_query_list: List["PoolQuery"] = []
+    
 
-    def __init__(self, job: PoolJob, query: str, opts: QueryOptions) -> None:
+    def __init__(self, job: _SQLJobProtocol, query: str, opts: QueryOptions) -> None:
         self.job = job
         self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
-        self.parameters: Optional[List[str]] = opts.parameters
+        self.parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = opts.parameters
         self.is_cl_command: Optional[bool] = opts.isClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
         self.is_terse_results: Optional[bool] = opts.isTerseResults
@@ -34,7 +47,7 @@ class PoolQuery:
         self.state: QueryState = QueryState.NOT_YET_RUN
         self._correlation_id: Optional[str] = None
 
-        PoolQuery.global_query_list.append(self)
+        
 
     async def __aenter__(self):
         return self
@@ -46,7 +59,7 @@ class PoolQuery:
         query_result = await self.job.send(json.dumps(dataclasses.asdict(request)))
         return query_result
 
-    async def run(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
+    async def run(self, rows_to_fetch: Optional[int] = None) -> QueryResult:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:
@@ -96,7 +109,7 @@ class PoolQuery:
 
         return query_result
 
-    async def fetch_more(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
+    async def fetch_more(self, rows_to_fetch: Optional[int] = None) -> SqlMoreResponse:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:

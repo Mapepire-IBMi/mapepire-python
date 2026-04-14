@@ -1,7 +1,7 @@
 import dataclasses
 import json
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Dict, Generic, Mapping, Optional, Sequence, TypeVar, Union
 
 from mapepire_python.websocket import handle_ws_errors
 
@@ -30,13 +30,13 @@ class QueryState(Enum):
 
 
 class Query(Generic[T]):
-    global_query_list: List["Query[Any]"] = []
+    
 
     def __init__(self, job: SQLJob, query: str, opts: QueryOptions) -> None:
         self.job = job
         self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
-        self.parameters: Optional[List[str]] = opts.parameters or []
+        self.parameters: Union[Sequence[Any], Mapping[Union[str, int], Any]] = opts.parameters if opts.parameters is not None else []
         self.is_cl_command: Optional[bool] = opts.isClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
         self.is_terse_results: Optional[bool] = opts.isTerseResults
@@ -44,7 +44,7 @@ class Query(Generic[T]):
         self._rows_to_fetch: int = 100
         self.state: QueryState = QueryState.NOT_YET_RUN
         self._correlation_id: Optional[str] = None
-        Query.global_query_list.append(self)
+       
 
     def __enter__(self):
         return self
