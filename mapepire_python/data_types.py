@@ -302,7 +302,7 @@ class SqlRequest(BaseRequest):
     sql: str = ""
     rows: int = 0
     terse: Optional[bool] = None
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     type: str = field(default=MessageType.SQL.value, init=False)
 
 
@@ -317,7 +317,7 @@ class PrepareSqlExecuteRequest(BaseRequest):
     sql: str = ""
     rows: int = 0
     terse: Optional[bool] = None
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     type: str = field(default=MessageType.PREPARE_SQL_EXECUTE.value, init=False)
 
 
@@ -325,7 +325,7 @@ class PrepareSqlExecuteRequest(BaseRequest):
 class ExecuteRequest(BaseRequest):
     cont_id: str = ""
     rows: int = 0
-    parameters: Optional[List[Any]] = None
+    parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     type: str = field(default=MessageType.EXECUTE.value, init=False)
 
 

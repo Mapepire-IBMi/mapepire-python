@@ -1,6 +1,6 @@
 import dataclasses
 import json
-from typing import Any, Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence, Union
 
 from mapepire_python.client.query import QueryState
 from mapepire_python.data_types import (
@@ -38,7 +38,7 @@ class PoolQuery:
         self.job = job
         self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
-        self.parameters: Optional[List[str]] = opts.parameters
+        self.parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = opts.parameters
         self.is_cl_command: Optional[bool] = opts.isClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
         self.is_terse_results: Optional[bool] = opts.isTerseResults

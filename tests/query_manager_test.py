@@ -18,14 +18,14 @@ def test_query_manager():
     query = query_manager.create_query("select * from sample.employee")
 
     # run query
-    result = query_manager.run_query(query)
+    result = query.run()
 
     assert result["success"]
     job.close()
     with SQLJob(creds) as sql_job:
         query_manager = QueryManager(sql_job)
         with query_manager.create_query("select * from sample.employee") as query:
-            result = query_manager.run_query(query, rows_to_fetch=1)
+            result = query.run(rows_to_fetch=1)
             print(result)
 
 
@@ -42,7 +42,7 @@ def test_context_manager():
 
         query_manager = QueryManager(job)
         query = query_manager.create_query("select * from sample.department")
-        result = query_manager.run_query(query)
+        result = query.run()
         assert result["success"]
 
 
@@ -50,7 +50,7 @@ def test_simple_v2():
     with SQLJob(creds) as job:
         query_manager = QueryManager(job)
         query = query_manager.create_query("select * from sample.employee")
-        result = query_manager.run_query(query, rows_to_fetch=5)
+        result = query.run(rows_to_fetch=5)
         assert result["success"] == True
         assert result["is_done"] == False
         assert result["has_results"] == True
@@ -63,7 +63,7 @@ def test_query_large_dataset():
     query_manager = QueryManager(job)
     query = query_manager.create_query("select * from sample.employee")
 
-    result = query_manager.run_query(query, rows_to_fetch=30)
+    result = query.run(rows_to_fetch=30)
     query.close()
     job.close()
 
