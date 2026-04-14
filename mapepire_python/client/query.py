@@ -1,7 +1,7 @@
 import dataclasses
 import json
 from enum import Enum
-from typing import Any, Dict, Generic, List, Mapping, Optional, Sequence, TypeVar, Union
+from typing import Any, Dict, Generic, Mapping, Optional, Sequence, TypeVar, Union
 
 from mapepire_python.websocket import handle_ws_errors
 
@@ -36,7 +36,7 @@ class Query(Generic[T]):
         self.job = job
         self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
-        self.parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = opts.parameters
+        self.parameters: Union[Sequence[Any], Mapping[Union[str, int], Any]] = opts.parameters if opts.parameters is not None else []
         self.is_cl_command: Optional[bool] = opts.isClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
         self.is_terse_results: Optional[bool] = opts.isTerseResults

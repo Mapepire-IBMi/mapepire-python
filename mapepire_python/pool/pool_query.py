@@ -1,6 +1,6 @@
 import dataclasses
 import json
-from typing import Any, Dict, List, Mapping, Optional, Protocol, Sequence, Union
+from typing import Any, Dict, Mapping, Optional, Protocol, Sequence, Union
 
 from mapepire_python.client.query import QueryState
 from mapepire_python.data_types import (
