@@ -39,8 +39,7 @@ class SQLJob(BaseJob):
         self.id: Optional[str] = None
 
     def __enter__(self):
-        if self.creds:
-            self.connect(self.creds, **self.kwargs)
+        self.connect(self.creds, **self.kwargs)
         return self
 
     def __exit__(self, *args, **kwargs):
@@ -91,7 +90,7 @@ class SQLJob(BaseJob):
 
     @handle_ws_errors
     def connect(
-        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+        self, db2_server: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None, **kwargs
     ) -> Dict[Any, Any]:
         """create connection to the mapepire server
 

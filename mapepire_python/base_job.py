@@ -18,8 +18,10 @@ class BaseJob:
         self.kwargs = kwargs
 
     def _parse_connection_input(
-        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs: Any
+        self, db2_server: Optional[Union[DaemonServer, Dict[str, Any], Path]], **kwargs: Any
     ) -> DaemonServer:
+        if db2_server is None:
+            db2_server = DaemonServer.from_env()
         if isinstance(db2_server, dict):
             db2_server = dict_to_dataclass(db2_server, DaemonServer)
         elif isinstance(db2_server, (str, Path)):
@@ -51,7 +53,7 @@ class BaseJob:
         return f"BaseJob(creds={creds_str}, options={self.options})"
 
     def connect(
-        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+        self, db2_server: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None, **kwargs
     ) -> Dict[str, Any]:
         raise NotImplementedError()
 

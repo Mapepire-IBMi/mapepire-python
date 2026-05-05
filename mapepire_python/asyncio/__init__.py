@@ -41,7 +41,16 @@ paramstyle = "qmark"
 
 
 def connect(
-    connection_details: Union[DaemonServer, dict, Path], opts: Optional[Dict[str, Any]] = None, **kwargs
+    connection_details: Optional[Union[DaemonServer, dict, Path]] = None,
+    opts: Optional[Dict[str, Any]] = None,
+    **kwargs,
 ) -> AsyncConnection:
-    """Connect to a Mapepire Server, returning a connection."""
+    """Connect to a Mapepire Server, returning an async connection.
+
+    If connection_details is omitted, credentials are read from environment
+    variables: MAPEPIRE_HOST, MAPEPIRE_USER, MAPEPIRE_PASSWORD, MAPEPIRE_PORT,
+    and MAPEPIRE_CA_PATH.
+    """
+    if connection_details is None:
+        connection_details = DaemonServer.from_env()
     return AsyncConnection(connection_details, opts, **kwargs)
