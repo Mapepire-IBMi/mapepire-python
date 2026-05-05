@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- bump GitHub Actions: `actions/checkout` to v6, `actions/upload-artifact` to v7, `actions/download-artifact` to v8, `actions/setup-python` to v6, `softprops/action-gh-release` to v3
+- bump Python dev dependencies: `mypy` to <1.20, `black` to <26.0, `isort` to <6.2, `Sphinx` to <7.5.0, `furo` to 2025.12.19, `myst-parser` to <4.1, `sphinx-autobuild` to 2024.10.3, `sphinx-autodoc-typehints` to 2.5.0
 - add TLS support
 - enable server certificate verification by default
 - enable Kerberos authentication
