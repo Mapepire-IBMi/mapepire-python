@@ -16,6 +16,7 @@ from dataclasses_json import dataclass_json
 
 from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
 
+
 def dict_to_dataclass(data: Dict[str, Any], dataclass_type: Any) -> Any:
     field_names = {f.name for f in fields(dataclass_type)}
     filtered_data = {k: v for k, v in data.items() if k in field_names}
