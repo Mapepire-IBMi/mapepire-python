@@ -2,7 +2,7 @@
 
 import dataclasses
 from functools import wraps
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 from .exceptions import CONNECTION_CLOSED, ProgrammingError, ReturnType
 
@@ -49,11 +49,15 @@ def ignore_transaction_error(
 
 
 class ColumnMetaData:
-    def __init__(self, name: str, type: str, display_size: int, label: str):
+    def __init__(self, name: str, type: str, display_size: int, label: str,
+                 precision=None, scale=None, nullable=None, **kwargs):
         self.name = name
         self.type = type
         self.display_size = display_size
         self.label = label
+        self.precision = precision
+        self.scale = scale
+        self.nullable = nullable
 
 
 class MetaData:
@@ -64,17 +68,18 @@ class MetaData:
 
 
 class QueryResultSet:
-    def __init__(self, result):
+    def __init__(self, result) -> None:
         if dataclasses.is_dataclass(result) and not isinstance(result, type):
             result = dataclasses.asdict(result)
+        result = cast(Dict[str, Any], result)
         self.id = result.get("id", None)
         self.has_results = result.get("has_results", None)
         self.update_count = result.get("update_count", None)
-        metadata = result.get("metadata", {})
+        metadata = cast(Dict[str, Any], result.get("metadata") or {})
         self.metadata = MetaData(
-            column_count=metadata.get("column_count", None),
-            job=metadata.get("job", None),
-            columns=[ColumnMetaData(**col) for col in metadata.get("columns", [])],
+            column_count=metadata.get("column_count", 0),
+            job=metadata.get("job", ""),
+            columns=[ColumnMetaData(**col) for col in metadata.get("columns", [])],  # type: ignore[arg-type]
         )
         self.data = result.get("data", [])
         self.is_done = result.get("is_done", None)
