@@ -127,8 +127,13 @@ class DaemonServer:
 
         ca: Optional[bytes] = None
         if ca_path:
-            with open(ca_path, "rb") as f:
-                ca = f.read()
+            try:
+                with open(ca_path, "rb") as f:
+                    ca = f.read()
+            except FileNotFoundError:
+                raise ValueError(f"CA certificate file not found: {ca_path!r}")
+            except PermissionError:
+                raise ValueError(f"Cannot read CA certificate file (permission denied): {ca_path!r}")
 
         return cls(host=host, user=user, password=password, port=port, ca=ca)
 
