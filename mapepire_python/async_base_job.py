@@ -47,8 +47,7 @@ class AsyncBaseJob(BaseJob):
         self.id: Optional[str] = None
 
     async def __aenter__(self):
-        if self.creds:
-            await self.connect(self.creds, **self.kwargs)
+        await self.connect(self.creds, **self.kwargs)
         return self
 
     async def __aexit__(self, *args, **kwargs):
@@ -109,7 +108,7 @@ class AsyncBaseJob(BaseJob):
         return len(self.response_emitter.event_names())
 
     async def connect(  # type: ignore[override]
-        self, db2_server: Union[DaemonServer, Dict[str, Any], Path], **kwargs
+        self, db2_server: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None, **kwargs
     ) -> Any:
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 

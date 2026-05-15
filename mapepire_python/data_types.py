@@ -7,6 +7,7 @@
 # these from the protocol's JSON Schema files using datamodel-codegen, which
 # would prevent drift. See issue #96 for details.
 
+import os
 from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
@@ -92,6 +93,49 @@ class DaemonServer:
         if isinstance(self.password, KerberosTokenProvider):
             return self.password.get_token()
         return self.password
+
+    @classmethod
+    def from_env(cls) -> "DaemonServer":
+        """Create a DaemonServer from environment variables.
+
+        Reads MAPEPIRE_HOST, MAPEPIRE_USER, MAPEPIRE_PASSWORD (required),
+        MAPEPIRE_PORT (default 8076), and MAPEPIRE_CA_PATH (optional).
+        """
+        host = os.environ.get("MAPEPIRE_HOST")
+        user = os.environ.get("MAPEPIRE_USER")
+        password = os.environ.get("MAPEPIRE_PASSWORD")
+        port = os.environ.get("MAPEPIRE_PORT", "8076")
+        ca_path = os.environ.get("MAPEPIRE_CA_PATH")
+
+        missing = [
+            name
+            for name, val in [
+                ("MAPEPIRE_HOST", host),
+                ("MAPEPIRE_USER", user),
+                ("MAPEPIRE_PASSWORD", password),
+            ]
+            if not val
+        ]
+        if missing:
+            raise ValueError(
+                f"Missing required environment variables: {', '.join(missing)}"
+            )
+
+        assert host is not None
+        assert user is not None
+        assert password is not None
+
+        ca: Optional[bytes] = None
+        if ca_path:
+            try:
+                with open(ca_path, "rb") as f:
+                    ca = f.read()
+            except FileNotFoundError:
+                raise ValueError(f"CA certificate file not found: {ca_path!r}")
+            except PermissionError:
+                raise ValueError(f"Cannot read CA certificate file (permission denied): {ca_path!r}")
+
+        return cls(host=host, user=user, password=password, port=port, ca=ca)
 
 
 @dataclass_json
