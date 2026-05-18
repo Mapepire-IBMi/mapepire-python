@@ -3,9 +3,7 @@ import os
 
 import pytest
 
-from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import JobStatus
-from mapepire_python.pool.pool_client import Pool, PoolOptions
+from mapepire_python import JobStatus, Pool, PoolOptions, SQLJob
 
 from .test_setup import *
 

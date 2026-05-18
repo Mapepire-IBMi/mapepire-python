@@ -3,7 +3,7 @@ import ssl
 
 import pytest
 
-from mapepire_python.client.sql_job import SQLJob
+from mapepire_python import SQLJob
 from mapepire_python.ssl import get_certificate
 
 from .test_setup import *

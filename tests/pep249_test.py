@@ -1,7 +1,7 @@
 import os
 
 from mapepire_python import connect
-from mapepire_python.data_types import QueryOptions
+from mapepire_python import QueryOptions
 
 from .test_setup import *
 
@@ -216,14 +216,15 @@ def test_pep249_has_results():
         cur = conn.cursor()
         cur.execute("select * from sample.department")
         assert cur.has_results == True
+        rows = cur.fetchall()
+        assert len(rows) > 0
 
         cur.execute(
             "create or replace variable sample.coolval varchar(8) ccsid 1208 default 'abcd'"
         )
 
-        assert cur.has_results == True
-
-        assert cur.fetchall() is not None
+        # DDL has no result set — has_results resets to False
+        assert cur.has_results == False
 
 
 def test_pep249_has_results_no_select():

@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from mapepire_python.core.cursor import Cursor
+from mapepire_python import Cursor
 
 
 # ---------------------------------------------------------------------------

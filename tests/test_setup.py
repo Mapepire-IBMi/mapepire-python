@@ -3,7 +3,7 @@ import os
 import platform
 
 from mapepire_python.authentication.kerberosTokenProvider import KerberosTokenProvider
-from mapepire_python.data_types import DaemonServer
+from mapepire_python import DaemonServer
 
 __all__ = [
     "creds",

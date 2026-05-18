@@ -2,8 +2,7 @@ import os
 
 import pytest
 
-from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import QueryOptions
+from mapepire_python import QueryOptions, SQLJob
 
 from .test_setup import *
 
