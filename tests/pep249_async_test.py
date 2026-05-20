@@ -5,9 +5,9 @@ import time
 import pytest
 
 import mapepire_python
+from mapepire_python import Pool, PoolOptions
 from mapepire_python.asyncio import connect
 from mapepire_python.client.async_sql_job import AsyncSQLJob
-from mapepire_python import Pool, PoolOptions
 
 from .test_setup import *
 

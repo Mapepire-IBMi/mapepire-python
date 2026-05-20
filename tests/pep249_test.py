@@ -1,7 +1,6 @@
 import os
 
-from mapepire_python import connect
-from mapepire_python import QueryOptions
+from mapepire_python import QueryOptions, connect
 
 from .test_setup import *
 
