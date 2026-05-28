@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -7,6 +8,8 @@ from ..data_types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
 from .pool_job import PoolJob
 
 __all__ = ["Pool"]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -100,6 +103,7 @@ class Pool:
         if new_sql_job.get_status() == JobStatus.NotStarted:
             await new_sql_job.connect(self.options.creds, section=self.options.section)
 
+        logger.info("Job added to pool: pool_size=%d", len(self.jobs))
         return new_sql_job
 
     def _get_ready_job(self) -> PoolJob:

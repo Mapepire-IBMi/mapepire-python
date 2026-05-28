@@ -106,6 +106,7 @@ class AsyncBaseJob(BaseJob):
     ) -> Any:
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 
+        logger.info("Connecting to %s:%s", db2_server.host, db2_server.port)
         self.socket = await self.get_channel(db2_server)
         self._message_task = asyncio.create_task(self.message_handler())
 
@@ -127,12 +128,14 @@ class AsyncBaseJob(BaseJob):
 
         if result.success:
             self.status = JobStatus.Ready
+            self.id = result.job
+            logger.info("Connection established: job_id=%s", self.id)
         else:
             self.status = JobStatus.NotStarted
+            logger.error("Connection failed: %s", result.error or "unknown error")
             await self.close()
             raise Exception(result.error or "Failed to connect to server")
 
-        self.id = result.job
         self._is_tracing_channel_data = False
 
         return result
@@ -207,6 +210,7 @@ class AsyncBaseJob(BaseJob):
             raise RuntimeError(f"Failed to run query: {e}") from e
 
     async def close(self) -> None: # type: ignore[override]
+        logger.info("Closing job %s", self.id)
         await self.dispose()
         self.status = JobStatus.Ended
         

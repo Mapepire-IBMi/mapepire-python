@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -5,6 +6,8 @@ from ..async_base_job import AsyncBaseJob
 from ..data_types import DaemonServer
 
 __all__ = ["PoolJob"]
+
+logger = logging.getLogger(__name__)
 
 
 class PoolJob(AsyncBaseJob):
