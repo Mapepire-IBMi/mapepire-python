@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- fix: do not force a connection in `SQLJob.__enter__` / `AsyncSQLJob.__aenter__` when no credentials are provided, restoring the `with SQLJob() as job: job.connect(creds)` pattern (regression from #111)
 - add TLS support
 - enable server certificate verification by default
 - enable Kerberos authentication
