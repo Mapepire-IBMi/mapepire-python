@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import websockets
-from pyee.asyncio import AsyncIOEventEmitter
 from websockets.asyncio.client import ClientConnection
 
 from .base_job import BaseJob
@@ -40,7 +39,13 @@ class AsyncBaseJob(BaseJob):
     ) -> None:
         super().__init__(creds, options or {}, **kwargs)
         self.socket: Optional[ClientConnection] = None
-        self.response_emitter = AsyncIOEventEmitter()
+        # Correlate responses to in-flight requests by id. Using a plain dict of
+        # futures (instead of an event emitter) gives O(1) routing, an exact
+        # in-flight count via len(), and lets the count increment synchronously
+        # at send time — which is what allows the pool to spread concurrent
+        # queries across connections (see Pool.get_job).
+        self._pending: Dict[str, "asyncio.Future[Dict[str, Any]]"] = {}
+        self._message_task: Optional["asyncio.Task[None]"] = None
         self.status = JobStatus.NotStarted
         self._unique_id_counter: int = 0
         self.unique_id = self._get_unique_id("sqljob")
@@ -71,41 +76,29 @@ class AsyncBaseJob(BaseJob):
         req = json.loads(content)
         if self.socket is None:
             raise RuntimeError("Socket is not connected")
+        req_id = req["id"]
+        # Register the pending future *before* awaiting the socket so the
+        # in-flight count (and Busy status) is reflected synchronously, before
+        # this coroutine yields. Without this, concurrent acquirers would all
+        # see the job as idle and pile onto it.
+        future: "asyncio.Future[Dict[str, Any]]" = asyncio.get_running_loop().create_future()
+        self._pending[req_id] = future
+        self.status = JobStatus.Busy
         try:
             await self.socket.send(content)
-            self.status = JobStatus.Busy
             logger.debug("waiting for response ...")
-            response = await self.wait_for_response(req["id"])
-            self.status = JobStatus.Ready if self.get_running_count() == 0 else JobStatus.Busy
-            return response
-        except Exception as e:
-            raise e
-
-    async def wait_for_response(self, req_id: str) -> Dict[str, Any]:
-        future: asyncio.Future = asyncio.Future()
-
-        def on_response(response):
-            logger.debug(f"Received response for req_id: {req_id} - {response}")
-            if not future.done():
-                future.set_result(response)
-            self.response_emitter.remove_listener(req_id, on_response)
-
-        try:
-            self.response_emitter.on(req_id, on_response)
-            logger.debug(f"Listener registered for req_id: {req_id}")
             return await future
-        except Exception as e:
-            self.response_emitter.remove_listener(req_id, on_response)
-            raise e
+        finally:
+            self._pending.pop(req_id, None)
+            self.status = JobStatus.Ready if not self._pending else JobStatus.Busy
 
     def get_status(self) -> JobStatus:
         return self.status
 
     def get_running_count(self) -> int:
-        logger.debug(
-            f"--- running count {self.unique_id}: {len(self.response_emitter.event_names())}, status: {self.get_status()}"
-        )
-        return len(self.response_emitter.event_names())
+        count = len(self._pending)
+        logger.debug(f"--- running count {self.unique_id}: {count}, status: {self.get_status()}")
+        return count
 
     async def connect(  # type: ignore[override]
         self, db2_server: Optional[Union[DaemonServer, Dict[str, Any], Path]] = None, **kwargs
@@ -113,7 +106,7 @@ class AsyncBaseJob(BaseJob):
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 
         self.socket = await self.get_channel(db2_server)
-        asyncio.create_task(self.message_handler())
+        self._message_task = asyncio.create_task(self.message_handler())
 
         props = ";".join(
             [
@@ -144,11 +137,21 @@ class AsyncBaseJob(BaseJob):
         return result
 
     async def dispose(self):
+        # Cancel the reader task unless dispose() is being called from within it
+        # (the server-close path), which would otherwise self-cancel mid-cleanup.
+        task = self._message_task
+        self._message_task = None
+        if task is not None and task is not asyncio.current_task():
+            task.cancel()
         if self.socket is not None:
             await self.socket.close()
         self.socket = None
         self.status = JobStatus.NotStarted
-        self.response_emitter.remove_all_listeners()
+        # Fail any still-in-flight requests so their awaiters don't hang forever.
+        for future in self._pending.values():
+            if not future.done():
+                future.cancel()
+        self._pending.clear()
 
     async def message_handler(self):
         try:
@@ -158,16 +161,15 @@ class AsyncBaseJob(BaseJob):
                 logger.debug(f"Received raw message: {message}")
                 try:
                     response = json.loads(message)
-                    req_id = response.get("id")
-                    if req_id:
-                        logger.debug(f"Emitting response for req_id: {req_id}")
-                        self.response_emitter.emit(req_id, response)
-                    else:
-                        logger.debug(f"No req_id found in response: {response}")
                 except json.JSONDecodeError as e:
-                    raise ValueError(f"Error decoding JSON: {e}")
-                except Exception as e:
-                    raise RuntimeError(f"Error: {e}")
+                    logger.warning(f"Discarding malformed message: {e}")
+                    continue
+                req_id = response.get("id")
+                future = self._pending.get(req_id) if req_id else None
+                if future is not None and not future.done():
+                    future.set_result(response)
+                else:
+                    logger.debug(f"No pending request for response id: {req_id}")
         except websockets.exceptions.ConnectionClosedError:
             await self.dispose()
 

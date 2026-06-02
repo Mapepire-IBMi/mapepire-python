@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -39,8 +40,10 @@ class Pool:
         elif self.options.starting_size > self.options.max_size:
             raise ValueError("Max size must be greater than or equal to starting size")
 
-        for _ in range(self.options.starting_size):
-            await self._add_job()
+        # Establish the starting connections concurrently. Each connect is a
+        # full WebSocket handshake + connect round-trip, so doing them serially
+        # cost starting_size x RTT before the pool became usable.
+        await asyncio.gather(*(self._add_job() for _ in range(self.options.starting_size)))
 
     async def __aenter__(self):
         await self.init()
@@ -67,8 +70,11 @@ class Pool:
         return f"-------\nJobs:\n{job_details_str}\nActive Jobs: {active_jobs}\n-------"
 
     def has_space(self):
+        # Count every slot that isn't fully ended — including jobs still
+        # mid-connect (NotStarted) — so concurrent growth can't overshoot
+        # max_size while several get_job() calls are each adding a connection.
         return (
-            len([j for j in self.jobs if j.get_status() not in INVALID_STATES])
+            len([j for j in self.jobs if j.get_status() != JobStatus.Ended])
             < self.options.max_size
         )
 
@@ -105,15 +111,25 @@ class Pool:
             -1,
         )
 
-    async def get_job(self):
-        job = self._get_ready_job()
-        if not job:
-            busy_jobs: PoolJob = [j for j in self.jobs if j.get_status() == JobStatus.Busy]
-            freeist: PoolJob = sorted(busy_jobs, key=lambda job: job.get_running_count())[0]
-            if self.has_space() and freeist.get_running_count() > 2:
-                await self._add_job()
-            return freeist
-        return job
+    async def get_job(self) -> PoolJob:
+        # Pick the least-loaded usable connection by in-flight request count.
+        # Because send() bumps that count synchronously before yielding, a burst
+        # of concurrent acquirers fans out across connections instead of all
+        # selecting the same nominally-"ready" job.
+        usable = [j for j in self.jobs if j.get_status() not in INVALID_STATES]
+        if not usable:
+            # Pool is empty or every job died; bring one up.
+            return await self._add_job()
+
+        least_loaded = min(usable, key=lambda job: job.get_running_count())
+
+        # If even the least-loaded connection is busy and we still have capacity,
+        # grow the pool and hand back the fresh connection so THIS query runs on
+        # it, rather than queueing behind in-flight work on an existing one.
+        if least_loaded.get_running_count() > 0 and self.has_space():
+            return await self._add_job()
+
+        return least_loaded
 
     async def wait_for_job(self, use_new_job: bool = False):
         job = self._get_ready_job()
@@ -141,5 +157,6 @@ class Pool:
         return await job.query_and_run(sql, opts=opts)
 
     async def end(self):
-        for j in self.jobs:
-            await j.close()
+        # Close all connections concurrently; tolerate individual close errors
+        # so one bad socket doesn't strand the rest open.
+        await asyncio.gather(*(j.close() for j in self.jobs), return_exceptions=True)
