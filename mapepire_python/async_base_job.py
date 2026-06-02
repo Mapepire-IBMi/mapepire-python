@@ -52,7 +52,8 @@ class AsyncBaseJob(BaseJob):
         self.id: Optional[str] = None
 
     async def __aenter__(self):
-        await self.connect(self.creds, **self.kwargs)
+        if self.creds:
+            await self.connect(self.creds, **self.kwargs)
         return self
 
     async def __aexit__(self, *args, **kwargs):

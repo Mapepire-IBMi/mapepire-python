@@ -39,7 +39,8 @@ class SQLJob(BaseJob):
         self.id: Optional[str] = None
 
     def __enter__(self):
-        self.connect(self.creds, **self.kwargs)
+        if self.creds:
+            self.connect(self.creds, **self.kwargs)
         return self
 
     def __exit__(self, *args, **kwargs):
