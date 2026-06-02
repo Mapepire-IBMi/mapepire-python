@@ -6,6 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- perf(pool): parallel pool init/teardown and load-aware connection fan-out so concurrent queries spread across all connections instead of serializing onto one; switch async response routing from `pyee` to a `dict[str, Future]` (O(1) routing, accurate in-flight accounting) and drop the `pyee` dependency (#115)
 - remove outdated Sphinx/ReadTheDocs documentation (superseded by https://mapepire-ibmi.github.io)
 - patch dependency security vulnerabilities by regenerating `uv.lock` (urllib3, cryptography, requests, idna, wheel, virtualenv, filelock, marshmallow, python-dotenv, pytest, black, pygments; tornado dropped with the docs toolchain)
 - correct declared `requires-python` to `>=3.10` to match the supported Python versions
