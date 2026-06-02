@@ -22,7 +22,6 @@ requires-python = ">3.9"
 dependencies = [
   "dataclasses-json>=0.6.4",
   "websockets>=14.0",
-  "pyee",
   "pep249abc"
 ]
 license = {file = "LICENSE"}
@@ -40,7 +39,6 @@ dev = [
     "black>=23.0,<24.0",
     "isort>=5.12,<5.13",
     "pytest",
-    "pyee",
     "pep249abc",
     "pytest-asyncio",
     "pytest-sphinx",
