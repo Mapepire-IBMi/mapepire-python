@@ -55,8 +55,3 @@ __pycache__
 *.env
 *.ini
 
-# documentation build artifacts
-
-docs/build
-site/
-
