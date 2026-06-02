@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - remove outdated Sphinx/ReadTheDocs documentation (superseded by https://mapepire-ibmi.github.io)
 - patch dependency security vulnerabilities by regenerating `uv.lock` (urllib3, cryptography, requests, idna, wheel, virtualenv, filelock, marshmallow, python-dotenv, pytest, black, pygments; tornado dropped with the docs toolchain)
 - correct declared `requires-python` to `>=3.10` to match the supported Python versions
+- fix: do not force a connection in `SQLJob.__enter__` / `AsyncSQLJob.__aenter__` when no credentials are provided, restoring the `with SQLJob() as job: job.connect(creds)` pattern (regression from #111)
 - add TLS support
 - enable server certificate verification by default
 - enable Kerberos authentication
