@@ -1,8 +1,3 @@
-.PHONY : docs
-docs :
-	rm -rf docs/build/
-	sphinx-autobuild -b html --watch mapepire_python/ docs/source/ docs/build/
-
 .PHONY : run-checks
 run-checks :
 	isort --check .

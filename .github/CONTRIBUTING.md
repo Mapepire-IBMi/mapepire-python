@@ -144,13 +144,8 @@ When you're ready to contribute code to address an open issue, please follow the
         pytest -v tests/a/b_test.py
 
     If your contribution involves additions to any public part of the API, we require that you write docstrings
-    for each function, method, class, or module that you add.
-    See the [Writing docstrings](#writing-docstrings) section below for details on the syntax.
-    You should test to make sure the API documentation can build without errors by running
-
-        make docs
-
-    If the build fails, it's most likely due to small formatting issues. If the error message isn't clear, feel free to comment on this in your pull request.
+    for each function, method, class, or module that you add, following the Google docstring style used
+    elsewhere in the codebase.
 
     And finally, please update the [CHANGELOG](https://github.com/Mapepire-IBMi/mapepire-python/blob/main/CHANGELOG.md) with notes on your contribution in the "Unreleased" section at the top.
 
@@ -160,9 +155,3 @@ When you're ready to contribute code to address an open issue, please follow the
     We look forward to reviewing your PR!
 
     </details>
-
-### Writing docstrings
-
-We use [Sphinx](https://www.sphinx-doc.org/en/master/index.html) to build our API docs, which automatically parses all docstrings
-of public classes and methods using the [autodoc](https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html) extension.
-Please refer to autoc's documentation to learn about the docstring syntax.
