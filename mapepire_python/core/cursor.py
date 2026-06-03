@@ -14,8 +14,6 @@ from pep249 import (
     SQLQuery,
 )
 
-from mapepire_python.core.utils import raise_if_closed
-
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
     from ..core.connection import Connection
@@ -23,12 +21,14 @@ if TYPE_CHECKING:
 from ..client.query import Query, QueryState
 from ..client.sql_job import SQLJob
 from ..core.exceptions import convert_runtime_errors
-from ..core.utils import QueryResultSet
+from ..core.utils import DB_TYPE_MAP, QueryResultSet, raise_if_closed, row_to_tuple
 from ..data_types import QueryOptions
 
 __all__ = ["Cursor"]
 
 logger = logging.getLogger(__name__)
+
+
 class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.TransactionalCursor):
     max_rows = 2147483647
 
@@ -39,6 +39,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         self.query: Optional[Query] = None
         self.query_q: deque[Query] = deque(maxlen=20)
         self._result_set: Optional[QueryResultSet] = None
+        self._metadata = None
         self.__closed = False
         self.__has_results = False
 
@@ -104,10 +105,15 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
 
         prepare_result = query.prepare_sql_execute()
 
+        qs = QueryResultSet(prepare_result)
+        self._metadata = qs.metadata if qs.metadata.columns else None
+
         if prepare_result.has_results:
             self.query = query
             self.__set_has_results(True)
             self.query_q.append(query)
+        else:
+            self.__set_has_results(False)
 
         if prepare_result.update_count is not None:
             self.rowcount = prepare_result.update_count
@@ -134,7 +140,20 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     def description(
         self,
     ) -> Optional[Sequence[ColumnDescription]]:
-        pass
+        if not self._metadata or not self._metadata.columns:
+            return None
+        return [
+            (
+                col.name,
+                DB_TYPE_MAP.get(col.type.upper() if col.type else "", str),
+                col.display_size,
+                None,
+                col.precision,
+                col.scale,
+                col.nullable,
+            )
+            for col in self._metadata.columns
+        ]
 
     @raise_if_closed
     @convert_runtime_errors
@@ -144,7 +163,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         res = self.query.fetch_more(rows_to_fetch=1)
         if res:
             self._result_set = QueryResultSet(res)
-            return self._result_set.data[0] if self._result_set.data else None
+            if self._result_set.data:
+                return row_to_tuple(self._result_set.data[0], self._metadata)
         return None
 
     @raise_if_closed
@@ -156,7 +176,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         res = self.query.fetch_more(rows_to_fetch=self.max_rows)
         if res:
             self._result_set = QueryResultSet(res)
-            return self._result_set.data
+            return [row_to_tuple(row, self._metadata) for row in self._result_set.data]
         return []
 
     @raise_if_closed
@@ -169,7 +189,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         res = self.query.fetch_more(rows_to_fetch=size)
         if res:
             self._result_set = QueryResultSet(res)
-            return self._result_set.data
+            return [row_to_tuple(row, self._metadata) for row in self._result_set.data]
         return []
 
     def executescript(self, script: SQLQuery) -> "Cursor":

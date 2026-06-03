@@ -14,15 +14,9 @@ if TYPE_CHECKING:
     from .connection import AsyncConnection
 
 from ..client.async_sql_job import AsyncSQLJob
+from ..core.utils import DB_TYPE_MAP, row_to_tuple
 from ..data_types import QueryOptions
 from ..pool.pool_query import PoolQuery
-
-_DB_TYPE_MAP: dict = {
-    "VARCHAR": str, "CHAR": str, "CLOB": str, "NVARCHAR": str, "NCHAR": str,
-    "INTEGER": int, "INT": int, "SMALLINT": int, "BIGINT": int,
-    "DECIMAL": float, "NUMERIC": float, "FLOAT": float, "DOUBLE": float, "REAL": float,
-    "BOOLEAN": bool,
-}
 
 
 class AsyncCursor(
@@ -58,13 +52,13 @@ class AsyncCursor(
             return None
         return [
             (
-                col.name,                                  
-                _DB_TYPE_MAP.get(col.type.upper(), str),  
-                col.display_size,  
-                None,        
-                col.precision,     
-                col.scale,         
-                col.nullable,      
+                col.name,
+                DB_TYPE_MAP.get(col.type.upper() if col.type else "", str),
+                col.display_size,
+                None,
+                col.precision,
+                col.scale,
+                col.nullable,
             )
             for col in self._metadata.columns
         ]
@@ -104,13 +98,13 @@ class AsyncCursor(
 
     async def fetchone(self) -> Optional[ResultRow]:
         if self._buffer:
-            return self._buffer.pop(0)
+            return row_to_tuple(self._buffer.pop(0), self._metadata)
         if self._is_done or self._query is None:
             return None
         result = await self._query.fetch_more(rows_to_fetch=1)
         self._is_done = result.is_done
         self._buffer.extend(result.data or [])
-        return self._buffer.pop(0) if self._buffer else None
+        return row_to_tuple(self._buffer.pop(0), self._metadata) if self._buffer else None
 
     async def fetchmany(self, size: Optional[int] = None) -> ResultSet:
         if size is None:
@@ -118,7 +112,7 @@ class AsyncCursor(
         rows = []
         while len(rows) < size:
             if self._buffer:
-                rows.append(self._buffer.pop(0))
+                rows.append(row_to_tuple(self._buffer.pop(0), self._metadata))
             elif self._is_done or self._query is None:
                 break
             else:
@@ -128,12 +122,12 @@ class AsyncCursor(
         return rows
 
     async def fetchall(self) -> ResultSet:
-        rows = list(self._buffer)
+        rows = [row_to_tuple(r, self._metadata) for r in self._buffer]
         self._buffer.clear()
         while not self._is_done and self._query is not None:
             result = await self._query.fetch_more(rows_to_fetch=100)
             self._is_done = result.is_done
-            rows.extend(result.data or [])
+            rows.extend(row_to_tuple(r, self._metadata) for r in (result.data or []))
         return rows
 
     async def close(self) -> None:

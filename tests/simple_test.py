@@ -1,7 +1,6 @@
 import re
 
-from mapepire_python.client.sql_job import SQLJob
-from mapepire_python.data_types import DaemonServer
+from mapepire_python import DaemonServer, SQLJob
 
 from .test_setup import *
 
