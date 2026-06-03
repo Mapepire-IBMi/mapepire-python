@@ -14,8 +14,6 @@ from pep249 import (
     SQLQuery,
 )
 
-from mapepire_python.core.utils import raise_if_closed, DB_TYPE_MAP, row_to_tuple
-
 if TYPE_CHECKING:
     # pylint: disable=cyclic-import
     from ..core.connection import Connection
@@ -23,7 +21,7 @@ if TYPE_CHECKING:
 from ..client.query import Query, QueryState
 from ..client.sql_job import SQLJob
 from ..core.exceptions import convert_runtime_errors
-from ..core.utils import QueryResultSet
+from ..core.utils import DB_TYPE_MAP, QueryResultSet, raise_if_closed, row_to_tuple
 from ..data_types import QueryOptions
 
 __all__ = ["Cursor"]
