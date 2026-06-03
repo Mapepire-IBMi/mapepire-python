@@ -6,7 +6,28 @@ from typing import Any, Callable, Dict, List, Optional, cast
 
 from .exceptions import CONNECTION_CLOSED, ProgrammingError, ReturnType
 
-__all__ = ["raise_if_closed"]
+__all__ = ["raise_if_closed", "DB_TYPE_MAP", "row_to_tuple"]
+
+DB_TYPE_MAP = {
+    "VARCHAR": str, "CHAR": str, "CLOB": str, "NVARCHAR": str, "NCHAR": str,
+    "NCLOB": str, "GRAPHIC": str, "VARGRAPHIC": str, "DBCLOB": str, "XML": str,
+    "INTEGER": int, "INT": int, "SMALLINT": int, "BIGINT": int,
+    "DECIMAL": float, "NUMERIC": float, "FLOAT": float, "DOUBLE": float, "REAL": float,
+    "DECFLOAT": float,
+    "BOOLEAN": bool,
+    "DATE": str, "TIME": str, "TIMESTAMP": str,
+    "BINARY": bytes, "VARBINARY": bytes, "BLOB": bytes,
+}
+
+
+def row_to_tuple(row: Any, metadata) -> tuple:
+    if isinstance(row, dict):
+        if metadata and metadata.columns:
+            return tuple(row.get(col.name, None) for col in metadata.columns)
+        return tuple(row.values())
+    if isinstance(row, (list, tuple)):
+        return tuple(row)
+    return row
 
 
 def raise_if_closed(method: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
