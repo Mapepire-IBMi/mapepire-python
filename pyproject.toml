@@ -37,7 +37,7 @@ dev = [
     "ruff",
     "mypy>=1.0,<1.20",
     "black>=24.3.0,<27.0",
-    "isort>=5.12,<6.2",
+    "isort>=5.12,<8.1",
     "pytest>=9.0.3",
     "pep249abc",
     "pytest-asyncio",
