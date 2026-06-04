@@ -96,15 +96,6 @@ class AsyncCursor(
             await self.execute(operation, params)
         return self
 
-    def _row_to_tuple(self, row) -> tuple:
-        if isinstance(row, dict):
-            if self._metadata and self._metadata.columns:
-                return tuple(row.get(col.name, None) for col in self._metadata.columns)
-            return tuple(row.values())
-        if isinstance(row, (list, tuple)):
-            return tuple(row)
-        return row
-
     async def fetchone(self) -> Optional[ResultRow]:
         if self._buffer:
             return row_to_tuple(self._buffer.pop(0), self._metadata)
