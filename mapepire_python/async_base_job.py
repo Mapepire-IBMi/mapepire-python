@@ -73,7 +73,7 @@ class AsyncBaseJob(BaseJob):
         return await socket.connect()
 
     async def send(self, content: str) -> Dict[str, Any]:
-        logger.debug(f"sending data: {content}")
+        logger.debug("sending data: %s", content)
         req = json.loads(content)
         if self.socket is None:
             raise RuntimeError("Socket is not connected")
@@ -98,7 +98,7 @@ class AsyncBaseJob(BaseJob):
 
     def get_running_count(self) -> int:
         count = len(self._pending)
-        logger.debug(f"--- running count {self.unique_id}: {count}, status: {self.get_status()}")
+        logger.debug("--- running count %s: %d, status: %s", self.unique_id, count, self.get_status())
         return count
 
     async def connect(  # type: ignore[override]
@@ -162,18 +162,18 @@ class AsyncBaseJob(BaseJob):
             if self.socket is None:
                 raise RuntimeError("Socket is not connected")
             async for message in self.socket:
-                logger.debug(f"Received raw message: {message}")
+                logger.debug("Received raw message: %s", message)
                 try:
                     response = json.loads(message)
                 except json.JSONDecodeError as e:
-                    logger.warning(f"Discarding malformed message: {e}")
+                    logger.warning("Discarding malformed message: %s", e)
                     continue
                 req_id = response.get("id")
                 future = self._pending.get(req_id) if req_id else None
                 if future is not None and not future.done():
                     future.set_result(response)
                 else:
-                    logger.debug(f"No pending request for response id: {req_id}")
+                    logger.debug("No pending request for response id: %s", req_id)
         except websockets.exceptions.ConnectionClosedError:
             await self.dispose()
 
