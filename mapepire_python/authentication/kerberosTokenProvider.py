@@ -1,7 +1,10 @@
 import base64
+import logging
 import os
 import platform
 from typing import Final, Optional
+
+logger = logging.getLogger(__name__)
 
 sspi = None
 gssapi = None
@@ -45,6 +48,7 @@ class KerberosTokenProvider:
                 raise ValueError(f"Missing required parameters: {', '.join(missing)}")
 
     def get_token(self) -> str:
+        logger.debug("Requesting Kerberos token for host=%s", self.host)
         return self._refresh_token()
 
     def _refresh_token(self) -> str:
@@ -58,17 +62,21 @@ class KerberosTokenProvider:
         return TOKEN_PREFIX + token_b64
 
     def _refresh_token_windows(self) -> str:
+        logger.debug("Generating Kerberos token via Windows SSPI for host=%s", self.host)
         target = f"krbsvr400/{self.host}"
         client = sspi.ClientAuth("Kerberos", targetspn=target)
 
         err, out_buffer = client.authorize(None)
         if err != 0:
+            logger.error("Windows SSPI Kerberos authentication failed: error_code=%s", hex(err))
             raise RuntimeError(f"Windows SSPI error when attempting Kerberos login: {hex(err)}")
 
         token = out_buffer[0].Buffer
+        logger.debug("Kerberos token generated successfully via Windows SSPI")
         return self._format_token(token)
 
     def _refresh_token_unix(self) -> str:
+        logger.debug("Generating Kerberos token via GSSAPI for host=%s realm=%s", self.host, self.realm)
         os.environ["KRB5_CONFIG"] = self.krb5_path
         if self.ticket_cache:
             os.environ["KRB5CCNAME"] = self.ticket_cache
@@ -96,9 +104,12 @@ class KerberosTokenProvider:
                 )
         except gssapi.exceptions.GSSError as e:
             if "No credentials were supplied" in str(e) or "Unavailable" in str(e):
+                logger.error("Kerberos authentication failed: no valid TGT in credential cache")
                 raise RuntimeError("No valid TGT found in credential cache.")
+            logger.error("Kerberos GSSAPI authentication failed for host=%s", self.host)
             raise RuntimeError(
                 f"Kerberos token generation error when attempting Kerberos login: {str(e)}"
             )
 
+        logger.debug("Kerberos token generated successfully via GSSAPI")
         return self._format_token(token)

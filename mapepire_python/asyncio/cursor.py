@@ -1,3 +1,4 @@
+import logging
 import weakref
 from typing import TYPE_CHECKING, List, Optional, Sequence, Type, Union
 
@@ -17,6 +18,8 @@ from ..client.async_sql_job import AsyncSQLJob
 from ..core.utils import DB_TYPE_MAP, row_to_tuple
 from ..data_types import QueryOptions
 from ..pool.pool_query import PoolQuery
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncCursor(
@@ -76,6 +79,7 @@ class AsyncCursor(
     async def execute(
         self, operation: SQLQuery, parameters: Optional[QueryParameters] = None
     ) -> "AsyncCursor":
+        logger.debug("Executing statement")
         opts = QueryOptions(parameters=parameters)
         self._query = self._job.query(operation, opts=opts)
         result = await self._query.run()
@@ -131,6 +135,7 @@ class AsyncCursor(
         return rows
 
     async def close(self) -> None:
+        logger.debug("Closing cursor")
         if self._query is not None:
             await self._query.close()
             self._query = None

@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import logging
 from typing import Any, Dict, Mapping, Optional, Protocol, Sequence, Union
 
 from mapepire_python.client.query import QueryState
@@ -15,6 +16,8 @@ from mapepire_python.data_types import (
     SqlMoreResponse,
     SqlRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class _SQLJobProtocol(Protocol):
@@ -71,6 +74,8 @@ class PoolQuery:
         elif self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
 
+        logger.debug("Executing async query: rows_to_fetch=%s", rows_to_fetch)
+
         if self.is_cl_command:
             request = ClRequest(
                 id=self.job._get_unique_id("clcommand"),
@@ -103,9 +108,11 @@ class PoolQuery:
             error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v is not None}
             if not error_list:
                 error_list["error"] = "failed to run query for unknown reason"
+            logger.error("Async query execution failed: %s", error_list)
             raise Exception(error_list)
 
         self._correlation_id = query_result.id
+        logger.debug("Async query executed: correlation_id=%s done=%s", self._correlation_id, query_result.is_done)
 
         return query_result
 
@@ -121,6 +128,7 @@ class PoolQuery:
             raise Exception("Statement has already been fully run")
 
         assert self._correlation_id is not None
+        logger.debug("Fetching more rows: rows=%s correlation_id=%s", rows_to_fetch, self._correlation_id)
         self._rows_to_fetch = rows_to_fetch
         query_result = SqlMoreResponse.from_dict(  # type: ignore
             await self._execute_query(
@@ -137,6 +145,7 @@ class PoolQuery:
 
         if not query_result.success:
             self.state = QueryState.ERROR
+            logger.error("Async fetch failed: %s", query_result.error)
             raise Exception(query_result.error or "Failed to run Query (unknown error)")
 
         return query_result
@@ -144,6 +153,7 @@ class PoolQuery:
     async def close(self):
         if not self.job.socket:
             raise Exception("SQL Job not connected")
+        logger.debug("Closing async query: correlation_id=%s", self._correlation_id)
         if self._correlation_id and self.state is not QueryState.RUN_DONE:
             self.state = QueryState.RUN_DONE
             return SqlCloseResponse.from_dict(  # type: ignore

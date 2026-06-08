@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -18,6 +19,8 @@ from ..data_types import (
 )
 
 __all__ = ["SQLJob"]
+
+logger = logging.getLogger(__name__)
 
 
 class SQLJob(BaseJob):
@@ -106,6 +109,7 @@ class SQLJob(BaseJob):
         """
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 
+        logger.info("Connecting to %s:%s", db2_server.host, db2_server.port)
         self._socket = self._get_channel(db2_server)
 
         props = ";".join(
@@ -124,16 +128,19 @@ class SQLJob(BaseJob):
         try:
             result = ConnectionResult.from_dict(json.loads(self._socket.recv()))  # type: ignore
         except Exception as e:
+            logger.error("Failed to parse connect response: %s", e)
             raise Exception(f"Failed to parse connect response: {e}")
 
         if result.success:
             self._status = JobStatus.Ready
+            self.id = result.job
+            logger.info("Connection established: job_id=%s", self.id)
         else:
             self._status = JobStatus.NotStarted
+            logger.error("Connection failed: %s", result.error or "unknown error")
             self.close()
             raise Exception(result.error or "Failed to connect to server")
 
-        self.id = result.job
         self._is_tracing_channeldata = False
 
         return result
@@ -196,6 +203,7 @@ class SQLJob(BaseJob):
             raise RuntimeError(f"Failed to run query: {e}")
 
     def close(self) -> None:
+        logger.info("Closing job %s", self.id)
         self._status = JobStatus.Ended
         if self._socket:
             self._socket.close()

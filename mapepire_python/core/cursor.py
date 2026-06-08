@@ -90,6 +90,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         parameters: Optional[QueryParameters] = None,
         **kwargs: Any,
     ) -> "Cursor":
+        logger.debug("Executing statement")
         opts = kwargs.get("opts", None)
         if opts:
             query = Query(self.job, operation, opts)
@@ -212,6 +213,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
     def close(self) -> None:
         if self._closed:
             return
+        logger.debug("Closing cursor")
         if self.query:
             for q in self.query_q:
                 q.close()
