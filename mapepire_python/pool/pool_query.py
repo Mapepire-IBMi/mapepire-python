@@ -74,7 +74,7 @@ class PoolQuery:
         elif self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
 
-        logger.debug("Executing async query: rows_to_fetch=%d", rows_to_fetch)
+        logger.debug("Executing async query: rows_to_fetch=%s", rows_to_fetch)
 
         if self.is_cl_command:
             request = ClRequest(
@@ -128,7 +128,7 @@ class PoolQuery:
             raise Exception("Statement has already been fully run")
 
         assert self._correlation_id is not None
-        logger.debug("Fetching more rows: rows=%d correlation_id=%s", rows_to_fetch, self._correlation_id)
+        logger.debug("Fetching more rows: rows=%s correlation_id=%s", rows_to_fetch, self._correlation_id)
         self._rows_to_fetch = rows_to_fetch
         query_result = SqlMoreResponse.from_dict(  # type: ignore
             await self._execute_query(
