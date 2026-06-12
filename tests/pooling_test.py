@@ -165,91 +165,10 @@ async def test_pop_jobs_returns_free_job():
                     task.cancel()
 
 
-# @pytest.mark.asyncio
-# async def test_pop_job_with_pool_ignore():
-#     async with Pool(PoolOptions(creds=creds, max_size=1, starting_size=1)) as pool:
-#         try:
-
-#             assert pool.get_active_job_count() == 1
-
-#             executed_promises = [pool.execute("select * FROM SAMPLE.employee")]
-
-#             # there is 1 job in pool, return that job
-#             job = await pool.pop_job()
-
-#             # the pool is empty, this will create a new job and add it to the pool
-#             job2 = await pool.pop_job()
-#             assert len(pool.jobs) == 1
-#             assert job.get_status() == JobStatus.Ready
-#             assert pool.get_active_job_count() == 1
-#             await asyncio.gather(*executed_promises)
-#         finally:
-#             # Ensure all tasks are completed before exiting
-#             pending = asyncio.all_tasks()
-#             if pending:
-#                 for task in pending:
-#                     task.cancel()
-
-
-# The following tests need further invesigation for tracking JobStatus and running tasks
-
-# @pytest.mark.asyncio
-# async def test_pool_with_no_space_no_ready_job_doesnt_increase_pool_size():
-#     pool = Pool(PoolOptions(creds=creds, max_size=1, starting_size=1))
-#     await pool.init()
-#     add_job_spy = pool._add_job
-#     assert pool.get_active_job_count() == 1
-#     executed_promises = [
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#     ]
-#     job = await pool.get_job()
-#     # assert job.get_status() == JobStatus.Busy
-#     print(job.get_running_count())
-#     await asyncio.gather(*executed_promises)
-#     print(job.get_running_count())
-#     # assert not add_job_spy.called
-#     # assert pool.get_active_job_count() == 1
-#     await pool.end()
-
-
-# @pytest.mark.asyncio
-# async def test_pool_with_space_but_no_ready_job_adds_job_to_pool():
-#     pool = Pool(PoolOptions(creds=creds, max_size=2, starting_size=1))
-#     await pool.init()
-#     add_job_spy = pool._add_job
-#     assert pool.get_active_job_count() == 1
-#     executed_promises = [
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#     ]
-#     job = await pool.get_job()
-#     assert job.get_status() == JobStatus.Busy
-#     assert job.get_running_count() == 5
-#     await asyncio.gather(*executed_promises)
-#     assert add_job_spy.called
-#     await pool.end()
-
-# @pytest.mark.asyncio
-# async def test_freeist_job_is_returned():
-#     pool = Pool(PoolOptions(creds=creds, max_size=3, starting_size=3))
-#     await pool.init()
-#     executed_promises = [
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#         pool.execute("select * FROM SAMPLE.employee"),
-#     ]
-#     job = await pool.get_job()
-#     job.enable_local_trace_data()
-#     assert job.get_running_count() == 2
-#     await asyncio.gather(*executed_promises)
-#     await pool.end()
+# NOTE: Four pool tests previously lived here commented out
+# (test_pop_job_with_pool_ignore, test_pool_with_no_space_no_ready_job_doesnt_increase_pool_size,
+#  test_pool_with_space_but_no_ready_job_adds_job_to_pool, test_freeist_job_is_returned).
+# They were blocked by async JobStatus/running-count timing that made them flaky against a
+# live server, and they asserted pre-#115 selection behaviour. They have been replaced by
+# deterministic, mock-based equivalents in tests/unit/test_pool_scaling.py (TestGetJob,
+# TestPopJob), which exercise the same scaling/job-selection logic without a server.

@@ -110,22 +110,23 @@ def test_prepare_statement_mult_params_seq():
     assert res is not None
 
 
-# def test_prepare_statement_mult_params_seq_tuple():
-#     conn = connect(creds)
-#     cur = conn.cursor()
-#     parameters = [[500, "PRES"], [200, "PRES"]]
-#     cur.execute("select * from sample.employee where bonus > ? and job = ?", parameters=parameters)
-#     res = cur.fetchall()
-#     assert res["success"] == True
+# NOTE: A removed test_prepare_statement_mult_params_seq_tuple passed multiple
+# parameter SETS (a list of lists) into a single cur.execute(SELECT ...). The
+# server rejects that with "Cursor state not valid." (SQLSTATE 24000) — multi-set
+# tuple params via execute() are not supported (that is executemany() semantics;
+# see test_pep249_execute_many). Single-set parameters= coverage already exists in
+# test_prepare_statement_mult_params_seq above, so that test was dropped as a dup.
 
 
-# def test_prepare_statement_mult_params_seq_tuple_opts():
-#     conn = connect(creds)
-#     cur = conn.cursor()
-#     opts = QueryOptions(parameters=[[500, "PRES"], [200, "PRES"]])
-#     cur.execute("select * from sample.employee where bonus > ? and job = ?", opts=opts)
-#     res = cur.fetchall()
-#     assert res["success"] == True
+def test_prepare_statement_params_via_opts():
+    # Exercises the opts= path of cursor.execute (Query built directly from the
+    # provided QueryOptions), distinct from the parameters= kwarg path above.
+    conn = connect(creds)
+    cur = conn.cursor()
+    opts = QueryOptions(parameters=[500, "PRES"])
+    cur.execute("select * from sample.employee where bonus > ? and job = ?", opts=opts)
+    res = cur.fetchall()
+    assert res is not None
 
 
 def test_pep249_iterate():
