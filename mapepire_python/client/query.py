@@ -85,7 +85,7 @@ class Query(Generic[T]):
 
         if not query_result.success and not self.is_cl_command:
             self.state = QueryState.ERROR
-            error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v is not None}
+            error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v}
             if not error_list:
                 error_list["error"] = "failed to run query for unknown reason"
             logger.error("Query preparation failed: %s", error_list)
@@ -140,7 +140,7 @@ class Query(Generic[T]):
 
         if not query_result.success and not self.is_cl_command:
             self.state = QueryState.ERROR
-            error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v is not None}
+            error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v}
             if not error_list:
                 error_list["error"] = "failed to run query for unknown reason"
             logger.error("Query execution failed: %s", error_list)

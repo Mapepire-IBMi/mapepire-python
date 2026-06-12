@@ -13,7 +13,7 @@ from mapepire_python import DaemonServer, JobStatus, SQLJob
 
 
 class MockSocket:
-  
+
     def __init__(self, responses: Optional[List[str]] = None) -> None:
         self._response_queue: List[str] = list(responses or [])
         self.sent: List[str] = []
@@ -35,6 +35,58 @@ class MockSocket:
 
     def __len__(self) -> int:
         return len(self._response_queue)
+
+
+class AsyncMockSocket:
+    """Async counterpart to ``MockSocket`` for the asyncio WebSocket path.
+
+    ``send``/``recv``/``close`` are coroutines, matching the ``websockets``
+    async connection interface so it can be injected into async jobs.
+    """
+
+    def __init__(self, responses: Optional[List[str]] = None) -> None:
+        self._response_queue: List[str] = list(responses or [])
+        self.sent: List[str] = []
+        self.closed: bool = False
+
+    async def send(self, data: str) -> None:
+        self.sent.append(data)
+
+    async def recv(self) -> str:
+        if not self._response_queue:
+            raise RuntimeError("AsyncMockSocket: no more responses queued")
+        return self._response_queue.pop(0)
+
+    async def close(self) -> None:
+        self.closed = True
+
+    def add_response(self, response: str) -> None:
+        self._response_queue.append(response)
+
+    def __len__(self) -> int:
+        return len(self._response_queue)
+
+
+class RaisingSocket:
+    """Socket whose I/O raises, simulating a transport-level failure.
+
+    ``recv``/``send`` raise ``exc`` (default ``ConnectionError``) so tests can
+    exercise error-recovery paths around a dropped or refused connection.
+    """
+
+    def __init__(self, exc: Optional[Exception] = None) -> None:
+        self.exc = exc or ConnectionError("connection lost")
+        self.sent: List[str] = []
+        self.closed: bool = False
+
+    def send(self, data: str) -> None:
+        raise self.exc
+
+    def recv(self) -> str:
+        raise self.exc
+
+    def close(self) -> None:
+        self.closed = True
 
 
 
@@ -161,3 +213,70 @@ def make_close_response():
             "execution_time": None,
         })
     return _make
+
+
+# ---------------------------------------------------------------------------
+# Error-condition fixtures
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def make_error_query_result(make_query_result):
+    """Return a factory for *failed* QueryResult JSON strings.
+
+    Defaults mimic a real SQL error: ``success=False`` with a populated
+    ``error`` message and non-zero ``sql_rc``/``sql_state``.
+    """
+    def _make(
+        error: str = "SQL error occurred",
+        sql_rc: int = -104,
+        sql_state: str = "42000",
+        id: str = "query_err",
+    ) -> str:
+        return make_query_result(
+            success=False,
+            is_done=False,
+            error=error,
+            sql_rc=sql_rc,
+            sql_state=sql_state,
+            id=id,
+        )
+    return _make
+
+
+@pytest.fixture
+def error_socket(make_error_query_result) -> MockSocket:
+    """MockSocket pre-loaded with a single failed-query response."""
+    return MockSocket([make_error_query_result()])
+
+
+@pytest.fixture
+def error_sql_job(mock_sql_job, make_error_query_result):
+    """``(job, socket)`` like ``mock_sql_job`` but queued with a failed response.
+
+    The next ``recv`` the job performs returns a ``success=False`` QueryResult,
+    so query execution against this job raises.
+    """
+    job, socket = mock_sql_job
+    socket.add_response(make_error_query_result())
+    return job, socket
+
+
+@pytest.fixture
+def raising_socket() -> RaisingSocket:
+    """Socket whose ``recv``/``send`` raise, simulating a dropped connection."""
+    return RaisingSocket()
+
+
+@pytest.fixture
+def raising_sql_job(mock_sql_job):
+    """``(job, socket)`` whose socket raises on I/O, simulating transport loss."""
+    job, _ = mock_sql_job
+    socket = RaisingSocket()
+    job._socket = socket  # type: ignore[assignment]
+    return job, socket
+
+
+@pytest.fixture
+def async_mock_socket() -> AsyncMockSocket:
+    """Bare AsyncMockSocket with no pre-loaded responses."""
+    return AsyncMockSocket()
