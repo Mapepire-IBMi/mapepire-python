@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import logging
 from enum import Enum
 from typing import Any, Dict, Generic, Mapping, Optional, Sequence, TypeVar, Union
 
@@ -20,6 +21,8 @@ from ..data_types import (
 from .sql_job import SQLJob
 
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 class QueryState(Enum):
@@ -68,6 +71,7 @@ class Query(Generic[T]):
         if self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
 
+        logger.debug("Preparing and executing query")
         query_result = QueryResult.from_dict(  # type: ignore
             self._execute_query(
                 PrepareSqlExecuteRequest(
@@ -84,9 +88,11 @@ class Query(Generic[T]):
             error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v is not None}
             if not error_list:
                 error_list["error"] = "failed to run query for unknown reason"
+            logger.error("Query preparation failed: %s", error_list)
             raise RuntimeError(error_list)
 
         self._correlation_id = query_result.id
+        logger.debug("Query prepared: correlation_id=%s done=%s", self._correlation_id, query_result.is_done)
 
         return query_result
 
@@ -102,6 +108,8 @@ class Query(Generic[T]):
             raise Exception("Statement has already been run")
         elif self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
+
+        logger.debug("Executing query: rows_to_fetch=%s", rows_to_fetch)
 
         if self.is_cl_command:
             request = ClRequest(
@@ -135,9 +143,11 @@ class Query(Generic[T]):
             error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v is not None}
             if not error_list:
                 error_list["error"] = "failed to run query for unknown reason"
+            logger.error("Query execution failed: %s", error_list)
             raise RuntimeError(error_list)
 
         self._correlation_id = query_result.id
+        logger.debug("Query executed: correlation_id=%s done=%s", self._correlation_id, query_result.is_done)
 
         return query_result
 
@@ -154,6 +164,7 @@ class Query(Generic[T]):
             raise Exception("Statement has already been fully run")
 
         assert self._correlation_id is not None
+        logger.debug("Fetching more rows: rows=%s correlation_id=%s", rows_to_fetch, self._correlation_id)
         self._rows_to_fetch = rows_to_fetch
         query_result = SqlMoreResponse.from_dict(  # type: ignore
             self._execute_query(
@@ -170,14 +181,16 @@ class Query(Generic[T]):
 
         if not query_result.success:
             self.state = QueryState.ERROR
+            logger.error("Fetch failed: %s", query_result.error)
             raise RuntimeError(query_result.error or "Failed to run Query (unknown error)")
 
         return query_result
 
     @handle_ws_errors
     def close(self):
-        if not self.job._socket:
+        if self.job._socket is None:
             raise Exception("SQL Job not connected")
+        logger.debug("Closing query: correlation_id=%s", self._correlation_id)
         if self._correlation_id and self.state is not QueryState.RUN_DONE:
             self.state = QueryState.RUN_DONE
             return SqlCloseResponse.from_dict(  # type: ignore

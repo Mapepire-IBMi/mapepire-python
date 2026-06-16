@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Union
 
@@ -7,6 +8,8 @@ from pep249.aiopep249 import ProcArgs, ProcName, QueryParameters, SQLQuery
 from ..client.async_sql_job import AsyncSQLJob
 from ..data_types import DaemonServer, JobStatus
 from .cursor import AsyncCursor
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnection):
@@ -47,6 +50,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
 
     async def _ensure_connected(self) -> None:
         if self._job.status == JobStatus.NotStarted:
+            logger.debug("Opening async connection")
             await self._job.connect(self._database, **self._kwargs)
 
     async def cursor(self) -> AsyncCursor:
@@ -54,6 +58,7 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
         return AsyncCursor(self, self._job)
 
     async def close(self) -> None:
+        logger.debug("Closing async connection")
         await self._job.close()
 
     async def execute(
@@ -94,8 +99,10 @@ class AsyncConnection(aiopep249.AsyncCursorExecuteMixin, aiopep249.AsyncConnecti
 
     async def commit(self) -> None:
         self._raise_if_closed()
+        logger.debug("Committing transaction")
         await self.execute("COMMIT")
 
     async def rollback(self) -> None:
         self._raise_if_closed()
+        logger.debug("Rolling back transaction")
         await self.execute("ROLLBACK")

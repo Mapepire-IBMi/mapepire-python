@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Union
 
@@ -11,6 +12,8 @@ from ..core.utils import raise_if_closed
 from ..data_types import DaemonServer
 
 __all__ = ["Connection"]
+
+logger = logging.getLogger(__name__)
 
 COMMIT = "COMMIT"
 ROLLBACK = "ROLLBACK"
@@ -45,6 +48,7 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
     def __init__(self, database: Union[DaemonServer, dict, Path], opts: Optional[Dict[str, Any]] = None, **kwargs) -> None:
         super().__init__()
         self._closed = False
+        logger.info("Opening connection")
         self.job = SQLJob(creds=database, options=opts, **kwargs)
         self.job.connect(database, **kwargs)
 
@@ -60,6 +64,7 @@ class Connection(pep249.CursorExecuteMixin, pep249.ConcreteErrorMixin, pep249.Co
         if self._closed:
             return
 
+        logger.info("Closing connection: job_id=%s", self.job.id)
         self.job.close()
         self._closed = True
 

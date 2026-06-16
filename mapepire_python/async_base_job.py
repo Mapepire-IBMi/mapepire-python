@@ -73,7 +73,7 @@ class AsyncBaseJob(BaseJob):
         return await socket.connect()
 
     async def send(self, content: str) -> Dict[str, Any]:
-        logger.debug(f"sending data: {content}")
+        logger.debug("sending data: %s", content)
         req = json.loads(content)
         if self.socket is None:
             raise RuntimeError("Socket is not connected")
@@ -98,7 +98,7 @@ class AsyncBaseJob(BaseJob):
 
     def get_running_count(self) -> int:
         count = len(self._pending)
-        logger.debug(f"--- running count {self.unique_id}: {count}, status: {self.get_status()}")
+        logger.debug("--- running count %s: %d, status: %s", self.unique_id, count, self.get_status())
         return count
 
     async def connect(  # type: ignore[override]
@@ -106,6 +106,7 @@ class AsyncBaseJob(BaseJob):
     ) -> Any:
         db2_server = self._parse_connection_input(db2_server, **kwargs)
 
+        logger.info("Connecting to %s:%s", db2_server.host, db2_server.port)
         self.socket = await self.get_channel(db2_server)
         self._message_task = asyncio.create_task(self.message_handler())
 
@@ -127,12 +128,14 @@ class AsyncBaseJob(BaseJob):
 
         if result.success:
             self.status = JobStatus.Ready
+            self.id = result.job
+            logger.info("Connection established: job_id=%s", self.id)
         else:
             self.status = JobStatus.NotStarted
+            logger.error("Connection failed: %s", result.error or "unknown error")
             await self.close()
             raise Exception(result.error or "Failed to connect to server")
 
-        self.id = result.job
         self._is_tracing_channel_data = False
 
         return result
@@ -159,18 +162,18 @@ class AsyncBaseJob(BaseJob):
             if self.socket is None:
                 raise RuntimeError("Socket is not connected")
             async for message in self.socket:
-                logger.debug(f"Received raw message: {message}")
+                logger.debug("Received raw message: %s", message)
                 try:
                     response = json.loads(message)
                 except json.JSONDecodeError as e:
-                    logger.warning(f"Discarding malformed message: {e}")
+                    logger.warning("Discarding malformed message: %s", e)
                     continue
                 req_id = response.get("id")
                 future = self._pending.get(req_id) if req_id else None
                 if future is not None and not future.done():
                     future.set_result(response)
                 else:
-                    logger.debug(f"No pending request for response id: {req_id}")
+                    logger.debug("No pending request for response id: %s", req_id)
         except websockets.exceptions.ConnectionClosedError:
             await self.dispose()
 
@@ -207,6 +210,7 @@ class AsyncBaseJob(BaseJob):
             raise RuntimeError(f"Failed to run query: {e}") from e
 
     async def close(self) -> None: # type: ignore[override]
+        logger.info("Closing job %s", self.id)
         await self.dispose()
         self.status = JobStatus.Ended
         

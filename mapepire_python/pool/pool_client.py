@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -7,6 +8,8 @@ from ..data_types import DaemonServer, JDBCOptions, JobStatus, QueryOptions
 from .pool_job import PoolJob
 
 __all__ = ["Pool"]
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -40,6 +43,11 @@ class Pool:
         elif self.options.starting_size > self.options.max_size:
             raise ValueError("Max size must be greater than or equal to starting size")
 
+        logger.info(
+            "Initializing pool: starting_size=%d, max_size=%d",
+            self.options.starting_size,
+            self.options.max_size,
+        )
         # Establish the starting connections concurrently. Each connect is a
         # full WebSocket handshake + connect round-trip, so doing them serially
         # cost starting_size x RTT before the pool became usable.
@@ -100,6 +108,7 @@ class Pool:
         if new_sql_job.get_status() == JobStatus.NotStarted:
             await new_sql_job.connect(self.options.creds, section=self.options.section)
 
+        logger.info("Job added to pool: pool_size=%d", len(self.jobs))
         return new_sql_job
 
     def _get_ready_job(self) -> PoolJob:
@@ -127,6 +136,7 @@ class Pool:
         # grow the pool and hand back the fresh connection so THIS query runs on
         # it, rather than queueing behind in-flight work on an existing one.
         if least_loaded.get_running_count() > 0 and self.has_space():
+            logger.info("Pool growing under load: pool_size=%d, max_size=%d", len(self.jobs), self.options.max_size)
             return await self._add_job()
 
         return least_loaded
@@ -157,6 +167,7 @@ class Pool:
         return await job.query_and_run(sql, opts=opts)
 
     async def end(self):
+        logger.info("Ending pool: closing %d connections", len(self.jobs))
         # Close all connections concurrently; tolerate individual close errors
         # so one bad socket doesn't strand the rest open.
         await asyncio.gather(*(j.close() for j in self.jobs), return_exceptions=True)
