@@ -23,7 +23,6 @@ import pytest
 from mapepire_python.base_job import BaseJob
 from mapepire_python.data_types import DaemonServer, dict_to_dataclass
 
-
 # ===========================================================================
 # DaemonServer
 # ===========================================================================

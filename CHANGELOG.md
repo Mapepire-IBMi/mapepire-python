@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improve public API surface and top-level exports #94
 - Fix PEP 249 compliance: cursor.description and result types #91
 - Add structured logging across the codebase #90
+- Add unit test infrastructure with WebSocket mocking #92
 
 ## [v0.2.0](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.2.0) - 2024-11-26
 - replace `websocket-client` with `websockets`
