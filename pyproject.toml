@@ -134,8 +134,12 @@ omit = [
   "*/__pycache__/*",
 ]
 
+# NOTE: no global `fail_under` here on purpose. The offline unit suite
+# (tests/unit/) alone sits around ~66% coverage, so a global floor would make
+# `pytest tests/unit/` fail locally and break the offline workflow (issue #92).
+# The 70% gate is enforced in CI via `--cov-fail-under=70` on the integration
+# job (see .github/workflows/main.yml), which exercises the full live-server paths.
 [tool.coverage.report]
-fail_under = 70
 show_missing = true
 skip_covered = false
 exclude_lines = [

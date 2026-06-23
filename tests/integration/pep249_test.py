@@ -110,12 +110,18 @@ def test_prepare_statement_mult_params_seq():
     assert res is not None
 
 
-# NOTE: A removed test_prepare_statement_mult_params_seq_tuple passed multiple
-# parameter SETS (a list of lists) into a single cur.execute(SELECT ...). The
-# server rejects that with "Cursor state not valid." (SQLSTATE 24000) — multi-set
-# tuple params via execute() are not supported (that is executemany() semantics;
-# see test_pep249_execute_many). Single-set parameters= coverage already exists in
-# test_prepare_statement_mult_params_seq above, so that test was dropped as a dup.
+# NOTE: Two tests were removed here, both passing multiple parameter SETS (a list
+# of lists) into a single cur.execute(SELECT ...). The server rejects that with
+# "Cursor state not valid." (SQLSTATE 24000) — multi-set params via execute() are
+# not supported; that is executemany() semantics (see test_pep249_execute_many).
+#
+#   1. test_prepare_statement_mult_params_seq_tuple fed the list-of-lists through
+#      the parameters= kwarg. Single-set parameters= coverage already exists in
+#      test_prepare_statement_mult_params_seq above, so it was dropped as a dup.
+#   2. test_prepare_statement_mult_params_seq_tuple_opts did the same thing through
+#      the opts=QueryOptions(parameters=[[...], [...]]) path instead. It hit the
+#      identical 24000 error, and the single-set opts= path is now covered by
+#      test_prepare_statement_params_via_opts below, so it too was dropped.
 
 
 def test_prepare_statement_params_via_opts():

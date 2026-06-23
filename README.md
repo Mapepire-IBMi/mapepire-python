@@ -799,9 +799,26 @@ conda deactivate
 ```
 ## Run local test suite
 
-First, create a `pytest.ini` file in the `tests` directory. 
+The suite is split in two:
 
-`tests/pytest.ini`
+- `tests/unit/` — offline unit tests. They mock the WebSocket transport and need
+  **no** IBM i server or credentials, so they run anywhere (including CI on forks).
+- `tests/integration/` — live-server tests. They connect to a real Mapepire
+  server and require credentials.
+
+### Unit tests (no server required)
+
+```bash
+# activate python development environment first
+
+pytest tests/unit/
+```
+
+### Integration tests (server required)
+
+First, create a `pytest.ini` file in the `tests/integration` directory:
+
+`tests/integration/pytest.ini`
 
 ```ini
 [pytest]
@@ -811,11 +828,17 @@ env =
     VITE_DB_PASS=PASS
 ```
 
-Run the test suite from the `mapepire-python` directory:
+Then run the integration suite from the `mapepire-python` directory:
 
 ```bash
 # activate python development environment first
 
+pytest tests/integration/
+```
+
+To run everything (unit + integration), just point pytest at `tests/`:
+
+```bash
 pytest tests/
 ```
 
