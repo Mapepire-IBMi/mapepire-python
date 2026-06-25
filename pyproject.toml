@@ -116,6 +116,7 @@ strict_optional = false
 
 [tool.pytest.ini_options]
 testpaths = "tests/"
+addopts = "--cov=mapepire_python --cov-report=term-missing"
 python_classes = [
   "Test*",
   "*Test"
@@ -124,6 +125,30 @@ log_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
 log_level = "DEBUG"
 asyncio_mode = "auto"
 env_files = [".env"]
+
+[tool.coverage.run]
+source = ["mapepire_python"]
+branch = true
+omit = [
+  "tests/*",
+  "*/__pycache__/*",
+]
+
+# NOTE: no global `fail_under` here on purpose. The offline unit suite
+# (tests/unit/) alone sits around ~66% coverage, so a global floor would make
+# `pytest tests/unit/` fail locally and break the offline workflow (issue #92).
+# The 70% gate is enforced in CI via `--cov-fail-under=70` on the integration
+# job (see .github/workflows/main.yml), which exercises the full live-server paths.
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+exclude_lines = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  "^\\s*\\.\\.\\.\\s*$",
+  "if __name__ == .__main__.:",
+]
 
 [dependency-groups]
 dev = [

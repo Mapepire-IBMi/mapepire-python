@@ -36,9 +36,12 @@ jobs:
       matrix:
         python: ["3.10"]
         task:
-          - name: Test
+          - name: Unit Test
             run: |
-              pytest -v --color=yes tests/
+              pytest -v --color=yes tests/unit/
+          - name: Integration Test
+            run: |
+              pytest -v --color=yes --cov-fail-under=70 tests/integration/
         include:
           - python: "3.10"
             task:
@@ -94,8 +97,14 @@ jobs:
             mypy-${{ env.CACHE_PREFIX }}-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('*requirements.txt') }}-${{ github.ref }}
             mypy-${{ env.CACHE_PREFIX }}-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('*requirements.txt') }}
 
-      - name: Run Python tests
-        if: env.is_fork != 'true' && matrix.task.name == 'Test'
+      - name: Run unit tests
+        if: matrix.task.name == 'Unit Test'
+        run: |
+          . .venv/bin/activate
+          ${{ matrix.task.run }}
+
+      - name: Run integration tests
+        if: env.is_fork != 'true' && matrix.task.name == 'Integration Test'
         run: |
           . .venv/bin/activate
           ${{ matrix.task.run }}
@@ -106,7 +115,7 @@ jobs:
           VITE_DB_PORT: ${{ secrets.VITE_DB_PORT }}
 
       - name: ${{ matrix.task.name }}
-        if: matrix.task.name != 'Test'
+        if: matrix.task.name != 'Unit Test' && matrix.task.name != 'Integration Test'
         run: |
           . .venv/bin/activate
           ${{ matrix.task.run }}
