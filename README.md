@@ -315,6 +315,18 @@ cert = get_certificate(creds)
 print(cert)
 ```
 
+## Logging
+
+`mapepire-python` emits structured logs through the standard library `logging` module. Following library best practice, it does not configure any handlers itself, so logging is silent until your application opts in. Each module logs under the `mapepire_python` namespace, so you can enable and filter logs as needed:
+
+```python
+import logging
+
+# Enable INFO-level logs from mapepire-python
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("mapepire_python").setLevel(logging.DEBUG)
+```
+
 
 
 # Usage
