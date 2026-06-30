@@ -150,8 +150,8 @@ jobs:
 
       - name: Install requirements
         run: |
-          pip install --upgrade pip setuptools wheel build
-          pip install -e .[dev]
+          pip install --upgrade pip
+          pip install twine packaging
 
       - name: Prepare environment
         run: |
