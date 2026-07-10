@@ -244,11 +244,13 @@ First create a `mapepire.ini` file in the root of your project with the followin
 
 ```ini title=mapepire.ini
 [mapepire]
-SERVER="SERVER"
-PORT="PORT"
-USER="USER"
-PASSWORD="PASSWORD"
+host=SERVER
+port=PORT
+user=USER
+password=PASSWORD
 ```
+
+> **Note:** The keys must match the `DaemonServer` fields (`host`, `port`, `user`, `password`), and values must **not** be quoted — write `host=myhost`, not `host="myhost"`.
 
 Then you can create a `SQLJob` object by passing the path to the `.ini` file which will handle the connection details
 
