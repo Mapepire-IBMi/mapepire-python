@@ -333,7 +333,7 @@ logging.getLogger("mapepire_python").setLevel(logging.DEBUG)
 
 # Usage
 
-Depending on your setup and use case, you can choose the most convenient way to configure the connection details. The following usage examples are compatible with all three connection options detailed above. For simplicity, we assume there is a `mapepire.ini` file in the root of the project with the connection details.
+Depending on your setup and use case, you can choose the most convenient way to configure the connection details. The following usage examples are compatible with all four connection options detailed above. For simplicity, we assume there is a `mapepire.ini` file in the root of the project with the connection details.
 
 
 There are four main ways to run queries using `mapepire-python`:
