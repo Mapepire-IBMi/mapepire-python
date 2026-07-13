@@ -35,7 +35,7 @@ Documentation = "https://mapepire-ibmi.github.io/"
 [project.optional-dependencies]
 dev = [
     "ruff",
-    "mypy>=1.0,<1.20",
+    "mypy>=1.0,<2.4",
     "black>=24.3.0,<27.0",
     "isort>=5.12,<6.2",
     "pytest>=9.0.3",
