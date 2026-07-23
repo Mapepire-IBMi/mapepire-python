@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 - ci: install only `twine`/`packaging` in the release job instead of the full `.[dev]` extra, so it no longer compiles `gssapi` (avoids the `krb5-config: not found` build failure on the release runner)
+- ci: bump `actions/checkout` v6→v7, `actions/setup-python` v6→v7, `actions/cache` v5→v6 
+- widen `mypy` requirement to `>=1.0,<2.4` and `isort` requirement to `>=5.12,<8.1`; regenerate `uv.lock` including `cryptography` 48.0.0→48.0.1 
 
 ## [v0.3.0](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.3.0) - 2026-06-29
 - ci: update GitHub Actions to current majors — `actions/checkout` v3/v4→v6, `actions/setup-python` v5→v6, `actions/upload-artifact` v4→v7, `actions/download-artifact` v4→v8, `softprops/action-gh-release` v2→v3 (consolidates Dependabot PRs #105–#109)
