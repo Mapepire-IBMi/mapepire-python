@@ -819,7 +819,7 @@ requires-dist = [
     { name = "pytest-env", marker = "extra == 'dev'" },
     { name = "python-dotenv", marker = "extra == 'dev'" },
     { name = "pywin32", marker = "sys_platform == 'win32' and extra == 'dev'" },
-    { name = "ruff", marker = "extra == 'dev'" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15,<0.16" },
     { name = "setuptools", marker = "extra == 'dev'" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=1.11.0" },
     { name = "websockets", specifier = ">=14.0" },
