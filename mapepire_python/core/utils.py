@@ -5,6 +5,7 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, cast
 
 from .exceptions import CONNECTION_CLOSED, ProgrammingError, ReturnType
+from ..lob import BLOB_TYPES, CLOB_TYPES, BlobValue, ClobValue
 
 __all__ = ["raise_if_closed", "DB_TYPE_MAP", "row_to_tuple"]
 
@@ -20,10 +21,29 @@ DB_TYPE_MAP = {
 }
 
 
+def _wrap_lob(value: Any, sql_type: Optional[str]) -> Any:
+    """Wrap *value* in a LOB object when *sql_type* is a LOB type.
+
+    Returns the value unchanged for all non-LOB types or when sql_type
+    is unknown.
+    """
+    if sql_type is None or value is None:
+        return value
+    upper = sql_type.upper()
+    if upper in CLOB_TYPES:
+        return ClobValue(value)
+    if upper in BLOB_TYPES:
+        return BlobValue(value)
+    return value
+
+
 def row_to_tuple(row: Any, metadata) -> tuple:
     if isinstance(row, dict):
         if metadata and metadata.columns:
-            return tuple(row.get(col.name, None) for col in metadata.columns)
+            return tuple(
+                _wrap_lob(row.get(col.name, None), col.type)
+                for col in metadata.columns
+            )
         return tuple(row.values())
     if isinstance(row, (list, tuple)):
         return tuple(row)
