@@ -5,6 +5,7 @@ from .asyncio import connect as async_connect
 from .asyncio.connection import AsyncConnection
 from .client.query import QueryState
 from .client.sql_job import SQLJob
+from .lob import BlobValue, ClobValue, LOBValue
 from .core import (
     Connection,
     Cursor,
@@ -28,6 +29,9 @@ __all__ = [
     "apilevel",
     "threadsafety",
     "paramstyle",
+    "ClobValue",
+    "BlobValue",
+    "LOBValue",
     "DatabaseError",
     "DataError",
     "Error",
