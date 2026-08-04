@@ -46,6 +46,11 @@ def row_to_tuple(row: Any, metadata) -> tuple:
             )
         return tuple(row.values())
     if isinstance(row, (list, tuple)):
+        if metadata and metadata.columns:
+            return tuple(
+                _wrap_lob(value, col.type)
+                for value, col in zip(row, metadata.columns)
+            )
         return tuple(row)
     return row
 

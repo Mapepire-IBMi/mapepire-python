@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- feat: add LOB support — CLOB/NCLOB/DBCLOB and BLOB column values are now wrapped in `ClobValue`/`BlobValue` file-like objects (with a PEP 249-style `read()`), exported from the package root
+- fix: wrap LOB columns in terse-mode (list) rows, not just dict rows — `cursor.execute(sql, isTerseResults=True)` was previously returning raw unwrapped values for CLOB/BLOB columns
 - ci: install only `twine`/`packaging` in the release job instead of the full `.[dev]` extra, so it no longer compiles `gssapi` (avoids the `krb5-config: not found` build failure on the release runner)
 - ci: bump `actions/checkout` v6→v7, `actions/setup-python` v6→v7, `actions/cache` v5→v6 
 - widen `mypy` requirement to `>=1.0,<2.4` and `isort` requirement to `>=5.12,<8.1`; regenerate `uv.lock` including `cryptography` 48.0.0→48.0.1 

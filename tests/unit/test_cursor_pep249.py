@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from mapepire_python import Cursor
+from mapepire_python import BlobValue, ClobValue, Cursor
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -32,6 +32,17 @@ _ROWS = [
     {"EMPNO": "000020", "FIRSTNME": "ALICE", "SALARY": 41250.00},
     {"EMPNO": "000030", "FIRSTNME": "BOB",   "SALARY": 38500.00},
 ]
+
+_LOB_COLUMNS = [
+    {"name": "ID",    "label": "ID",    "type": "INTEGER", "display_size": 10,
+     "precision": None, "scale": None, "nullable": False},
+    {"name": "NOTES", "label": "NOTES", "type": "CLOB",     "display_size": 100,
+     "precision": None, "scale": None, "nullable": True},
+    {"name": "PHOTO", "label": "PHOTO", "type": "BLOB",     "display_size": 100,
+     "precision": None, "scale": None, "nullable": True},
+]
+
+_LOB_METADATA = {"column_count": 3, "job": "TEST/QUSER/JOB001", "columns": _LOB_COLUMNS}
 
 
 class _FakeConn:
@@ -300,3 +311,70 @@ class TestRowcount:
         _queue_dml(socket, update_count=5)
         cursor.execute("DELETE FROM SAMPLE.EMPLOYEE WHERE BONUS > 1000")
         assert cursor.rowcount == 5
+
+
+# ---------------------------------------------------------------------------
+# LOB (CLOB/BLOB) wrapping end-to-end through Cursor
+# ---------------------------------------------------------------------------
+
+class TestLobWrapping:
+    def test_dict_row_wraps_clob_and_blob(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(
+            socket,
+            rows=[{"ID": 1, "NOTES": "hello world", "PHOTO": "68656c6c6f"}],
+            metadata=_LOB_METADATA,
+        )
+        cursor.execute("SELECT ID, NOTES, PHOTO FROM SAMPLE.DOCS")
+        row = cursor.fetchone()
+        assert row[0] == 1
+        assert isinstance(row[1], ClobValue)
+        assert row[1].value == "hello world"
+        assert isinstance(row[2], BlobValue)
+        assert row[2].value == b"hello"
+
+    def test_terse_list_row_wraps_clob_and_blob(self, mock_sql_job):
+        """Regression test: LOB wrapping must also apply when the server
+        returns terse (list) rows, not just dict rows.
+        """
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(
+            socket,
+            rows=[[1, "hello world", "68656c6c6f"]],
+            metadata=_LOB_METADATA,
+        )
+        cursor.execute("SELECT ID, NOTES, PHOTO FROM SAMPLE.DOCS", isTerseResults=True)
+        row = cursor.fetchone()
+        assert row[0] == 1
+        assert isinstance(row[1], ClobValue)
+        assert row[1].value == "hello world"
+        assert isinstance(row[2], BlobValue)
+        assert row[2].value == b"hello"
+
+    def test_fetchall_wraps_lob_columns_in_every_row(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(
+            socket,
+            rows=[
+                {"ID": 1, "NOTES": "first", "PHOTO": "68656c6c6f"},
+                {"ID": 2, "NOTES": "second", "PHOTO": "776f726c64"},
+            ],
+            metadata=_LOB_METADATA,
+        )
+        cursor.execute("SELECT ID, NOTES, PHOTO FROM SAMPLE.DOCS")
+        rows = cursor.fetchall()
+        assert all(isinstance(r[1], ClobValue) for r in rows)
+        assert all(isinstance(r[2], BlobValue) for r in rows)
+        assert rows[1][2].value == b"world"
+
+    def test_null_lob_values_stay_none(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(
+            socket,
+            rows=[{"ID": 1, "NOTES": None, "PHOTO": None}],
+            metadata=_LOB_METADATA,
+        )
+        cursor.execute("SELECT ID, NOTES, PHOTO FROM SAMPLE.DOCS")
+        row = cursor.fetchone()
+        assert row[1] is None
+        assert row[2] is None
