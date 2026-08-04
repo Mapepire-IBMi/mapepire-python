@@ -4,8 +4,8 @@ import dataclasses
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, cast
 
-from .exceptions import CONNECTION_CLOSED, ProgrammingError, ReturnType
 from ..lob import BLOB_TYPES, CLOB_TYPES, BlobValue, ClobValue
+from .exceptions import CONNECTION_CLOSED, ProgrammingError, ReturnType
 
 __all__ = ["raise_if_closed", "DB_TYPE_MAP", "row_to_tuple"]
 

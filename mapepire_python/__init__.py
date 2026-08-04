@@ -5,7 +5,6 @@ from .asyncio import connect as async_connect
 from .asyncio.connection import AsyncConnection
 from .client.query import QueryState
 from .client.sql_job import SQLJob
-from .lob import BlobValue, ClobValue, LOBValue
 from .core import (
     Connection,
     Cursor,
@@ -21,6 +20,7 @@ from .core import (
 )
 from .core.exceptions import CONNECTION_CLOSED, convert_runtime_errors
 from .data_types import DaemonServer, JobStatus, QueryOptions, QueryResult
+from .lob import BlobValue, ClobValue, LOBValue
 from .pool.pool_client import Pool, PoolOptions
 from .pool.pool_job import PoolJob
 from .version import VERSION as __version__
