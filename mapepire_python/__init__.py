@@ -20,6 +20,7 @@ from .core import (
 )
 from .core.exceptions import CONNECTION_CLOSED, convert_runtime_errors
 from .data_types import DaemonServer, JobStatus, QueryOptions, QueryResult
+from .lob import BlobValue, ClobValue, LOBValue
 from .pool.pool_client import Pool, PoolOptions
 from .pool.pool_job import PoolJob
 from .version import VERSION as __version__
@@ -28,6 +29,9 @@ __all__ = [
     "apilevel",
     "threadsafety",
     "paramstyle",
+    "ClobValue",
+    "BlobValue",
+    "LOBValue",
     "DatabaseError",
     "DataError",
     "Error",
