@@ -19,6 +19,7 @@
   - [Overview](#overview)
   - [Setup](#setup)
     - [Install with `pip`](#install-with-pip)
+      - [Optional: Kerberos authentication support](#optional-kerberos-authentication-support)
     - [Server Component Setup](#server-component-setup)
 - [Quick Start](#quick-start)
 - [Other Connection options](#other-connection-options)
@@ -89,6 +90,23 @@
 ```bash
 pip install mapepire-python
 ```
+
+#### Optional: Kerberos authentication support
+
+Kerberos authentication (see [Authenticating with Kerberos](#11-authenticating-with-kerberos)) requires the optional `kerberos` extra, which pulls in `gssapi` on Linux/macOS or `pywin32` on Windows:
+
+```bash
+pip install mapepire-python[kerberos]
+```
+
+On Linux, building `gssapi` also requires Kerberos development headers to be available, e.g.:
+
+```bash
+sudo apt install libkrb5-dev      # Debian/Ubuntu
+sudo dnf install krb5-devel       # Fedora/RHEL
+```
+
+If you don't use Kerberos authentication, you don't need this extra — the base `pip install mapepire-python` has no Kerberos dependencies.
 
 ### Server Component Setup
 To use mapire-python, you will need to have the Mapepire Server Component running on your IBM i server. Follow these instructions to set up the server component: [Mapepire Server Installation](https://mapepire-ibmi.github.io/guides/sysadmin/)
@@ -161,6 +179,9 @@ job = SQLJob(creds)
 
 ### 1.1 Authenticating with Kerberos
 If your IBM i is configured to support Kerberos authentication, you can authenticate using Kerberos instead of passing a plain-text password to the `DaemonServer` Object.
+
+> [!NOTE]
+> Kerberos support requires the `kerberos` extra: `pip install mapepire-python[kerberos]`. See [Optional: Kerberos authentication support](#optional-kerberos-authentication-support).
 
 #### 1.1.1 Windows
 

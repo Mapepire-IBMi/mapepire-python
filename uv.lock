@@ -764,9 +764,7 @@ name = "mapepire-python"
 source = { editable = "." }
 dependencies = [
     { name = "dataclasses-json" },
-    { name = "gssapi", marker = "sys_platform != 'win32'" },
     { name = "pep249abc" },
-    { name = "pywin32", marker = "sys_platform == 'win32'" },
     { name = "websockets" },
 ]
 
@@ -789,6 +787,10 @@ dev = [
     { name = "twine" },
     { name = "wheel" },
 ]
+kerberos = [
+    { name = "gssapi", marker = "sys_platform != 'win32'" },
+    { name = "pywin32", marker = "sys_platform == 'win32'" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -800,7 +802,7 @@ requires-dist = [
     { name = "black", marker = "extra == 'dev'", specifier = ">=24.3.0,<27.0" },
     { name = "build", marker = "extra == 'dev'" },
     { name = "dataclasses-json", specifier = ">=0.6.4" },
-    { name = "gssapi", marker = "sys_platform != 'win32'" },
+    { name = "gssapi", marker = "sys_platform != 'win32' and extra == 'kerberos'" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=5.12,<8.1" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0,<2.4" },
     { name = "packaging", marker = "extra == 'dev'" },
@@ -812,14 +814,14 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "pytest-env", marker = "extra == 'dev'" },
     { name = "python-dotenv", marker = "extra == 'dev'" },
-    { name = "pywin32", marker = "sys_platform == 'win32'" },
+    { name = "pywin32", marker = "sys_platform == 'win32' and extra == 'kerberos'" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.15,<0.16" },
     { name = "setuptools", marker = "extra == 'dev'" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=1.11.0" },
     { name = "websockets", specifier = ">=14.0" },
     { name = "wheel", marker = "extra == 'dev'" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["kerberos", "dev"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.0.3" }]
