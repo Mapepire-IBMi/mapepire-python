@@ -6,17 +6,13 @@ from typing import Final, Optional
 
 logger = logging.getLogger(__name__)
 
-sspi = None
-gssapi = None
 PLATFORM = platform.system()
 TOKEN_PREFIX: Final = "_KERBEROSAUTH_"
 
-
-# For Windows SSPI token generation:
-if PLATFORM == "Windows":
-    import sspi
-else:
-    import gssapi
+_KERBEROS_EXTRA_HINT = (
+    "Kerberos authentication requires the optional 'kerberos' extra. "
+    "Install it with: pip install mapepire-python[kerberos]"
+)
 
 
 class KerberosTokenProvider:
@@ -62,6 +58,11 @@ class KerberosTokenProvider:
         return TOKEN_PREFIX + token_b64
 
     def _refresh_token_windows(self) -> str:
+        try:
+            import sspi
+        except ImportError as e:
+            raise ImportError(_KERBEROS_EXTRA_HINT) from e
+
         logger.debug("Generating Kerberos token via Windows SSPI for host=%s", self.host)
         target = f"krbsvr400/{self.host}"
         client = sspi.ClientAuth("Kerberos", targetspn=target)
@@ -76,6 +77,11 @@ class KerberosTokenProvider:
         return self._format_token(token)
 
     def _refresh_token_unix(self) -> str:
+        try:
+            import gssapi
+        except ImportError as e:
+            raise ImportError(_KERBEROS_EXTRA_HINT) from e
+
         logger.debug("Generating Kerberos token via GSSAPI for host=%s realm=%s", self.host, self.realm)
         os.environ["KRB5_CONFIG"] = self.krb5_path
         if self.ticket_cache:

@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- fix: move `gssapi`/`pywin32` back out of core runtime dependencies into an optional `kerberos` extra (`pip install mapepire-python[kerberos]`), and make the `import gssapi`/`import sspi` in `KerberosTokenProvider` lazy — only triggered when a Kerberos token is actually requested. Plain `pip install mapepire-python` no longer requires `krb5-config`/`libkrb5-dev` at build time or `gssapi` at import time for callers who don't use Kerberos auth; `KerberosTokenProvider.get_token()` raises a clear `ImportError` pointing at the extra if it's missing
+- ci: drop the `libkrb5-dev` apt install from the `setup-venv` action — no longer needed now that `gssapi` isn't in the `dev` extra
 - fix: declare `gssapi` (Linux/macOS) and `pywin32` (Windows) as runtime dependencies instead of dev-only extras, so Kerberos auth works out of the box without a separate `pip install gssapi` — Windows SSPI support still requires `pywin32`'s `sspi` module even though native Windows headers are present, and macOS ships its own GSSAPI/Kerberos framework and headers so no `brew install krb5` is needed there; Linux still needs `krb5-config`/dev headers (e.g. `libkrb5-dev`) available at install time to build `gssapi`
 - ci: install only `twine`/`packaging` in the release job instead of the full `.[dev]` extra, so it no longer compiles `gssapi` (avoids the `krb5-config: not found` build failure on the release runner)
 - ci: bump `actions/checkout` v6→v7, `actions/setup-python` v6→v7, `actions/cache` v5→v6 

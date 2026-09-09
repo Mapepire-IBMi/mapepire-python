@@ -12,6 +12,7 @@ Windows.  Tests are grouped into four classes:
 """
 import base64
 import os
+import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -157,8 +158,8 @@ class TestUnixTokenPath:
     """_refresh_token_unix via gssapi (patched)."""
 
     def _run(self, gss_mock, **provider_kwargs):
-        """Patch gssapi on the module, call get_token(), return the result."""
-        with patch.object(mod, "PLATFORM", "Linux"), patch.object(mod, "gssapi", gss_mock):
+        """Patch gssapi in sys.modules (it is imported lazily), call get_token(), return the result."""
+        with patch.object(mod, "PLATFORM", "Linux"), patch.dict(sys.modules, {"gssapi": gss_mock}):
             provider = KerberosTokenProvider(
                 host="ibmi.example.com",
                 realm="REALM.COM",
@@ -262,7 +263,7 @@ class TestWindowsTokenPath:
     """_refresh_token_windows via sspi (patched)."""
 
     def _run(self, sspi_mock):
-        with patch.object(mod, "PLATFORM", "Windows"), patch.object(mod, "sspi", sspi_mock):
+        with patch.object(mod, "PLATFORM", "Windows"), patch.dict(sys.modules, {"sspi": sspi_mock}):
             provider = KerberosTokenProvider(host="ibmi.example.com")
             return provider.get_token()
 
@@ -287,3 +288,27 @@ class TestWindowsTokenPath:
         sspi = _make_sspi_mock(err=0x80090302)  # SEC_E_NO_CREDENTIALS
         with pytest.raises(RuntimeError, match="0x80090302"):
             self._run(sspi)
+
+
+# ---------------------------------------------------------------------------
+# TestMissingKerberosExtra
+# ---------------------------------------------------------------------------
+
+
+class TestMissingKerberosExtra:
+    """gssapi/sspi are imported lazily, only when a token is actually requested,
+    so callers who never use Kerberos auth never need them installed."""
+
+    def test_unix_without_gssapi_raises_actionable_import_error(self):
+        with patch.object(mod, "PLATFORM", "Linux"), patch.dict(sys.modules, {"gssapi": None}):
+            provider = KerberosTokenProvider(
+                host="ibmi.example.com", realm="R", realm_user="u", krb5_path="/k"
+            )
+            with pytest.raises(ImportError, match=r"pip install mapepire-python\[kerberos\]"):
+                provider.get_token()
+
+    def test_windows_without_sspi_raises_actionable_import_error(self):
+        with patch.object(mod, "PLATFORM", "Windows"), patch.dict(sys.modules, {"sspi": None}):
+            provider = KerberosTokenProvider(host="ibmi.example.com")
+            with pytest.raises(ImportError, match=r"pip install mapepire-python\[kerberos\]"):
+                provider.get_token()
