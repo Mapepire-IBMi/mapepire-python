@@ -11,12 +11,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Install system dependencies
-      shell: bash
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libkrb5-dev
-
     - name: Setup Python
       uses: actions/setup-python@v7
       with:
