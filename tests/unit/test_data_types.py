@@ -92,6 +92,8 @@ class TestEnums:
     def test_server_trace_dest_values(self):
         assert ServerTraceDest.FILE.value == "FILE"
         assert ServerTraceDest.IN_MEM.value == "IN_MEM"
+        assert ServerTraceDest.UNKNOWN.value == "unknown"
+        assert len(ServerTraceDest) == 3
 
 
 # ---------------------------------------------------------------------------

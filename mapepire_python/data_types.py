@@ -51,6 +51,13 @@ class ServerTraceLevel(Enum):
 class ServerTraceDest(Enum):
     FILE = "FILE"
     IN_MEM = "IN_MEM"
+    UNKNOWN = "unknown"
+
+    @classmethod
+    def _missing_(cls, value: object) -> "ServerTraceDest":
+        # v2.4.0 server returns a full file path (e.g. /var/folders/.../trace.html)
+        # when the destination is a file.  Treat any unrecognised string as FILE.
+        return cls.FILE
 
 class MessageType(Enum):
     CONNECT = "connect"
@@ -88,6 +95,10 @@ class DaemonServer:
     port: Optional[Union[str, int]]
     ignoreUnauthorized: Optional[bool] = False
     ca: Optional[Union[str, bytes]] = None
+    # Set to True when connecting to a server running without TLS
+    # (e.g. started with MP_UNSECURE=true for local development).
+    # When True the client connects via ws:// instead of wss://.
+    unsecure: Optional[bool] = False
 
     def get_password(self) -> str:
         if isinstance(self.password, KerberosTokenProvider):

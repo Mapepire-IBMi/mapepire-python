@@ -13,7 +13,8 @@ ReturnType = TypeVar("ReturnType")
 
 class BaseConnection:
     def __init__(self, db2_server: DaemonServer) -> None:
-        self.uri = f"wss://{db2_server.host}:{db2_server.port}/db/"
+        scheme = "ws" if db2_server.unsecure else "wss"
+        self.uri = f"{scheme}://{db2_server.host}:{db2_server.port}/db/"
         self.headers = {
             "Authorization": "Basic "
             + base64.b64encode(f"{db2_server.user}:{db2_server.get_password()}".encode()).decode(

@@ -17,6 +17,7 @@ __all__ = [
     "port",
     "ignoreUnauthorized",
     "ca",
+    "unsecure",
 ]
 
 # Necessary environment variables
@@ -30,10 +31,13 @@ realm = os.getenv("VITE_KRB_REALM", None)
 realm_user = os.getenv("VITE_KRB_USER", None)
 krb5_path = os.getenv("VITE_KRB5_PATH", None)
 
-# Optional environemnt variables
+# Optional environment variables
 port = os.getenv("VITE_DB_PORT")
-ignoreUnauthorized = True # to silence ssl warnings 
+ignoreUnauthorized = True  # to silence ssl warnings
 ca = os.getenv("VITE_CA", None)
+# Set VITE_UNSECURE=true when pointing at a server started with MP_UNSECURE=true
+# (plain ws:// instead of wss://, e.g. local dev builds)
+unsecure = os.getenv("VITE_UNSECURE", "false").lower() == "true"
 
 # Check if necessary environment variables are set
 if not server or not user or not password:
@@ -68,4 +72,5 @@ else:
         password=password,
         ignoreUnauthorized=ignoreUnauthorized,
         ca=ca,
+        unsecure=unsecure,
     )
