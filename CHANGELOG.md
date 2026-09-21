@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [v1.0.0](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v1.0.0) - 2026-09-10
+- fix: add fallback handling for `ServerTraceDest` to support `"unknown"` values and file paths returned by Mapepire Server v2.4.1+
+
 ## [v0.3.1](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v0.3.1) - 2026-09-09
 - fix: move `gssapi`/`pywin32` back out of core runtime dependencies into an optional `kerberos` extra (`pip install mapepire-python[kerberos]`), and make the `import gssapi`/`import sspi` in `KerberosTokenProvider` lazy — only triggered when a Kerberos token is actually requested. Plain `pip install mapepire-python` no longer requires `krb5-config`/`libkrb5-dev` at build time or `gssapi` at import time for callers who don't use Kerberos auth; `KerberosTokenProvider.get_token()` raises a clear `ImportError` pointing at the extra if it's missing
 - ci: drop the `libkrb5-dev` apt install from the `setup-venv` action — no longer needed now that `gssapi` isn't in the `dev` extra
