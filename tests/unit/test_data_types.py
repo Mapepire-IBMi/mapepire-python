@@ -93,6 +93,13 @@ class TestEnums:
         assert ServerTraceDest.FILE.value == "FILE"
         assert ServerTraceDest.IN_MEM.value == "IN_MEM"
 
+    def test_server_trace_dest_fallback(self):
+        assert ServerTraceDest("unknown") == ServerTraceDest.FILE
+        assert ServerTraceDest("UNKNOWN") == ServerTraceDest.FILE
+        assert ServerTraceDest("/tmp/mapepire_trace.log") == ServerTraceDest.FILE
+        assert ServerTraceDest("file") == ServerTraceDest.FILE
+        assert ServerTraceDest("in_mem") == ServerTraceDest.IN_MEM
+
 
 # ---------------------------------------------------------------------------
 # Request type tests (serialization via dataclasses.asdict)
@@ -291,6 +298,35 @@ class TestGetTraceDataResult:
         data = {**_base_response_fields(), "tracedata": "trace output"}
         result = GetTraceDataResult.from_dict(data)
         assert result.jtopentracedata is None
+
+
+class TestSetConfigResult:
+    def test_from_dict_standard(self):
+        data = {**_base_response_fields(), "tracedest": "FILE", "tracelevel": "ON"}
+        result = SetConfigResult.from_dict(data)
+        assert result.tracedest == ServerTraceDest.FILE
+        assert result.tracelevel == ServerTraceLevel.ON
+
+    def test_from_dict_unknown_tracedest_fallback(self):
+        data = {**_base_response_fields(), "tracedest": "unknown", "tracelevel": "OFF"}
+        result = SetConfigResult.from_dict(data)
+        assert result.tracedest == ServerTraceDest.FILE
+
+    def test_from_dict_filepath_tracedest_fallback(self):
+        data = {**_base_response_fields(), "tracedest": "/tmp/mapepire/server.log", "tracelevel": "ON"}
+        result = SetConfigResult.from_dict(data)
+        assert result.tracedest == ServerTraceDest.FILE
+
+    def test_from_dict_jtopentracedest_fallback(self):
+        data = {
+            **_base_response_fields(),
+            "tracedest": "FILE",
+            "tracelevel": "ON",
+            "jtopentracedest": "unknown",
+            "jtopentracelevel": "OFF",
+        }
+        result = SetConfigResult.from_dict(data)
+        assert result.jtopentracedest == ServerTraceDest.FILE
 
 
 # ---------------------------------------------------------------------------

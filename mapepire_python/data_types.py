@@ -52,6 +52,18 @@ class ServerTraceDest(Enum):
     FILE = "FILE"
     IN_MEM = "IN_MEM"
 
+    @classmethod
+    def _missing_(cls, value: object) -> "ServerTraceDest":
+        if isinstance(value, str):
+            v_upper = value.upper()
+            if v_upper in ("FILE", "IN_MEM"):
+                return cls(v_upper)
+            if v_upper == "UNKNOWN":
+                return cls.FILE
+            # If server returns a file path (e.g. /tmp/... on server 2.4.0) or other string, fallback to FILE
+            return cls.FILE
+        return cls.FILE
+
 class MessageType(Enum):
     CONNECT = "connect"
     SQL = "sql"
