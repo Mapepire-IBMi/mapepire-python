@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 - ci: add `contents: read` permissions to `changelog.yml` workflow
+- chore(deps): bump `cryptography` from 48.0.1 to 50.0.0 in `uv.lock`
 
 ## [v1.0.0](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v1.0.0) - 2026-09-21
 - fix: add fallback handling for `ServerTraceDest` to support `"unknown"` values and file paths returned by Mapepire Server v2.4.1+
