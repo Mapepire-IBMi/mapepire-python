@@ -100,6 +100,13 @@ class TestClose:
         cursor.close()  # second call returns immediately, no error
         assert cursor._closed is True
 
+    def test_close_without_result_set_marks_closed(self, mock_sql_job, make_query_result):
+        cursor, socket, _conn = _make_cursor(mock_sql_job)
+        socket.add_response(make_query_result(is_done=True, has_results=False, update_count=1))
+        cursor.execute("DELETE FROM T")
+        cursor.close()
+        assert cursor._closed is True
+
 
 # ---------------------------------------------------------------------------
 # closed-cursor detection (raise_if_closed)

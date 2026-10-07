@@ -1,7 +1,8 @@
 import logging
 import weakref
 from collections import deque
-from typing import TYPE_CHECKING, Any, Optional, Sequence, Type, Union, cast
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING, Any, Deque, List, Optional, Sequence, Type, Union, cast
 
 import pep249
 from pep249 import (
@@ -29,8 +30,18 @@ __all__ = ["Cursor"]
 logger = logging.getLogger(__name__)
 
 
+@dataclass
+class _ResultState:
+    """Fetch state for one query: its column metadata and rows received but not yet returned."""
+
+    metadata: Any
+    rows: Deque[Any] = field(default_factory=deque)
+
+
 class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.TransactionalCursor):
     max_rows = 2147483647
+    # Rows requested per round trip when fetchone() (and so iteration) needs more data.
+    fetch_size = 100
 
     def __init__(self, connection: "Connection", job: SQLJob) -> None:
         super().__init__()
@@ -38,7 +49,10 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         self.job = job
         self.query: Optional[Query] = None
         self.query_q: deque[Query] = deque(maxlen=20)
-        self._result_set: Optional[QueryResultSet] = None
+        # Keyed weakly so a query evicted from query_q takes its buffered rows with it.
+        self._results: "weakref.WeakKeyDictionary[Query, _ResultState]" = (
+            weakref.WeakKeyDictionary()
+        )
         self._metadata = None
         self.__closed = False
         self.__has_results = False
@@ -113,6 +127,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             self.query = query
             self.__set_has_results(True)
             self.query_q.append(query)
+            # Rows that arrive with the execute response are served by the first fetch.
+            self._results[query] = _ResultState(self._metadata, deque(qs.data or []))
         else:
             self.__set_has_results(False)
 
@@ -156,42 +172,46 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             for col in self._metadata.columns
         ]
 
+    def _fetch_rows(self, size: int, batch_size: int = 0) -> ResultSet:
+        """Return up to ``size`` rows of the current query as tuples.
+
+        Buffered rows are served first; the server is only asked for more once
+        the buffer is empty, and then for at least ``batch_size`` rows. Once the
+        result set is exhausted this returns what it has (possibly ``[]``)
+        instead of raising.
+        """
+        if self.query is None:
+            return []
+        state = self._results[self.query]
+        rows: List[ResultRow] = []
+        while len(rows) < size:
+            if not state.rows:
+                if self.query.state == QueryState.RUN_DONE:
+                    break
+                res = self.query.fetch_more(rows_to_fetch=max(size - len(rows), batch_size))
+                if not res.data:
+                    break
+                state.rows.extend(res.data)
+            rows.append(row_to_tuple(state.rows.popleft(), state.metadata))
+        return rows
+
     @raise_if_closed
     @convert_runtime_errors
     def fetchone(self) -> Optional[ResultRow]:
-        if not self.query or self.query.state == QueryState.RUN_DONE:
-            return None
-        res = self.query.fetch_more(rows_to_fetch=1)
-        if res:
-            self._result_set = QueryResultSet(res)
-            if self._result_set.data:
-                return row_to_tuple(self._result_set.data[0], self._metadata)
-        return None
+        rows = self._fetch_rows(1, batch_size=self.fetch_size)
+        return rows[0] if rows else None
 
     @raise_if_closed
     @convert_runtime_errors
     def fetchall(self) -> ResultSet:
-        if not self.query:
-            return []
-
-        res = self.query.fetch_more(rows_to_fetch=self.max_rows)
-        if res:
-            self._result_set = QueryResultSet(res)
-            return [row_to_tuple(row, self._metadata) for row in self._result_set.data]
-        return []
+        return self._fetch_rows(self.max_rows)
 
     @raise_if_closed
     @convert_runtime_errors
     def fetchmany(self, size: Optional[int] = None) -> ResultSet:
         if size is None:
             size = self.arraysize
-        if not self.query:
-            return []
-        res = self.query.fetch_more(rows_to_fetch=size)
-        if res:
-            self._result_set = QueryResultSet(res)
-            return [row_to_tuple(row, self._metadata) for row in self._result_set.data]
-        return []
+        return self._fetch_rows(size)
 
     def executescript(self, script: SQLQuery) -> "Cursor":
         """A lazy implementation of SQLite's `executescript`."""
@@ -202,6 +222,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             if len(self.query_q) > 1:
                 self.query_q.popleft()
                 self.query = self.query_q[0]
+                self._metadata = self._results[self.query].metadata
                 self.__set_has_results(True)
                 return True
             return None
@@ -214,11 +235,11 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         if self._closed:
             return
         logger.debug("Closing cursor")
-        if self.query:
-            for q in self.query_q:
-                q.close()
-            self.query_q.clear()
-            self._closed = True
+        for q in self.query_q:
+            q.close()
+        self.query_q.clear()
+        self._results.clear()
+        self._closed = True
 
     def commit(self) -> None:
         self.job.query_and_run("COMMIT")
