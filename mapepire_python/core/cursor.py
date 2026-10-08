@@ -2,7 +2,17 @@ import logging
 import weakref
 from collections import deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Deque, List, Optional, Sequence, Type, Union, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Deque,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+    cast,
+)
 
 import pep249
 from pep249 import (
@@ -15,15 +25,15 @@ from pep249 import (
     SQLQuery,
 )
 
-if TYPE_CHECKING:
-    # pylint: disable=cyclic-import
-    from ..core.connection import Connection
-
 from ..client.query import Query, QueryState
 from ..client.sql_job import SQLJob
 from ..core.exceptions import convert_runtime_errors
 from ..core.utils import DB_TYPE_MAP, QueryResultSet, raise_if_closed, row_to_tuple
 from ..data_types import QueryOptions
+
+if TYPE_CHECKING:
+    # pylint: disable=cyclic-import
+    from ..core.connection import Connection
 
 __all__ = ["Cursor"]
 
