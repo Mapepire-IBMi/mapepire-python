@@ -152,7 +152,7 @@ class Query(Generic[T]):
         return query_result
 
     @handle_ws_errors
-    def fetch_more(self, rows_to_fetch: Optional[int] = None) -> Dict[str, Any]:
+    def fetch_more(self, rows_to_fetch: Optional[int] = None) -> SqlMoreResponse:
         if rows_to_fetch is None:
             rows_to_fetch = self._rows_to_fetch
         else:

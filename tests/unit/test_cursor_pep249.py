@@ -52,33 +52,62 @@ def _make_cursor(mock_sql_job):
     return cursor, socket
 
 
-def _queue_select(socket, rows=None, update_count=-1, metadata=None, is_done_on_fetch=True):
-    """Queue the two socket responses needed for execute() + one fetch call."""
-    # 1. prepare_sql_execute response: metadata present, no data rows yet
+def _queue_execute(socket, rows=None, is_done=False, update_count=-1, metadata=None):
+    """Queue the prepare_sql_execute response for a SELECT, optionally carrying rows."""
     socket.add_response(json.dumps({
         "id": "q1",
         "success": True,
         "sql_rc": 0,
         "sql_state": "",
-        "is_done": False,
+        "is_done": is_done,
         "has_results": True,
         "update_count": update_count,
-        "data": [],
+        "data": rows if rows is not None else [],
         "metadata": metadata if metadata is not None else _METADATA,
         "error": None,
         "execution_time": None,
     }))
-    # 2. sqlmore response: actual data rows
+
+
+def _queue_page(socket, rows, is_done=True):
+    """Queue one sqlmore response."""
     socket.add_response(json.dumps({
         "id": "q1",
         "success": True,
         "sql_rc": 0,
         "sql_state": "",
-        "is_done": is_done_on_fetch,
-        "data": rows if rows is not None else _ROWS,
+        "is_done": is_done,
+        "data": rows,
         "error": None,
         "execution_time": None,
     }))
+
+
+def _queue_select(socket, rows=None, update_count=-1, metadata=None, is_done_on_fetch=True):
+    """Queue the two socket responses needed for execute() + one fetch call."""
+    # 1. prepare_sql_execute response: metadata present, no data rows yet
+    _queue_execute(socket, update_count=update_count, metadata=metadata)
+    # 2. sqlmore response: actual data rows
+    _queue_page(socket, rows if rows is not None else _ROWS, is_done=is_done_on_fetch)
+
+
+def _queue_close(socket):
+    """Queue one sqlclose response, for closing a cursor whose query is still open."""
+    socket.add_response(json.dumps({
+        "id": "q1", "success": True, "sql_rc": 0, "sql_state": "", "error": None,
+    }))
+
+
+def _sqlmore_requests(socket):
+    """The sqlmore requests the cursor has sent, decoded."""
+    return [msg for msg in map(json.loads, socket.sent) if msg["type"] == "sqlmore"]
+
+
+_ROW_TUPLES = [
+    ("000010", "JOHN",  52750.00),
+    ("000020", "ALICE", 41250.00),
+    ("000030", "BOB",   38500.00),
+]
 
 
 def _queue_dml(socket, update_count=3):
@@ -278,6 +307,124 @@ class TestFetchmany:
     def test_returns_empty_list_before_execute(self, mock_sql_job):
         cursor, _ = _make_cursor(mock_sql_job)
         assert cursor.fetchmany(5) == []
+
+
+# ---------------------------------------------------------------------------
+# exhaustion: fetch* return empty instead of raising once rows run out
+# ---------------------------------------------------------------------------
+
+class TestFetchExhaustion:
+    def test_fetchmany_loop_ends_with_empty_list(self, mock_sql_job):
+        """The standard `while rows := cur.fetchmany(n)` loop must terminate cleanly."""
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(socket, rows=_ROWS[:2], is_done_on_fetch=False)
+        _queue_page(socket, _ROWS[2:], is_done=True)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        fetched = []
+        while rows := cursor.fetchmany(2):
+            fetched.extend(rows)
+        assert fetched == _ROW_TUPLES
+
+    def test_fetchall_twice_returns_empty_second_time(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(socket)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        assert cursor.fetchall() == _ROW_TUPLES
+        assert cursor.fetchall() == []
+
+    def test_fetchone_after_fetchall_returns_none(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(socket)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        cursor.fetchall()
+        assert cursor.fetchone() is None
+
+    def test_fetchall_follows_pages_until_done(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(socket, rows=_ROWS[:1], is_done_on_fetch=False)
+        _queue_page(socket, _ROWS[1:], is_done=True)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        assert cursor.fetchall() == _ROW_TUPLES
+
+    def test_empty_page_without_is_done_stops_fetching(self, mock_sql_job):
+        """A page with no rows ends the fetch even if the server never says is_done."""
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(socket, rows=[], is_done_on_fetch=False)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        assert cursor.fetchall() == []
+        _queue_close(socket)
+        cursor.close()
+
+
+# ---------------------------------------------------------------------------
+# buffering: rows are fetched in batches and never dropped
+# ---------------------------------------------------------------------------
+
+class TestFetchBuffering:
+    def test_iteration_fetches_in_batches(self, mock_sql_job):
+        """Iterating (fetchone under the hood) must not cost a round trip per row."""
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(socket)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        assert list(cursor) == _ROW_TUPLES
+        requests = _sqlmore_requests(socket)
+        assert len(requests) == 1
+        assert requests[0]["rows"] == cursor.fetch_size
+
+    def test_rows_in_execute_response_are_returned(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_execute(socket, rows=_ROWS[:2], is_done=False)
+        _queue_page(socket, _ROWS[2:], is_done=True)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        assert cursor.fetchall() == _ROW_TUPLES
+
+    def test_complete_execute_response_needs_no_fetch(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_execute(socket, rows=_ROWS, is_done=True)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        assert cursor.fetchall() == _ROW_TUPLES
+        assert _sqlmore_requests(socket) == []
+
+    def test_fetchmany_serves_buffer_then_requests_only_the_shortfall(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_select(socket, rows=_ROWS[:2], is_done_on_fetch=False)
+        _queue_page(socket, _ROWS[2:], is_done=True)
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+
+        assert cursor.fetchone() == _ROW_TUPLES[0]  # fetches a batch, buffers row 2
+        assert cursor.fetchmany(5) == _ROW_TUPLES[1:]
+
+        requests = _sqlmore_requests(socket)
+        assert [r["rows"] for r in requests] == [cursor.fetch_size, 4]
+
+
+# ---------------------------------------------------------------------------
+# nextset(): switching to an earlier query uses that query's metadata
+# ---------------------------------------------------------------------------
+
+_DEPT_METADATA = {
+    "column_count": 1,
+    "job": "TEST/QUSER/JOB001",
+    "columns": [{"name": "DEPTNO", "label": "DEPTNO", "type": "CHAR", "display_size": 3}],
+}
+
+
+class TestNextset:
+    def test_switched_query_uses_its_own_metadata(self, mock_sql_job):
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_execute(socket, metadata=_DEPT_METADATA)
+        _queue_execute(socket)  # employee columns
+        _queue_execute(socket, metadata=_DEPT_METADATA)
+        cursor.execute("SELECT DEPTNO FROM SAMPLE.DEPARTMENT")
+        cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
+        cursor.execute("SELECT DEPTNO FROM SAMPLE.DEPARTMENT")
+
+        assert cursor.nextset() is True  # now on the employee query
+        assert [col[0] for col in cursor.description] == ["EMPNO", "FIRSTNME", "SALARY"]
+        _queue_page(socket, _ROWS, is_done=True)
+        assert cursor.fetchall() == _ROW_TUPLES
+        _queue_close(socket)  # the last department query is still open
+        cursor.close()
 
 
 # ---------------------------------------------------------------------------
