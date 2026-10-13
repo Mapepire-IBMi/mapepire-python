@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - ci: add `contents: read` permissions to `changelog.yml` workflow
 - chore(deps): bump `cryptography` from 48.0.1 to 50.0.0 in `uv.lock`
+- chore(deps): bump `urllib3` from 2.7.0 to 2.8.0 in `uv.lock`
 - fix: sync PEP 249 `Cursor` now buffers rows, so `fetchmany()`/`fetchall()`/`fetchone()` return `[]`/`None` once a result set is exhausted instead of raising, and iterating a cursor fetches 100 rows per round trip instead of one
 
 ## [v1.0.0](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v1.0.0) - 2026-09-21
