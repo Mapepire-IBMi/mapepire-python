@@ -6,7 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
-
+- bump virtualenv to 21.14.5
+- fix: mark CL command results as done, since Mapepire Server v2.5.0+ omits `is_done`
 ## [v1.0.1](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v1.0.1) - 2026-10-13
 - fix: sync PEP 249 `Cursor` now buffers rows, so `fetchmany()`/`fetchall()`/`fetchone()` return `[]`/`None` once a result set is exhausted instead of raising, and iterating a cursor fetches 100 rows per round trip instead of one
 - chore(deps): bump `cryptography` from 48.0.1 to 50.0.0 in `uv.lock`

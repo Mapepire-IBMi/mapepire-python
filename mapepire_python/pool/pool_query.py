@@ -101,6 +101,10 @@ class PoolQuery:
 
         query_result = QueryResult.from_dict(await self._execute_query(request))  # type: ignore
 
+        # CL commands return all messages in one response; mapepire-server 2.5.0+ omits is_done for them
+        if self.is_cl_command:
+            query_result.is_done = True
+
         self.state = QueryState.RUN_DONE if query_result.is_done else QueryState.RUN_MORE_DATA_AVAIL
 
         if not query_result.success and not self.is_cl_command:
