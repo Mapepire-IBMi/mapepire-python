@@ -128,6 +128,17 @@ class TestRunTransitions:
         assert result is not None
         assert query.state == QueryState.RUN_DONE
 
+    @pytest.mark.asyncio
+    async def test_cl_command_without_is_done_is_run_done(self, make_query_result):
+        # mapepire-server 2.5.0+ omits is_done from CL responses.
+        response = json.loads(make_query_result(success=False))
+        del response["is_done"]
+        job = _job(json.dumps(response))
+        query = PoolQuery(job, "INVALIDCOMMAND", QueryOptions(isClCommand=True))
+        result = await query.run()
+        assert result["is_done"] is True
+        assert query.state == QueryState.RUN_DONE
+
 
 # ---------------------------------------------------------------------------
 # fetch_more() transitions

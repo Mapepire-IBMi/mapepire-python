@@ -3,6 +3,8 @@
 All tests use MockSocket injected into a pre-connected SQLJob so that no
 network I/O occurs.  The response factories come from tests/conftest.py.
 """
+import json
+
 import pytest
 
 from mapepire_python import QueryOptions
@@ -177,6 +179,17 @@ class TestRunTransitions:
         query = Query(job, "WRKACTJOB", QueryOptions(isClCommand=True))
         result = query.run()
         assert result is not None
+        assert query.state == QueryState.RUN_DONE
+
+    def test_cl_command_without_is_done_is_run_done(self, mock_sql_job, make_query_result):
+        # mapepire-server 2.5.0+ omits is_done from CL responses.
+        job, socket = mock_sql_job
+        response = json.loads(make_query_result(success=False))
+        del response["is_done"]
+        socket.add_response(json.dumps(response))
+        query = Query(job, "INVALIDCOMMAND", QueryOptions(isClCommand=True))
+        result = query.run()
+        assert result["is_done"] is True
         assert query.state == QueryState.RUN_DONE
 
 
