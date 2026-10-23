@@ -23,7 +23,8 @@ def test_cl_succesful():
     query = job.query("WRKACTJOB", opts=opts)
     result = query.run()
     job.close()
-    assert len(result["data"]) >= 1
+    # whether WRKACTJOB writes job log messages depends on the server job's logging level
+    assert isinstance(result["data"], list)
     assert result["success"] is True
 
 
@@ -36,7 +37,9 @@ def test_cl_unsuccesful():
     job.close()
     assert len(result["data"]) >= 1
     assert result["success"] is False
-    assert "[CPF0006] Errors occurred in command." in result["error"]
+    # mapepire-server < 2.5.0 reports the generic CPF0006; 2.5.0+ (mapepire-server#199)
+    # reports the underlying escape message, e.g. "[CPF0001] Error found on *N command."
+    assert "[CPF0006]" in result["error"] or "[CPF0001]" in result["error"]
     assert result["id"] is not None
     assert result["is_done"] is True
     assert result["sql_rc"] == -443
