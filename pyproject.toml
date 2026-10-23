@@ -52,6 +52,7 @@ dev = [
     "wheel",
     "packaging",
     "pre-commit",
+    "virtualenv>=21.7.13",
     "python-dotenv",
     "pytest-env",
 ]
