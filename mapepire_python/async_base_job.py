@@ -10,11 +10,15 @@ from websockets.asyncio.client import ClientConnection
 
 from .base_job import BaseJob
 from .data_types import (
+    BaseRequest,
+    CLCommandResult,
+    ClRequest,
     ConnectionResult,
     ConnectRequest,
     DaemonServer,
     JobStatus,
     QueryOptions,
+    RcclRequest,
 )
 
 __all__ = ["AsyncBaseJob"]
@@ -208,6 +212,24 @@ class AsyncBaseJob(BaseJob):
                 return await query.run(rows_to_fetch=rows_to_fetch)
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}") from e
+
+    async def clcommand(self, cmd: str) -> CLCommandResult:
+        """Run a CL command in the SQL job (``cl``)."""
+        return await self._run_cl_command(cmd, remote=False)
+
+    async def rcclcommand(self, cmd: str) -> CLCommandResult:
+        """Run a CL command in the remote command job (``rccl``, Mapepire Server v2.5.0+)."""
+        return await self._run_cl_command(cmd, remote=True)
+
+    async def _run_cl_command(self, cmd: str, remote: bool) -> CLCommandResult:
+        request: BaseRequest = (
+            RcclRequest(id=self._get_unique_id("rcclcommand"), cmd=cmd)
+            if remote
+            else ClRequest(id=self._get_unique_id("clcommand"), cmd=cmd)
+        )
+        return CLCommandResult.from_dict(  # type: ignore[attr-defined]
+            await self.send(json.dumps(dataclasses.asdict(request)))
+        )
 
     async def close(self) -> None: # type: ignore[override]
         logger.info("Closing job %s", self.id)

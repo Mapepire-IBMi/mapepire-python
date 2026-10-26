@@ -9,6 +9,7 @@ by focusing on:
 Uses MockSocket-backed jobs from tests/conftest.py — no live server.
 """
 import gc
+import json
 
 import pytest
 from pep249 import DatabaseError, ProgrammingError
@@ -75,6 +76,24 @@ class TestExecuteWiring:
         socket.add_response(make_query_result(success=False, is_done=False, error="bad sql"))
         with pytest.raises(DatabaseError):
             cursor.execute("SELECT bogus")
+
+
+class TestExecuteClCommand:
+    @pytest.mark.parametrize(
+        "kwargs, request_type",
+        [({"isClCommand": True}, "cl"), ({"isRemoteClCommand": True}, "rccl")],
+    )
+    def test_request_type(self, mock_sql_job, make_query_result, kwargs, request_type):
+        cursor, socket, _conn = _make_cursor(mock_sql_job)
+        socket.add_response(make_query_result())
+        cursor.execute("WRKACTJOB", **kwargs)
+        assert json.loads(socket.sent[0])["type"] == request_type
+
+    def test_failed_command_raises_database_error(self, mock_sql_job, make_query_result):
+        cursor, socket, _conn = _make_cursor(mock_sql_job)
+        socket.add_response(make_query_result(success=False, error="[CPF0001] Error found"))
+        with pytest.raises(DatabaseError, match="CPF0001"):
+            cursor.execute("SNDMSG", isRemoteClCommand=True)
 
 
 # ---------------------------------------------------------------------------

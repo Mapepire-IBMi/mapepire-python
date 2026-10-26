@@ -12,6 +12,7 @@ from ..data_types import (
     PrepareSqlExecuteRequest,
     QueryOptions,
     QueryResult,
+    RcclRequest,
     SqlCloseRequest,
     SqlCloseResponse,
     SqlMoreRequest,
@@ -40,7 +41,8 @@ class Query(Generic[T]):
         self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
         self.parameters: Union[Sequence[Any], Mapping[Union[str, int], Any]] = opts.parameters if opts.parameters is not None else []
-        self.is_cl_command: Optional[bool] = opts.isClCommand
+        self.is_remote_cl_command: Optional[bool] = opts.isRemoteClCommand
+        self.is_cl_command: Optional[bool] = opts.isClCommand or opts.isRemoteClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
         self.is_terse_results: Optional[bool] = opts.isTerseResults
 
@@ -111,7 +113,13 @@ class Query(Generic[T]):
 
         logger.debug("Executing query: rows_to_fetch=%s", rows_to_fetch)
 
-        if self.is_cl_command:
+        request: BaseRequest
+        if self.is_remote_cl_command:
+            request = RcclRequest(
+                id=self.job._get_unique_id("rcclcommand"),
+                cmd=self.sql,
+            )
+        elif self.is_cl_command:
             request = ClRequest(
                 id=self.job._get_unique_id("clcommand"),
                 cmd=self.sql,

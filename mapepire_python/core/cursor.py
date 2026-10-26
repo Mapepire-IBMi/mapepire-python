@@ -121,12 +121,25 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         else:
             create_opts = QueryOptions(
                 isClCommand=kwargs.get("isClCommand", None),
+                isRemoteClCommand=kwargs.get("isRemoteClCommand", None),
                 isTerseResults=kwargs.get("isTerseResults", None),
                 parameters=parameters if parameters else None,
                 autoClose=kwargs.get("autoclose", None),
             )
 
             query = Query(self.job, operation, create_opts)
+
+        if query.is_cl_command:
+            # CL commands return messages, not rows, and Query.run() does not raise when they fail.
+            cl_result = query.run()
+            self._metadata = None
+            self.__set_has_results(False)
+            self.rowcount = -1
+            if not cl_result["success"]:
+                raise RuntimeError(
+                    {"error": cl_result["error"] or "CL command failed for unknown reason"}
+                )
+            return self
 
         prepare_result = query.prepare_sql_execute()
 
