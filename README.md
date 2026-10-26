@@ -523,7 +523,9 @@ with SQLJob("./mapepire.ini") as sql_job:
 ### Run CL commands
 
 - `clcommand()` runs a CL command in the SQL job (`cl` request)
-- `rcclcommand()` runs it in the remote command job (`rccl` request, Mapepire Server v2.5.0+)
+- `rcclcommand()` runs it in the remote command job (`rccl` request)
+
+Both need Mapepire Server v2.5.0 or later, which added `rccl` and the message format these methods return.
 
 ```python
 from mapepire_python import SQLJob
@@ -535,7 +537,7 @@ with SQLJob("./mapepire.ini") as sql_job:
 
 Both return a `CLCommandResult` whose `data` is the list of messages the command produced. A failed command returns `success=False` and `error` instead of raising. `PoolJob` has async versions of both methods.
 
-CL commands can also go through `query()` with `QueryOptions(isClCommand=True)` or `QueryOptions(isRemoteClCommand=True)`, or through the PEP 249 cursor with `cursor.execute(cmd, isRemoteClCommand=True)`.
+CL commands can also go through `query()` with `QueryOptions(isClCommand=True)` or `QueryOptions(isRemoteClCommand=True)`, or through the sync PEP 249 `Cursor` with `cursor.execute(cmd, isRemoteClCommand=True)`.
 
 ## 2. Using the `PoolJob` object to run queries asynchronously
 

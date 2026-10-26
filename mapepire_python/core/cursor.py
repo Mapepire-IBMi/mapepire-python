@@ -132,6 +132,7 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         if query.is_cl_command:
             # CL commands return messages, not rows, and Query.run() does not raise when they fail.
             cl_result = query.run()
+            self.query = None
             self._metadata = None
             self.__set_has_results(False)
             self.rowcount = -1

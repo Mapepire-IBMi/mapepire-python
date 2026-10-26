@@ -306,19 +306,31 @@ class GetTraceDataResult(ServerResponse):
 
 
 @dataclass
+class JobLogEntry:
+    MESSAGE_ID: str
+    SEVERITY: int
+    MESSAGE_TIMESTAMP: str
+    FROM_LIBRARY: str
+    FROM_PROGRAM: str
+    MESSAGE_TYPE: str
+    MESSAGE_TEXT: str
+    MESSAGE_SECOND_LEVEL_TEXT: str
+
+
+@dataclass
 class CLMessage:
-    id: str = ""
-    type: str = ""
-    severity: int = 0
-    text: str = ""
+    id: Optional[str] = None
+    type: Optional[str] = None
+    severity: Optional[int] = None
+    text: Optional[str] = None
     help: Optional[str] = None
-    time: int = 0
-    messageLibrary: str = ""
-    messageFile: str = ""
-    sendingProgram: str = ""
-    sendingInstruction: str = ""
-    receivingProgram: str = ""
-    receivingInstruction: str = ""
+    time: Optional[int] = None
+    messageLibrary: Optional[str] = None
+    messageFile: Optional[str] = None
+    sendingProgram: Optional[str] = None
+    sendingInstruction: Optional[str] = None
+    receivingProgram: Optional[str] = None
+    receivingInstruction: Optional[str] = None
 
 
 @dataclass_json
@@ -326,6 +338,8 @@ class CLMessage:
 class CLCommandResult(ServerResponse):
     # sql_rc and sql_state are only set by `cl` requests; `rccl` does not run SQL.
     data: List[CLMessage] = field(default_factory=list)
+    # Deprecated: no longer sent by Mapepire Server, kept for backwards compatibility
+    joblog: List[JobLogEntry] = field(default_factory=list)
 
 
 @dataclass

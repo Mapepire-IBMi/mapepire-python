@@ -31,6 +31,7 @@ from mapepire_python.data_types import (
     GetTraceDataResult,
     GetVersionRequest,
     IncompleteError,
+    JobLogEntry,
     MessageType,
     ParameterDetail,
     ParameterMode,
@@ -380,12 +381,27 @@ class TestParameterResult:
         assert pr.ccsid is None
 
 
+class TestJobLogEntry:
+    def test_severity_is_int(self):
+        entry = JobLogEntry(
+            MESSAGE_ID="CPF0001", SEVERITY=30,
+            MESSAGE_TIMESTAMP="2024-01-01T00:00:00",
+            FROM_LIBRARY="QSYS", FROM_PROGRAM="QCMD",
+            MESSAGE_TYPE="INFORMATIONAL",
+            MESSAGE_TEXT="Job ended normally.",
+            MESSAGE_SECOND_LEVEL_TEXT=""
+        )
+        assert isinstance(entry.SEVERITY, int)
+        assert entry.SEVERITY == 30
+
+
 class TestCLCommandResult:
+    @pytest.mark.filterwarnings("error")
     def test_data_parsed_as_cl_messages(self):
         result = CLCommandResult.from_dict(
-            {"id": "1", "success": False, "data": [{"id": "CPF0001", "severity": 30}]}
+            {"id": "1", "success": False, "data": [{"id": "CPF0001", "messageFile": None}]}
         )
-        assert result.data == [CLMessage(id="CPF0001", severity=30)]
+        assert result.data == [CLMessage(id="CPF0001")]
 
 
 # ---------------------------------------------------------------------------

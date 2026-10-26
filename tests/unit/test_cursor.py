@@ -95,6 +95,14 @@ class TestExecuteClCommand:
         with pytest.raises(DatabaseError, match="CPF0001"):
             cursor.execute("SNDMSG", isRemoteClCommand=True)
 
+    def test_clears_previous_result_set(self, mock_sql_job, make_query_result):
+        cursor, socket, _conn = _make_cursor(mock_sql_job)
+        socket.add_response(make_query_result(data=[{"A": 1}], has_results=True))
+        socket.add_response(make_query_result())
+        cursor.execute("SELECT 1 AS A FROM SYSIBM.SYSDUMMY1")
+        cursor.execute("WRKACTJOB", isClCommand=True)
+        assert cursor.fetchall() == []
+
 
 # ---------------------------------------------------------------------------
 # close()

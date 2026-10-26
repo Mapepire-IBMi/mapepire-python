@@ -109,6 +109,12 @@ class TestPrepareSqlExecuteTransitions:
         assert result is not None
         assert result.success is True
 
+    def test_cl_command_sends_cl_request(self, mock_sql_job, make_query_result):
+        job, socket = mock_sql_job
+        socket.add_response(make_query_result())
+        Query(job, "WRKACTJOB", QueryOptions(isRemoteClCommand=True)).prepare_sql_execute()
+        assert json.loads(socket.sent[0])["type"] == "rccl"
+
 
 # ---------------------------------------------------------------------------
 # run() state transitions

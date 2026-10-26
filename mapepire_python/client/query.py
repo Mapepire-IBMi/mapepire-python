@@ -73,6 +73,9 @@ class Query(Generic[T]):
         if self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
 
+        if self.is_cl_command:
+            return self.run()
+
         logger.debug("Preparing and executing query")
         query_result = QueryResult.from_dict(  # type: ignore
             self._execute_query(
@@ -85,7 +88,7 @@ class Query(Generic[T]):
         )
         self.state = QueryState.RUN_DONE if query_result.is_done else QueryState.RUN_MORE_DATA_AVAIL
 
-        if not query_result.success and not self.is_cl_command:
+        if not query_result.success:
             self.state = QueryState.ERROR
             error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v}
             if not error_list:

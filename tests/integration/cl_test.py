@@ -13,12 +13,11 @@ from .test_setup import *
 
 @pytest.fixture(scope="module")
 def requires_v2_5():
-    job = SQLJob()
-    _ = job.connect(creds)
-    job.send(json.dumps(dataclasses.asdict(GetVersionRequest(id="getversion"))))
-    version = VersionCheckResult.from_dict(json.loads(job._socket.recv())).version  # type: ignore
-    job.close()
-    if tuple(int(n) for n in re.findall(r"\d+", version)[:3]) < (2, 5, 0):
+    with SQLJob(creds) as job:
+        job.send(json.dumps(dataclasses.asdict(GetVersionRequest(id="getversion"))))
+        response = json.loads(job._socket.recv())  # type: ignore
+    version = VersionCheckResult.from_dict(response).version  # type: ignore
+    if tuple(int(n) for n in re.findall(r"\d+", version)[:3]) < (2, 5):
         pytest.skip(f"requires Mapepire Server v2.5.0+, server is {version}")
 
 

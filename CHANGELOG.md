@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix: mark CL command results as done, since Mapepire Server v2.5.0+ omits `is_done`
 - feat: support the `rccl` request type (Mapepire Server v2.5.0+), which runs a CL command in the remote command job instead of the SQL job, via `QueryOptions(isRemoteClCommand=True)`; add `clcommand()`/`rcclcommand()` to `SQLJob`, `PoolJob` and `AsyncSQLJob`, matching mapepire-js
 - fix: PEP 249 `Cursor.execute()` now sends a CL request when `isClCommand`/`isRemoteClCommand` is passed instead of running the command as SQL; a failed command raises `DatabaseError`
-- replace the outdated `JobLogEntry` and `CLCommandResult.joblog` with `CLMessage` and `CLCommandResult.data`, matching the CL message format of Mapepire Server v2.5.0+
+- add `CLMessage` and `CLCommandResult.data` for the CL message format of Mapepire Server v2.5.0+; `JobLogEntry` and `CLCommandResult.joblog` are deprecated
+- fix: `Query.prepare_sql_execute()` sends CL commands as `cl`/`rccl` requests instead of SQL
 ## [v1.0.1](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v1.0.1) - 2026-10-13
 - fix: sync PEP 249 `Cursor` now buffers rows, so `fetchmany()`/`fetchall()`/`fetchone()` return `[]`/`None` once a result set is exhausted instead of raising, and iterating a cursor fetches 100 rows per round trip instead of one
 - chore(deps): bump `cryptography` from 48.0.1 to 50.0.0 in `uv.lock`
