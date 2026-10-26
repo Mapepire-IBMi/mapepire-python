@@ -139,6 +139,16 @@ class TestRunTransitions:
         assert result["is_done"] is True
         assert query.state == QueryState.RUN_DONE
 
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "opts, request_type",
+        [(QueryOptions(isClCommand=True), "cl"), (QueryOptions(isRemoteClCommand=True), "rccl")],
+    )
+    async def test_cl_command_request_type(self, make_query_result, opts, request_type):
+        job = _job(make_query_result())
+        await PoolQuery(job, "WRKACTJOB", opts).run()
+        assert json.loads(job.sent[0])["type"] == request_type
+
 
 # ---------------------------------------------------------------------------
 # fetch_more() transitions

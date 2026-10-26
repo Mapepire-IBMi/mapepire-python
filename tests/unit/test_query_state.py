@@ -109,6 +109,12 @@ class TestPrepareSqlExecuteTransitions:
         assert result is not None
         assert result.success is True
 
+    def test_cl_command_sends_cl_request(self, mock_sql_job, make_query_result):
+        job, socket = mock_sql_job
+        socket.add_response(make_query_result())
+        Query(job, "WRKACTJOB", QueryOptions(isRemoteClCommand=True)).prepare_sql_execute()
+        assert json.loads(socket.sent[0])["type"] == "rccl"
+
 
 # ---------------------------------------------------------------------------
 # run() state transitions
@@ -191,6 +197,16 @@ class TestRunTransitions:
         result = query.run()
         assert result["is_done"] is True
         assert query.state == QueryState.RUN_DONE
+
+    @pytest.mark.parametrize(
+        "opts, request_type",
+        [(QueryOptions(isClCommand=True), "cl"), (QueryOptions(isRemoteClCommand=True), "rccl")],
+    )
+    def test_cl_command_request_type(self, mock_sql_job, make_query_result, opts, request_type):
+        job, socket = mock_sql_job
+        socket.add_response(make_query_result())
+        Query(job, "WRKACTJOB", opts).run()
+        assert json.loads(socket.sent[0])["type"] == request_type
 
 
 # ---------------------------------------------------------------------------

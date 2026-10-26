@@ -1,8 +1,24 @@
+import dataclasses
+import json
 import os
+import re
+
+import pytest  # type: ignore
 
 from mapepire_python import QueryOptions, SQLJob
+from mapepire_python.data_types import GetVersionRequest, VersionCheckResult
 
 from .test_setup import *
+
+
+@pytest.fixture(scope="module")
+def requires_v2_5():
+    with SQLJob(creds) as job:
+        job.send(json.dumps(dataclasses.asdict(GetVersionRequest(id="getversion"))))
+        response = json.loads(job._socket.recv())  # type: ignore
+    version = VersionCheckResult.from_dict(response).version  # type: ignore
+    if tuple(int(n) for n in re.findall(r"\d+", version)[:3]) < (2, 5):
+        pytest.skip(f"requires Mapepire Server v2.5.0+, server is {version}")
 
 
 def test_simple():
@@ -44,3 +60,29 @@ def test_cl_unsuccesful():
     assert result["is_done"] is True
     assert result["sql_rc"] == -443
     assert result["sql_state"] == "38501"
+
+
+@pytest.mark.usefixtures("requires_v2_5")
+def test_run_cl_command_successfully():
+    job = SQLJob()
+    _ = job.connect(creds)
+    result_cl = job.rcclcommand("CHKOBJ OBJ(QSYS) OBJTYPE(*LIB)")
+    result_sql = job.clcommand("CHKOBJ OBJ(QSYS) OBJTYPE(*LIB)")
+    job.close()
+    for result in (result_cl, result_sql):
+        assert result.success is True
+        assert len(result.data) == 0
+
+
+@pytest.mark.usefixtures("requires_v2_5")
+def test_invalid_cl_command():
+    job = SQLJob()
+    _ = job.connect(creds)
+    result_cl = job.rcclcommand("SNDMSG")
+    result_sql = job.clcommand("SNDMSG")
+    job.close()
+    for result in (result_cl, result_sql):
+        assert len(result.data) >= 2
+        assert result.success is False
+    assert result_sql.sql_rc == -443
+    assert result_sql.sql_state == "38501"

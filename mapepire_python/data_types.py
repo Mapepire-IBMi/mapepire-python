@@ -73,6 +73,7 @@ class MessageType(Enum):
     SQL_MORE = "sqlmore"
     SQL_CLOSE = "sqlclose"
     CL = "cl"
+    RCCL = "rccl"
     PING = "ping"
     GET_DB_JOB = "getdbjob"
     GET_VERSION = "getversion"
@@ -316,9 +317,28 @@ class JobLogEntry:
     MESSAGE_SECOND_LEVEL_TEXT: str
 
 
+@dataclass
+class CLMessage:
+    id: Optional[str] = None
+    type: Optional[str] = None
+    severity: Optional[int] = None
+    text: Optional[str] = None
+    help: Optional[str] = None
+    time: Optional[int] = None
+    messageLibrary: Optional[str] = None
+    messageFile: Optional[str] = None
+    sendingProgram: Optional[str] = None
+    sendingInstruction: Optional[str] = None
+    receivingProgram: Optional[str] = None
+    receivingInstruction: Optional[str] = None
+
+
 @dataclass_json
 @dataclass
 class CLCommandResult(ServerResponse):
+    # sql_rc and sql_state are only set by `cl` requests; `rccl` does not run SQL.
+    data: List[CLMessage] = field(default_factory=list)
+    # Deprecated: no longer sent by Mapepire Server, kept for backwards compatibility
     joblog: List[JobLogEntry] = field(default_factory=list)
 
 
@@ -328,6 +348,8 @@ class QueryOptions:
     isClCommand: Optional[bool] = None
     parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = None
     autoClose: Optional[bool] = None
+    # `rccl` instead of `cl` (Mapepire Server v2.5.0+); implies isClCommand
+    isRemoteClCommand: Optional[bool] = None
 
 
 @dataclass_json
@@ -404,6 +426,12 @@ class ClRequest(BaseRequest):
     cmd: str = ""
     terse: Optional[bool] = None
     type: str = field(default=MessageType.CL.value, init=False)
+
+
+@dataclass
+class RcclRequest(BaseRequest):
+    cmd: str = ""
+    type: str = field(default=MessageType.RCCL.value, init=False)
 
 
 @dataclass

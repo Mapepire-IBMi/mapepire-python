@@ -12,6 +12,7 @@ from ..data_types import (
     PrepareSqlExecuteRequest,
     QueryOptions,
     QueryResult,
+    RcclRequest,
     SqlCloseRequest,
     SqlCloseResponse,
     SqlMoreRequest,
@@ -40,7 +41,8 @@ class Query(Generic[T]):
         self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
         self.parameters: Union[Sequence[Any], Mapping[Union[str, int], Any]] = opts.parameters if opts.parameters is not None else []
-        self.is_cl_command: Optional[bool] = opts.isClCommand
+        self.is_remote_cl_command: Optional[bool] = opts.isRemoteClCommand
+        self.is_cl_command: Optional[bool] = opts.isClCommand or opts.isRemoteClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
         self.is_terse_results: Optional[bool] = opts.isTerseResults
 
@@ -71,6 +73,9 @@ class Query(Generic[T]):
         if self.state == QueryState.RUN_DONE:
             raise Exception("Statement has already been fully run")
 
+        if self.is_cl_command:
+            return self.run()
+
         logger.debug("Preparing and executing query")
         query_result = QueryResult.from_dict(  # type: ignore
             self._execute_query(
@@ -83,7 +88,7 @@ class Query(Generic[T]):
         )
         self.state = QueryState.RUN_DONE if query_result.is_done else QueryState.RUN_MORE_DATA_AVAIL
 
-        if not query_result.success and not self.is_cl_command:
+        if not query_result.success:
             self.state = QueryState.ERROR
             error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v}
             if not error_list:
@@ -111,7 +116,13 @@ class Query(Generic[T]):
 
         logger.debug("Executing query: rows_to_fetch=%s", rows_to_fetch)
 
-        if self.is_cl_command:
+        request: BaseRequest
+        if self.is_remote_cl_command:
+            request = RcclRequest(
+                id=self.job._get_unique_id("rcclcommand"),
+                cmd=self.sql,
+            )
+        elif self.is_cl_command:
             request = ClRequest(
                 id=self.job._get_unique_id("clcommand"),
                 cmd=self.sql,
