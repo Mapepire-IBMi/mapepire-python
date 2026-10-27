@@ -40,7 +40,7 @@ kerberos = [
 dev = [
     "ruff>=0.15,<0.16",
     "mypy>=1.0,<2.4",
-    "black>=24.3.0,<27.0",
+    "black>=26.10.0,<27.0",
     "isort>=5.12,<8.1",
     "pytest>=9.0.3",
     "pep249abc",
@@ -52,7 +52,8 @@ dev = [
     "wheel",
     "packaging",
     "pre-commit",
-    "virtualenv>=21.7.13",
+    "virtualenv>=21.15.0",
+    "filelock>=4.0.0",
     "python-dotenv",
     "pytest-env",
 ]
