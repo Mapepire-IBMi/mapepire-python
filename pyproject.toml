@@ -53,7 +53,6 @@ dev = [
     "packaging",
     "pre-commit",
     "virtualenv>=21.15.0",
-    "filelock>=4.0.0",
     "python-dotenv",
     "pytest-env",
 ]

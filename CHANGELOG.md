@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+## [v2.0.0](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v2.0.0) - 2026-10-23
 - chore(deps): bump `black` to `>=26.10.0`, `virtualenv` to `>=21.15.0`, and add `filelock>=4.0.0`
 - fix: mark CL command results as done, since Mapepire Server v2.5.0+ omits `is_done`
 - feat: support the `rccl` request type (Mapepire Server v2.5.0+), which runs a CL command in the remote command job instead of the SQL job, via `QueryOptions(isRemoteClCommand=True)`; add `clcommand()`/`rcclcommand()` to `SQLJob`, `PoolJob` and `AsyncSQLJob`, matching mapepire-js
