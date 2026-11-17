@@ -8,17 +8,19 @@ by focusing on:
 
 Uses MockSocket-backed jobs from tests/conftest.py — no live server.
 """
+
 import gc
 import json
 
 import pytest
-from pep249 import DatabaseError, ProgrammingError
+from pep249 import DatabaseError, IntegrityError, InternalError, ProgrammingError
 
 from mapepire_python import Cursor
 
 
 class _FakeConn:
     """Minimal connection stub — just enough for Cursor._closed checks."""
+
     _closed = False
 
 
@@ -37,6 +39,7 @@ def _make_cursor(mock_sql_job):
 # ---------------------------------------------------------------------------
 # execute() state wiring
 # ---------------------------------------------------------------------------
+
 
 class TestExecuteWiring:
     def test_select_sets_has_results_and_queues_query(self, mock_sql_job, make_query_result):
@@ -77,6 +80,13 @@ class TestExecuteWiring:
         with pytest.raises(DatabaseError):
             cursor.execute("SELECT bogus")
 
+    def test_duplicate_key_raises_integrity_error(self, mock_sql_job, make_error_query_result):
+        cursor, socket, _conn = _make_cursor(mock_sql_job)
+        socket.add_response(make_error_query_result(sql_state="23505", sql_rc=-803))
+        with pytest.raises(IntegrityError) as exc_info:
+            cursor.execute("INSERT INTO T VALUES (1)")
+        assert (exc_info.value.sqlstate, exc_info.value.sql_rc) == ("23505", -803)
+
 
 class TestExecuteClCommand:
     @pytest.mark.parametrize(
@@ -95,6 +105,13 @@ class TestExecuteClCommand:
         with pytest.raises(DatabaseError, match="CPF0001"):
             cursor.execute("SNDMSG", isRemoteClCommand=True)
 
+    def test_failed_command_exposes_sqlstate(self, mock_sql_job, make_error_query_result):
+        cursor, socket, _conn = _make_cursor(mock_sql_job)
+        socket.add_response(make_error_query_result(sql_state="38501", sql_rc=-443))
+        with pytest.raises(InternalError) as exc_info:
+            cursor.execute("CRTLIB X", isClCommand=True)
+        assert (exc_info.value.sqlstate, exc_info.value.sql_rc) == ("38501", -443)
+
     def test_clears_previous_result_set(self, mock_sql_job, make_query_result):
         cursor, socket, _conn = _make_cursor(mock_sql_job)
         socket.add_response(make_query_result(data=[{"A": 1}], has_results=True))
@@ -107,6 +124,7 @@ class TestExecuteClCommand:
 # ---------------------------------------------------------------------------
 # close()
 # ---------------------------------------------------------------------------
+
 
 class TestClose:
     def test_close_after_execute_marks_closed_and_clears_queue(
@@ -138,6 +156,7 @@ class TestClose:
 # ---------------------------------------------------------------------------
 # closed-cursor detection (raise_if_closed)
 # ---------------------------------------------------------------------------
+
 
 class TestClosedDetection:
     def test_execute_on_closed_cursor_raises(self, mock_sql_job):

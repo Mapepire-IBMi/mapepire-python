@@ -138,7 +138,11 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
             self.rowcount = -1
             if not cl_result["success"]:
                 raise RuntimeError(
-                    {"error": cl_result["error"] or "CL command failed for unknown reason"}
+                    {
+                        "error": cl_result["error"] or "CL command failed for unknown reason",
+                        "sql_state": cl_result["sql_state"],
+                        "sql_rc": cl_result["sql_rc"],
+                    }
                 )
             return self
 
@@ -169,11 +173,15 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
         seq_of_parameters: Sequence[QueryParameters],
         **kwargs: Any,
     ) -> "Cursor":
-        return self.execute(operation=operation, parameters=cast(QueryParameters, seq_of_parameters))
+        return self.execute(
+            operation=operation, parameters=cast(QueryParameters, seq_of_parameters)
+        )
 
     @raise_if_closed
     @convert_runtime_errors
-    def callproc(self, procname: ProcName, parameters: Optional[ProcArgs] = None) -> Optional[ProcArgs]:
+    def callproc(
+        self, procname: ProcName, parameters: Optional[ProcArgs] = None
+    ) -> Optional[ProcArgs]:
         self.execute(procname, parameters=parameters)
         return parameters
 

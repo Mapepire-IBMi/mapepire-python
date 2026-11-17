@@ -5,6 +5,7 @@ This module covers the exceptions outlined in PEP 249.
 
 # pylint: disable=missing-class-docstring
 import ast
+import inspect
 import json
 from functools import wraps
 from typing import Callable, TypeVar
@@ -41,49 +42,55 @@ __all__ = [
 
 CONNECTION_CLOSED = ProgrammingError("Cannot operate on a closed connection.")
 
-INTEGRITY_ERRORS = ("Constraint Error",)
-PROGRAMMING_ERRORS = ("*FILE not found.",)
-DATA_ERRORS = ("Invalid Input Error", "Out of Range Error")
-INTERNAL_ERRORS = ()
-OPERATIONAL_ERRORS = ()
-NOT_SUPPORTED_ERRORS = ()
+SQLSTATE_CLASS_ERRORS = {
+    "23": IntegrityError,
+    **dict.fromkeys(("21", "22"), DataError),
+    **dict.fromkeys(("24", "26", "34", "3F", "42"), ProgrammingError),
+    **dict.fromkeys(("08", "25", "40", "57"), OperationalError),
+    "0A": NotSupportedError,
+    **dict.fromkeys(("38", "39", "58"), InternalError),
+}
+
+
+def _error_payload(error: RuntimeError) -> dict:
+    """Return the server error dict carried by a query-layer `RuntimeError`, or `{}`."""
+    if error.args and isinstance(error.args[0], dict):
+        return error.args[0]
+    for parse in (json.loads, ast.literal_eval):
+        try:
+            payload = parse(str(error))
+        except (ValueError, SyntaxError):
+            continue
+        return payload if isinstance(payload, dict) else {}
+    return {}
 
 
 def _parse_runtime_error(error: RuntimeError) -> Error:
-    """
-    Parse a runtime error straight from DuckDB and return a more
-    appropriate exception.
-
-    """
+    """Map a query-layer `RuntimeError` onto the PEP 249 class for its SQLSTATE."""
     if isinstance(error, Error) or not isinstance(error, RuntimeError):
         return error
-    error_string = str(error)
-    error_message = None
-    new_error_type = DatabaseError
-    error_dict = None
-
-    try:
-        error_dict = json.loads(error_string)
-    except ValueError:
-        try:
-            error_dict = ast.literal_eval(error_string)
-        except (ValueError, SyntaxError):
-            error_dict = None
-
-    try:
-        if isinstance(error_dict, dict):
-            error_message = error_dict["error"]
-            if any(err in error_message for err in PROGRAMMING_ERRORS):
-                new_error_type = ProgrammingError
-            return new_error_type(error_message)
-    except KeyError:
-        pass
-
-    return new_error_type(error_string)
+    payload = _error_payload(error)
+    sqlstate = payload.get("sql_state") or None
+    error_type = SQLSTATE_CLASS_ERRORS.get((sqlstate or "")[:2].upper(), DatabaseError)
+    new_error = error_type(payload.get("error") or str(error))
+    new_error.sqlstate = sqlstate
+    new_error.sql_rc = payload.get("sql_rc") or None
+    return new_error
 
 
 def convert_runtime_errors(function: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
-    """Wrap a function, raising correct errors from `RuntimeError`s."""
+    """Wrap a sync or async function, raising correct errors from `RuntimeError`s."""
+
+    if inspect.iscoroutinefunction(function):
+
+        @wraps(function)
+        async def async_wrapper(*args, **kwargs):
+            try:
+                return await function(*args, **kwargs)
+            except RuntimeError as err:
+                raise _parse_runtime_error(err) from err
+
+        return async_wrapper  # type: ignore[return-value]
 
     @wraps(function)
     def wrapper(*args, **kwargs):

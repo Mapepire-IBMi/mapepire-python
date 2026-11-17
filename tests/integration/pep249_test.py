@@ -1,5 +1,8 @@
 import os
 
+import pytest
+from pep249 import DataError, IntegrityError, ProgrammingError
+
 from mapepire_python import QueryOptions, connect
 
 from .test_setup import *
@@ -272,3 +275,21 @@ def test_pep249_has_next_set_None():
             if not cur.nextset():
                 cur.execute("select * from sample.department")
                 assert cur.fetchone() is not None
+
+
+@pytest.mark.parametrize(
+    "sql, error_type, sqlstate",
+    [
+        ("INSERT INTO QTEMP.T VALUES (1)", IntegrityError, "23505"),
+        ("INSERT INTO QTEMP.T VALUES (99999999999)", DataError, "22003"),
+        ("SELEC 1", ProgrammingError, "42601"),
+    ],
+)
+def test_pep249_error_class_from_sqlstate(sql, error_type, sqlstate):
+    with connect(creds) as conn:
+        conn.execute("CREATE TABLE QTEMP.T (ID INT)")
+        conn.execute("CREATE UNIQUE INDEX QTEMP.TI ON QTEMP.T (ID)")
+        conn.execute("INSERT INTO QTEMP.T VALUES (1)")
+        with pytest.raises(error_type) as exc_info:
+            conn.execute(sql)
+        assert exc_info.value.sqlstate == sqlstate

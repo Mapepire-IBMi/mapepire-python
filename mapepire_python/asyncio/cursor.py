@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from .connection import AsyncConnection
 
 from ..client.async_sql_job import AsyncSQLJob
+from ..core.exceptions import convert_runtime_errors
 from ..core.utils import DB_TYPE_MAP, row_to_tuple
 from ..data_types import QueryOptions
 from ..pool.pool_query import PoolQuery
@@ -76,6 +77,7 @@ class AsyncCursor(
     def setoutputsize(self, size: int, column: Optional[int] = None) -> None:
         pass
 
+    @convert_runtime_errors
     async def execute(
         self, operation: SQLQuery, parameters: Optional[QueryParameters] = None
     ) -> "AsyncCursor":
@@ -100,6 +102,7 @@ class AsyncCursor(
             await self.execute(operation, params)
         return self
 
+    @convert_runtime_errors
     async def fetchone(self) -> Optional[ResultRow]:
         if self._buffer:
             return row_to_tuple(self._buffer.pop(0), self._metadata)
@@ -110,6 +113,7 @@ class AsyncCursor(
         self._buffer.extend(result.data or [])
         return row_to_tuple(self._buffer.pop(0), self._metadata) if self._buffer else None
 
+    @convert_runtime_errors
     async def fetchmany(self, size: Optional[int] = None) -> ResultSet:
         if size is None:
             size = self.arraysize
@@ -125,6 +129,7 @@ class AsyncCursor(
                 self._buffer.extend(result.data or [])
         return rows
 
+    @convert_runtime_errors
     async def fetchall(self) -> ResultSet:
         rows = [row_to_tuple(r, self._metadata) for r in self._buffer]
         self._buffer.clear()
@@ -149,8 +154,10 @@ class AsyncCursor(
     async def nextset(self) -> Optional[bool]:
         return None
 
+    @convert_runtime_errors
     async def commit(self) -> None:
         await self._job.query("COMMIT").run()
 
+    @convert_runtime_errors
     async def rollback(self) -> None:
         await self._job.query("ROLLBACK").run()

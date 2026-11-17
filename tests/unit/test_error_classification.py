@@ -4,10 +4,20 @@ Covers ``_parse_runtime_error`` and the ``convert_runtime_errors`` decorator
 that map a raw ``RuntimeError`` (raised by the query layer) onto the
 appropriate PEP 249 exception type.  No network or server is involved.
 """
+
 import json
 
 import pytest
-from pep249 import DatabaseError, Error, ProgrammingError
+from pep249 import (
+    DatabaseError,
+    DataError,
+    Error,
+    IntegrityError,
+    InternalError,
+    NotSupportedError,
+    OperationalError,
+    ProgrammingError,
+)
 
 from mapepire_python.core.exceptions import (
     CONNECTION_CLOSED,
@@ -18,6 +28,7 @@ from mapepire_python.core.exceptions import (
 # ---------------------------------------------------------------------------
 # _parse_runtime_error
 # ---------------------------------------------------------------------------
+
 
 class TestParseRuntimeError:
     def test_already_a_pep249_error_is_returned_unchanged(self):
@@ -34,12 +45,37 @@ class TestParseRuntimeError:
         assert isinstance(result, DatabaseError)
         assert str(result) == "something went wrong"
 
-    def test_programming_error_message_maps_to_programming_error(self):
-        # "*FILE not found." is in PROGRAMMING_ERRORS
-        err = RuntimeError(json.dumps({"error": "*FILE not found."}))
+    @pytest.mark.parametrize(
+        "sqlstate, error_type",
+        [
+            ("23505", IntegrityError),
+            ("22003", DataError),
+            ("21000", DataError),
+            ("42601", ProgrammingError),
+            ("42704", ProgrammingError),
+            ("24501", ProgrammingError),
+            ("3f000", ProgrammingError),
+            ("08001", OperationalError),
+            ("57033", OperationalError),
+            ("0A001", NotSupportedError),
+            ("38501", InternalError),
+            ("58004", InternalError),
+            ("01000", DatabaseError),
+            ("", DatabaseError),
+        ],
+    )
+    def test_sqlstate_class_selects_error_type(self, sqlstate, error_type):
+        result = _parse_runtime_error(RuntimeError({"error": "x", "sql_state": sqlstate}))
+        assert type(result) is error_type
+
+    def test_exposes_sqlstate_and_sql_rc(self):
+        err = RuntimeError({"error": "dup", "sql_state": "23505", "sql_rc": -803})
         result = _parse_runtime_error(err)
-        assert isinstance(result, ProgrammingError)
-        assert str(result) == "*FILE not found."
+        assert (str(result), result.sqlstate, result.sql_rc) == ("dup", "23505", -803)
+
+    def test_missing_sqlstate_and_sql_rc_are_none(self):
+        result = _parse_runtime_error(RuntimeError("plain"))
+        assert (result.sqlstate, result.sql_rc) == (None, None)
 
     def test_python_dict_repr_payload_is_parsed_via_literal_eval(self):
         # The query layer raises RuntimeError(dict); str() yields a repr,
@@ -72,6 +108,7 @@ class TestParseRuntimeError:
 # convert_runtime_errors decorator
 # ---------------------------------------------------------------------------
 
+
 class TestConvertRuntimeErrors:
     def test_passes_return_value_through(self):
         @convert_runtime_errors
@@ -83,7 +120,7 @@ class TestConvertRuntimeErrors:
     def test_converts_runtime_error_to_pep249_error(self):
         @convert_runtime_errors
         def f():
-            raise RuntimeError(json.dumps({"error": "*FILE not found."}))
+            raise RuntimeError(json.dumps({"error": "*FILE not found.", "sql_state": "42704"}))
 
         with pytest.raises(ProgrammingError, match=r"\*FILE not found\."):
             f()
@@ -117,6 +154,7 @@ class TestConvertRuntimeErrors:
 # ---------------------------------------------------------------------------
 # Module constants
 # ---------------------------------------------------------------------------
+
 
 class TestConnectionClosedSentinel:
     def test_connection_closed_is_a_programming_error(self):
