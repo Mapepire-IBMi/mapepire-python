@@ -7,11 +7,14 @@ A small fake job supplies queued dict responses so no network is involved.
 Covers NOT_YET_RUN -> RUN_MORE_DATA_AVAIL -> RUN_DONE -> ERROR via run(),
 fetch_more() and close().
 """
+
 import json
 
 import pytest
+from pep249 import IntegrityError
 
 from mapepire_python import QueryOptions
+from mapepire_python.asyncio.cursor import AsyncCursor
 from mapepire_python.client.query import QueryState
 from mapepire_python.pool.pool_query import PoolQuery
 
@@ -48,6 +51,7 @@ def _job(*responses_json):
 # Initial state
 # ---------------------------------------------------------------------------
 
+
 class TestInitialState:
     def test_default_state_is_not_yet_run(self):
         query = PoolQuery(_FakeAsyncJob(), "SELECT 1", QueryOptions())
@@ -65,6 +69,7 @@ class TestInitialState:
 # ---------------------------------------------------------------------------
 # run() transitions
 # ---------------------------------------------------------------------------
+
 
 class TestRunTransitions:
     @pytest.mark.asyncio
@@ -154,6 +159,7 @@ class TestRunTransitions:
 # fetch_more() transitions
 # ---------------------------------------------------------------------------
 
+
 class TestFetchMoreTransitions:
     @pytest.mark.asyncio
     async def test_raises_when_not_yet_run(self):
@@ -170,7 +176,9 @@ class TestFetchMoreTransitions:
             await query.fetch_more()
 
     @pytest.mark.asyncio
-    async def test_transitions_to_run_done_when_is_done(self, make_query_result, make_sql_more_response):
+    async def test_transitions_to_run_done_when_is_done(
+        self, make_query_result, make_sql_more_response
+    ):
         job = _job(
             make_query_result(is_done=False, has_results=True, id="q1"),
             make_sql_more_response(is_done=True, id="q1"),
@@ -181,7 +189,9 @@ class TestFetchMoreTransitions:
         assert query.state == QueryState.RUN_DONE
 
     @pytest.mark.asyncio
-    async def test_stays_more_data_avail_when_not_done(self, make_query_result, make_sql_more_response):
+    async def test_stays_more_data_avail_when_not_done(
+        self, make_query_result, make_sql_more_response
+    ):
         job = _job(
             make_query_result(is_done=False, has_results=True, id="q1"),
             make_sql_more_response(is_done=False, id="q1"),
@@ -207,6 +217,7 @@ class TestFetchMoreTransitions:
 # ---------------------------------------------------------------------------
 # close()
 # ---------------------------------------------------------------------------
+
 
 class TestClose:
     @pytest.mark.asyncio
@@ -248,3 +259,14 @@ class TestClose:
         query = PoolQuery(job, "SELECT 1", QueryOptions())
         with pytest.raises(Exception, match="not connected"):
             await query.close()
+
+
+class TestAsyncCursorErrors:
+    async def test_duplicate_key_raises_integrity_error(self, make_error_query_result):
+        job = _job(make_error_query_result(sql_state="23505", sql_rc=-803))
+        job.query = lambda sql, opts: PoolQuery(job, sql, opts)
+        conn = _FakeAsyncJob()  # any weakref-able object stands in for the connection
+        cursor = AsyncCursor(conn, job)
+        with pytest.raises(IntegrityError) as exc_info:
+            await cursor.execute("INSERT INTO T VALUES (1)")
+        assert (exc_info.value.sqlstate, exc_info.value.sql_rc) == ("23505", -803)

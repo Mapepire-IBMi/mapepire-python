@@ -36,13 +36,14 @@ class _SQLJobProtocol(Protocol):
 
 
 class PoolQuery:
-    
 
     def __init__(self, job: _SQLJobProtocol, query: str, opts: QueryOptions) -> None:
         self.job = job
         self.sql: str = query
         self.is_prepared: bool = True if opts.parameters is not None else False
-        self.parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = opts.parameters
+        self.parameters: Optional[Union[Sequence[Any], Mapping[Union[str, int], Any]]] = (
+            opts.parameters
+        )
         self.is_remote_cl_command: Optional[bool] = opts.isRemoteClCommand
         self.is_cl_command: Optional[bool] = opts.isClCommand or opts.isRemoteClCommand
         self.should_auto_close: Optional[bool] = opts.autoClose
@@ -51,8 +52,6 @@ class PoolQuery:
         self._rows_to_fetch: int = 100
         self.state: QueryState = QueryState.NOT_YET_RUN
         self._correlation_id: Optional[str] = None
-
-        
 
     async def __aenter__(self):
         return self
@@ -117,14 +116,26 @@ class PoolQuery:
 
         if not query_result.success and not self.is_cl_command:
             self.state = QueryState.ERROR
-            error_list = {k: v for k, v in {"error": query_result.error, "sql_state": query_result.sql_state, "sql_rc": query_result.sql_rc}.items() if v is not None}
+            error_list = {
+                k: v
+                for k, v in {
+                    "error": query_result.error,
+                    "sql_state": query_result.sql_state,
+                    "sql_rc": query_result.sql_rc,
+                }.items()
+                if v is not None
+            }
             if not error_list:
                 error_list["error"] = "failed to run query for unknown reason"
             logger.error("Async query execution failed: %s", error_list)
-            raise Exception(error_list)
+            raise RuntimeError(error_list)
 
         self._correlation_id = query_result.id
-        logger.debug("Async query executed: correlation_id=%s done=%s", self._correlation_id, query_result.is_done)
+        logger.debug(
+            "Async query executed: correlation_id=%s done=%s",
+            self._correlation_id,
+            query_result.is_done,
+        )
 
         return query_result
 
@@ -140,7 +151,9 @@ class PoolQuery:
             raise Exception("Statement has already been fully run")
 
         assert self._correlation_id is not None
-        logger.debug("Fetching more rows: rows=%s correlation_id=%s", rows_to_fetch, self._correlation_id)
+        logger.debug(
+            "Fetching more rows: rows=%s correlation_id=%s", rows_to_fetch, self._correlation_id
+        )
         self._rows_to_fetch = rows_to_fetch
         query_result = SqlMoreResponse.from_dict(  # type: ignore
             await self._execute_query(
@@ -158,7 +171,7 @@ class PoolQuery:
         if not query_result.success:
             self.state = QueryState.ERROR
             logger.error("Async fetch failed: %s", query_result.error)
-            raise Exception(query_result.error or "Failed to run Query (unknown error)")
+            raise RuntimeError(query_result.error or "Failed to run Query (unknown error)")
 
         return query_result
 
