@@ -99,6 +99,13 @@ async def test_async_fetchmany():
 
 
 @pytest.mark.asyncio
+async def test_async_duplicate_column_names():
+    async with connect(creds) as conn:
+        async with await conn.execute("SELECT 1 AS A, 2 AS A FROM SYSIBM.SYSDUMMY1") as cur:
+            assert await cur.fetchall() == [(1, 2)]
+
+
+@pytest.mark.asyncio
 async def test_async_fetchone_multiple():
     async with connect(creds) as conn:
         async with await conn.execute("select * from sample.employee") as cur:
@@ -117,8 +124,8 @@ async def test_async_description():
             assert desc is not None
             assert len(desc) > 0
             for col in desc:
-                assert len(col) == 7        # PEP 249 7-tuple
-                assert isinstance(col[0], str)   # name
+                assert len(col) == 7  # PEP 249 7-tuple
+                assert isinstance(col[0], str)  # name
                 assert col[1] in (str, int, float, bool)  # type_code
 
 
@@ -151,7 +158,7 @@ async def test_async_cursor_explicit():
 async def test_async_executemany():
     params = [
         ["ALICE", "416 111 0001"],
-        ["BOB",   "416 111 0002"],
+        ["BOB", "416 111 0002"],
         ["CAROL", "416 111 0003"],
     ]
     async with connect(creds) as conn:

@@ -261,7 +261,14 @@ class TestClose:
             await query.close()
 
 
-class TestAsyncCursorErrors:
+class TestAsyncCursor:
+    async def test_execute_requests_terse_rows(self, make_query_result):
+        job = _job(make_query_result(data=[[1, 2]], has_results=True))
+        job.query = lambda sql, opts: PoolQuery(job, sql, opts)
+        cursor = AsyncCursor(_FakeAsyncJob(), job)
+        await cursor.execute("SELECT 1 AS A, 2 AS A FROM SYSIBM.SYSDUMMY1")
+        assert json.loads(job.sent[0])["terse"] is True
+
     async def test_duplicate_key_raises_integrity_error(self, make_error_query_result):
         job = _job(make_error_query_result(sql_state="23505", sql_rc=-803))
         job.query = lambda sql, opts: PoolQuery(job, sql, opts)
