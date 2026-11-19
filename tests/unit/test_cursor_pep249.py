@@ -6,36 +6,59 @@ Covers:
   - fetchone() returns None when exhausted
   - rowcount: -1 for SELECT, actual count for DML
 """
+
 import json
 
 import pytest
 
-from mapepire_python import Cursor
+from mapepire_python import Cursor, QueryOptions
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 _COLUMNS = [
-    {"name": "EMPNO",    "label": "EMPNO",    "type": "CHAR",    "display_size": 6,
-     "precision": None, "scale": None, "nullable": False},
-    {"name": "FIRSTNME", "label": "FIRSTNME", "type": "VARCHAR", "display_size": 12,
-     "precision": None, "scale": None, "nullable": True},
-    {"name": "SALARY",   "label": "SALARY",   "type": "DECIMAL", "display_size": 10,
-     "precision": 9,    "scale": 2,    "nullable": True},
+    {
+        "name": "EMPNO",
+        "label": "EMPNO",
+        "type": "CHAR",
+        "display_size": 6,
+        "precision": None,
+        "scale": None,
+        "nullable": False,
+    },
+    {
+        "name": "FIRSTNME",
+        "label": "FIRSTNME",
+        "type": "VARCHAR",
+        "display_size": 12,
+        "precision": None,
+        "scale": None,
+        "nullable": True,
+    },
+    {
+        "name": "SALARY",
+        "label": "SALARY",
+        "type": "DECIMAL",
+        "display_size": 10,
+        "precision": 9,
+        "scale": 2,
+        "nullable": True,
+    },
 ]
 
 _METADATA = {"column_count": 3, "job": "TEST/QUSER/JOB001", "columns": _COLUMNS}
 
 _ROWS = [
-    {"EMPNO": "000010", "FIRSTNME": "JOHN",  "SALARY": 52750.00},
+    {"EMPNO": "000010", "FIRSTNME": "JOHN", "SALARY": 52750.00},
     {"EMPNO": "000020", "FIRSTNME": "ALICE", "SALARY": 41250.00},
-    {"EMPNO": "000030", "FIRSTNME": "BOB",   "SALARY": 38500.00},
+    {"EMPNO": "000030", "FIRSTNME": "BOB", "SALARY": 38500.00},
 ]
 
 
 class _FakeConn:
     """Minimal connection stub — just enough for Cursor._closed checks."""
+
     _closed = False
 
 
@@ -54,33 +77,41 @@ def _make_cursor(mock_sql_job):
 
 def _queue_execute(socket, rows=None, is_done=False, update_count=-1, metadata=None):
     """Queue the prepare_sql_execute response for a SELECT, optionally carrying rows."""
-    socket.add_response(json.dumps({
-        "id": "q1",
-        "success": True,
-        "sql_rc": 0,
-        "sql_state": "",
-        "is_done": is_done,
-        "has_results": True,
-        "update_count": update_count,
-        "data": rows if rows is not None else [],
-        "metadata": metadata if metadata is not None else _METADATA,
-        "error": None,
-        "execution_time": None,
-    }))
+    socket.add_response(
+        json.dumps(
+            {
+                "id": "q1",
+                "success": True,
+                "sql_rc": 0,
+                "sql_state": "",
+                "is_done": is_done,
+                "has_results": True,
+                "update_count": update_count,
+                "data": rows if rows is not None else [],
+                "metadata": metadata if metadata is not None else _METADATA,
+                "error": None,
+                "execution_time": None,
+            }
+        )
+    )
 
 
 def _queue_page(socket, rows, is_done=True):
     """Queue one sqlmore response."""
-    socket.add_response(json.dumps({
-        "id": "q1",
-        "success": True,
-        "sql_rc": 0,
-        "sql_state": "",
-        "is_done": is_done,
-        "data": rows,
-        "error": None,
-        "execution_time": None,
-    }))
+    socket.add_response(
+        json.dumps(
+            {
+                "id": "q1",
+                "success": True,
+                "sql_rc": 0,
+                "sql_state": "",
+                "is_done": is_done,
+                "data": rows,
+                "error": None,
+                "execution_time": None,
+            }
+        )
+    )
 
 
 def _queue_select(socket, rows=None, update_count=-1, metadata=None, is_done_on_fetch=True):
@@ -93,9 +124,17 @@ def _queue_select(socket, rows=None, update_count=-1, metadata=None, is_done_on_
 
 def _queue_close(socket):
     """Queue one sqlclose response, for closing a cursor whose query is still open."""
-    socket.add_response(json.dumps({
-        "id": "q1", "success": True, "sql_rc": 0, "sql_state": "", "error": None,
-    }))
+    socket.add_response(
+        json.dumps(
+            {
+                "id": "q1",
+                "success": True,
+                "sql_rc": 0,
+                "sql_state": "",
+                "error": None,
+            }
+        )
+    )
 
 
 def _sqlmore_requests(socket):
@@ -104,32 +143,37 @@ def _sqlmore_requests(socket):
 
 
 _ROW_TUPLES = [
-    ("000010", "JOHN",  52750.00),
+    ("000010", "JOHN", 52750.00),
     ("000020", "ALICE", 41250.00),
-    ("000030", "BOB",   38500.00),
+    ("000030", "BOB", 38500.00),
 ]
 
 
 def _queue_dml(socket, update_count=3):
     """Queue the single socket response for a DML execute()."""
-    socket.add_response(json.dumps({
-        "id": "q2",
-        "success": True,
-        "sql_rc": 0,
-        "sql_state": "",
-        "is_done": True,
-        "has_results": False,
-        "update_count": update_count,
-        "data": [],
-        "metadata": None,
-        "error": None,
-        "execution_time": None,
-    }))
+    socket.add_response(
+        json.dumps(
+            {
+                "id": "q2",
+                "success": True,
+                "sql_rc": 0,
+                "sql_state": "",
+                "is_done": True,
+                "has_results": False,
+                "update_count": update_count,
+                "data": [],
+                "metadata": None,
+                "error": None,
+                "execution_time": None,
+            }
+        )
+    )
 
 
 # ---------------------------------------------------------------------------
 # cursor.description
 # ---------------------------------------------------------------------------
+
 
 class TestDescription:
     def test_none_before_execute(self, mock_sql_job):
@@ -171,8 +215,8 @@ class TestDescription:
         _queue_select(socket)
         cursor.execute("SELECT EMPNO, FIRSTNME, SALARY FROM SAMPLE.EMPLOYEE")
         desc = cursor.description
-        assert desc[0][1] == str    # CHAR
-        assert desc[1][1] == str    # VARCHAR
+        assert desc[0][1] == str  # CHAR
+        assert desc[1][1] == str  # VARCHAR
         assert desc[2][1] == float  # DECIMAL
 
     def test_display_size_mapping(self, mock_sql_job):
@@ -180,7 +224,7 @@ class TestDescription:
         _queue_select(socket)
         cursor.execute("SELECT EMPNO, FIRSTNME, SALARY FROM SAMPLE.EMPLOYEE")
         desc = cursor.description
-        assert desc[0][2] == 6   # EMPNO
+        assert desc[0][2] == 6  # EMPNO
         assert desc[1][2] == 12  # FIRSTNME
         assert desc[2][2] == 10  # SALARY
 
@@ -205,12 +249,24 @@ class TestDescription:
 
     def test_unknown_sql_type_falls_back_to_str(self, mock_sql_job):
         cursor, socket = _make_cursor(mock_sql_job)
-        _queue_select(socket, metadata={
-            "column_count": 1,
-            "job": "TEST/QUSER/JOB001",
-            "columns": [{"name": "X", "label": "X", "type": "EXOTIC_DBTYPE",
-                         "display_size": 10, "precision": None, "scale": None, "nullable": None}],
-        })
+        _queue_select(
+            socket,
+            metadata={
+                "column_count": 1,
+                "job": "TEST/QUSER/JOB001",
+                "columns": [
+                    {
+                        "name": "X",
+                        "label": "X",
+                        "type": "EXOTIC_DBTYPE",
+                        "display_size": 10,
+                        "precision": None,
+                        "scale": None,
+                        "nullable": None,
+                    }
+                ],
+            },
+        )
         cursor.execute("SELECT X FROM T")
         assert cursor.description[0][1] == str
 
@@ -218,6 +274,7 @@ class TestDescription:
 # ---------------------------------------------------------------------------
 # fetchone()
 # ---------------------------------------------------------------------------
+
 
 class TestFetchone:
     def test_returns_tuple(self, mock_sql_job):
@@ -254,10 +311,19 @@ class TestFetchone:
         assert isinstance(row, tuple)
         assert row == ("000010", "JOHN", 52750.00)
 
+    @pytest.mark.parametrize("kwargs", [{}, {"opts": QueryOptions(isTerseResults=False)}])
+    def test_execute_requests_terse_rows(self, mock_sql_job, kwargs):
+        """Keyed rows would collapse duplicate column names like `1 AS A, 2 AS A`."""
+        cursor, socket = _make_cursor(mock_sql_job)
+        _queue_execute(socket, rows=[[1, 2]], is_done=True)
+        cursor.execute("SELECT 1 AS A, 2 AS A FROM SYSIBM.SYSDUMMY1", **kwargs)
+        assert json.loads(socket.sent[0])["terse"] is True
+
 
 # ---------------------------------------------------------------------------
 # fetchall()
 # ---------------------------------------------------------------------------
+
 
 class TestFetchall:
     def test_returns_list_of_tuples(self, mock_sql_job):
@@ -274,9 +340,9 @@ class TestFetchall:
         _queue_select(socket)
         cursor.execute("SELECT * FROM SAMPLE.EMPLOYEE")
         rows = cursor.fetchall()
-        assert rows[0] == ("000010", "JOHN",  52750.00)
+        assert rows[0] == ("000010", "JOHN", 52750.00)
         assert rows[1] == ("000020", "ALICE", 41250.00)
-        assert rows[2] == ("000030", "BOB",   38500.00)
+        assert rows[2] == ("000030", "BOB", 38500.00)
 
     def test_returns_empty_list_before_execute(self, mock_sql_job):
         cursor, _ = _make_cursor(mock_sql_job)
@@ -286,6 +352,7 @@ class TestFetchall:
 # ---------------------------------------------------------------------------
 # fetchmany()
 # ---------------------------------------------------------------------------
+
 
 class TestFetchmany:
     def test_returns_list_of_tuples(self, mock_sql_job):
@@ -312,6 +379,7 @@ class TestFetchmany:
 # ---------------------------------------------------------------------------
 # exhaustion: fetch* return empty instead of raising once rows run out
 # ---------------------------------------------------------------------------
+
 
 class TestFetchExhaustion:
     def test_fetchmany_loop_ends_with_empty_list(self, mock_sql_job):
@@ -359,6 +427,7 @@ class TestFetchExhaustion:
 # ---------------------------------------------------------------------------
 # buffering: rows are fetched in batches and never dropped
 # ---------------------------------------------------------------------------
+
 
 class TestFetchBuffering:
     def test_iteration_fetches_in_batches(self, mock_sql_job):
@@ -430,6 +499,7 @@ class TestNextset:
 # ---------------------------------------------------------------------------
 # rowcount
 # ---------------------------------------------------------------------------
+
 
 class TestRowcount:
     def test_minus_one_before_execute(self, mock_sql_job):
