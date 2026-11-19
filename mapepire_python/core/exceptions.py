@@ -87,6 +87,8 @@ def convert_runtime_errors(function: Callable[..., ReturnType]) -> Callable[...,
         async def async_wrapper(*args, **kwargs):
             try:
                 return await function(*args, **kwargs)
+            except Error:
+                raise
             except RuntimeError as err:
                 raise _parse_runtime_error(err) from err
 
@@ -96,6 +98,8 @@ def convert_runtime_errors(function: Callable[..., ReturnType]) -> Callable[...,
     def wrapper(*args, **kwargs):
         try:
             return function(*args, **kwargs)
+        except Error:
+            raise
         except RuntimeError as err:
             raise _parse_runtime_error(err) from err
 

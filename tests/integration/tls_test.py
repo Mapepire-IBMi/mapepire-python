@@ -3,7 +3,7 @@ import ssl
 
 import pytest
 
-from mapepire_python import SQLJob
+from mapepire_python import OperationalError, SQLJob
 from mapepire_python.ssl import get_certificate
 
 from .test_setup import *
@@ -57,5 +57,6 @@ CHsadf7fvJnLnK3FXOStAnN31ISSTwsvsRobdXX70nlYM/2OaZQsIlndftVRbI39
     creds.ca = badCert
     creds.ignoreUnauthorized = False
     job = SQLJob()
-    with pytest.raises(ssl.SSLError) as err:
-        res = job.connect(creds)
+    with pytest.raises(OperationalError) as err:
+        job.connect(creds)
+    assert isinstance(err.value.__cause__, ssl.SSLError)

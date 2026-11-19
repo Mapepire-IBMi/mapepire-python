@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
 import websockets
+from pep249 import Error, OperationalError
 from websockets.asyncio.client import ClientConnection
 
 from .base_job import BaseJob
@@ -20,6 +21,7 @@ from .data_types import (
     QueryOptions,
     RcclRequest,
 )
+from .websocket import handle_ws_errors
 
 __all__ = ["AsyncBaseJob"]
 
@@ -76,6 +78,7 @@ class AsyncBaseJob(BaseJob):
         socket = AsyncWebSocketConnection(db2_server)
         return await socket.connect()
 
+    @handle_ws_errors
     async def send(self, content: str) -> Dict[str, Any]:
         logger.debug("sending data: %s", content)
         req = json.loads(content)
@@ -102,7 +105,9 @@ class AsyncBaseJob(BaseJob):
 
     def get_running_count(self) -> int:
         count = len(self._pending)
-        logger.debug("--- running count %s: %d, status: %s", self.unique_id, count, self.get_status())
+        logger.debug(
+            "--- running count %s: %d, status: %s", self.unique_id, count, self.get_status()
+        )
         return count
 
     async def connect(  # type: ignore[override]
@@ -138,7 +143,7 @@ class AsyncBaseJob(BaseJob):
             self.status = JobStatus.NotStarted
             logger.error("Connection failed: %s", result.error or "unknown error")
             await self.close()
-            raise Exception(result.error or "Failed to connect to server")
+            raise OperationalError(result.error or "Failed to connect to server")
 
         self._is_tracing_channel_data = False
 
@@ -158,7 +163,7 @@ class AsyncBaseJob(BaseJob):
         # Fail any still-in-flight requests so their awaiters don't hang forever.
         for future in self._pending.values():
             if not future.done():
-                future.cancel()
+                future.set_exception(OperationalError("Connection to Mapepire server closed"))
         self._pending.clear()
 
     async def message_handler(self):
@@ -179,7 +184,8 @@ class AsyncBaseJob(BaseJob):
                 else:
                     logger.debug("No pending request for response id: %s", req_id)
         except websockets.exceptions.ConnectionClosedError:
-            await self.dispose()
+            pass
+        await self.dispose()
 
     def query(
         self,
@@ -210,6 +216,8 @@ class AsyncBaseJob(BaseJob):
         try:
             async with self.query(sql, opts) as query:
                 return await query.run(rows_to_fetch=rows_to_fetch)
+        except Error:
+            raise
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}") from e
 
@@ -231,8 +239,7 @@ class AsyncBaseJob(BaseJob):
             await self.send(json.dumps(dataclasses.asdict(request)))
         )
 
-    async def close(self) -> None: # type: ignore[override]
+    async def close(self) -> None:  # type: ignore[override]
         logger.info("Closing job %s", self.id)
         await self.dispose()
         self.status = JobStatus.Ended
-        

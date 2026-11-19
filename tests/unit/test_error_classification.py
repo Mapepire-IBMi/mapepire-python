@@ -134,6 +134,17 @@ class TestConvertRuntimeErrors:
             f()
         assert isinstance(exc_info.value.__cause__, RuntimeError)
 
+    def test_pep249_error_keeps_its_cause(self):
+        cause = TimeoutError("timed out")
+
+        @convert_runtime_errors
+        def f():
+            raise OperationalError("x") from cause
+
+        with pytest.raises(OperationalError) as exc_info:
+            f()
+        assert exc_info.value.__cause__ is cause
+
     def test_non_runtime_exceptions_propagate_unchanged(self):
         @convert_runtime_errors
         def f():

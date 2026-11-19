@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
+from pep249 import Error, OperationalError
 from websockets.sync.client import ClientConnection
 
 from mapepire_python.client.websocket_client import WebsocketConnection
@@ -106,7 +107,7 @@ class SQLJob(BaseJob):
             db2_server (Union[DaemonServer, Dict[str, Any]]): server credentials
 
         Raises:
-            Exception: Failed to connect to server
+            OperationalError: Failed to connect to server
 
         Returns:
             Dict[Any, Any]: connection results from the server
@@ -129,11 +130,12 @@ class SQLJob(BaseJob):
         )
 
         self.send(json.dumps(dataclasses.asdict(connect_req)))
+        response = self._socket.recv()
         try:
-            result = ConnectionResult.from_dict(json.loads(self._socket.recv()))  # type: ignore
+            result = ConnectionResult.from_dict(json.loads(response))  # type: ignore
         except Exception as e:
             logger.error("Failed to parse connect response: %s", e)
-            raise Exception(f"Failed to parse connect response: {e}")
+            raise OperationalError(f"Failed to parse connect response: {e}") from e
 
         if result.success:
             self._status = JobStatus.Ready
@@ -143,7 +145,7 @@ class SQLJob(BaseJob):
             self._status = JobStatus.NotStarted
             logger.error("Connection failed: %s", result.error or "unknown error")
             self.close()
-            raise Exception(result.error or "Failed to connect to server")
+            raise OperationalError(result.error or "Failed to connect to server")
 
         self._is_tracing_channeldata = False
 
@@ -203,6 +205,8 @@ class SQLJob(BaseJob):
         try:
             with self.query(sql, opts) as query:
                 return query.run(**kwargs)
+        except Error:
+            raise
         except Exception as e:
             raise RuntimeError(f"Failed to run query: {e}")
 

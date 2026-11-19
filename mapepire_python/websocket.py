@@ -1,9 +1,11 @@
 import base64
+import inspect
 import ssl
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Callable, TypeVar
 
-from websockets import ConcurrencyError, ConnectionClosed, InvalidHandshake, InvalidURI
+from pep249 import OperationalError
+from websockets import WebSocketException
 
 from mapepire_python.data_types import DaemonServer
 from mapepire_python.ssl import get_certificate
@@ -42,33 +44,32 @@ class BaseConnection:
         return ssl_context
 
 
-def _parse_ws_error(error: Exception, driver: Any = None):
-    to_str = str(driver)
+CONNECTION_ERRORS = (OSError, WebSocketException)
 
-    if isinstance(error, InvalidURI):
-        raise InvalidURI(f"The provided URI is not a valid WebSocket URI: {to_str}")
-    elif isinstance(error, OSError):
-        raise OSError(f"The TCP connection failed to connect to Mapepire server: {to_str}")
-    elif isinstance(error, InvalidHandshake):
-        raise InvalidHandshake("The opening handshake failed.")
-    elif isinstance(error, TimeoutError):
-        raise TimeoutError("The opening handshake timed out.")
-    elif isinstance(error, ConnectionClosed):
-        raise ConnectionClosed("The Conection was closed.")
-    elif isinstance(error, ConcurrencyError):
-        raise ConcurrencyError("Connection is sending a fragmented message")
-    elif isinstance(error, TypeError):
-        raise TypeError("Message doesn't have a supported type")
-    else:
-        return error
+
+def _connection_error(error: Exception) -> OperationalError:
+    return OperationalError(f"Connection to Mapepire server failed: {error}")
 
 
 def handle_ws_errors(function: Callable[..., ReturnType]) -> Callable[..., ReturnType]:
-    @wraps(function)
-    def _impl(self, *args, **kwargs):
-        try:
-            return function(self, *args, **kwargs)
-        except RuntimeError as err:
-            raise _parse_ws_error(err, driver=self) from err
+    """Wrap a sync or async function, raising `OperationalError` from socket and websocket errors."""
 
-    return _impl
+    if inspect.iscoroutinefunction(function):
+
+        @wraps(function)
+        async def async_wrapper(*args, **kwargs):
+            try:
+                return await function(*args, **kwargs)
+            except CONNECTION_ERRORS as err:
+                raise _connection_error(err) from err
+
+        return async_wrapper  # type: ignore[return-value]
+
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except CONNECTION_ERRORS as err:
+            raise _connection_error(err) from err
+
+    return wrapper
