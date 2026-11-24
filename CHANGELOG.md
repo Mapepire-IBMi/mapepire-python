@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 - fix: connection failures (rejected sign-on, unreachable host, TLS/handshake errors, timeouts) and dropped connections raise `OperationalError`, chaining the original error, instead of a bare `Exception` or raw socket/`websockets` errors; async requests in flight when the server closes the connection now fail instead of hanging or being cancelled
 - fix: SQL errors raise the PEP 249 class matching their SQLSTATE (e.g. `IntegrityError` for `23505`) instead of plain `DatabaseError`, and expose `sqlstate`/`sql_rc`; the async cursor and CL commands now do the same
+- fix: PEP 249 cursors (sync and async) request terse rows, so result sets with duplicate column names (e.g. `SELECT a.ID, b.ID ...`) return every column's value instead of repeating the last one; `Query.prepare_sql_execute()` now forwards `isTerseResults`
 
 ## [v2.0.0](https://github.com/Mapepire-IBMi/mapepire-python/releases/tag/v2.0.0) - 2026-10-23
 - chore(deps): bump `black` to `>=26.10.0`, `virtualenv` to `>=21.15.0`, and add `filelock>=4.0.0`

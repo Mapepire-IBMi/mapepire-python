@@ -18,6 +18,12 @@ def test_pep249():
     assert len(res) == 5
 
 
+def test_pep249_duplicate_column_names():
+    with connect(creds) as conn:
+        cur = conn.execute("SELECT 1 AS A, 2 AS A FROM SYSIBM.SYSDUMMY1")
+        assert cur.fetchall() == [(1, 2)]
+
+
 def test_pep249_no_size():
     conn = connect(creds)
     cur = conn.execute("select * from sample.employee")

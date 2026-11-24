@@ -146,6 +146,8 @@ class Cursor(pep249.CursorConnectionMixin, pep249.IterableCursorMixin, pep249.Tr
                 )
             return self
 
+        # Keyed rows collapse duplicate column names (e.g. a.ID, b.ID); tuples are positional anyway.
+        query.is_terse_results = True
         prepare_result = query.prepare_sql_execute()
 
         qs = QueryResultSet(prepare_result)

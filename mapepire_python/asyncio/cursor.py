@@ -82,7 +82,8 @@ class AsyncCursor(
         self, operation: SQLQuery, parameters: Optional[QueryParameters] = None
     ) -> "AsyncCursor":
         logger.debug("Executing statement")
-        opts = QueryOptions(parameters=parameters)
+        # Keyed rows collapse duplicate column names; tuples are positional anyway.
+        opts = QueryOptions(parameters=parameters, isTerseResults=True)
         self._query = self._job.query(operation, opts=opts)
         result = await self._query.run()
         self._buffer = list(result.data or [])
